@@ -1,3 +1,10 @@
+spring:
+  datasource:
+    url: 'jdbc:postgresql://localhost:5432/court_data_ingestion'
+    username: court_data_ingestion
+    password: court_data_ingestion
+
+
 server:
   shutdown: immediate
 
@@ -7,3 +14,12 @@ management.endpoint:
 
 hmpps-auth:
   url: "http://localhost:8090/auth"
+
+hmpps.sqs:
+  provider: localstack
+  queues:
+    courtdataingestion:
+      queueName: "courtdataingestion-${random.uuid}"
+      dlqName: "courtdataingestion-dlq-${random.uuid}"
+      dlqMaxReceiveCount: 3
+      visibilityTimeout: 120
