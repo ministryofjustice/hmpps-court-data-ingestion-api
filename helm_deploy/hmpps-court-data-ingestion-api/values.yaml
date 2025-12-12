@@ -13,6 +13,13 @@ generic-service:
     enabled: true
     host: app-hostname.local # override per environment
     tlsSecretName: hmpps-court-data-ingestion-api-cert
+    annotations:
+      nginx.ingress.kubernetes.io/server-snippet: |
+        server_tokens off;
+        location /queue-admin/retry-all-dlqs {
+          deny all;
+          return 401;
+        }
 
   # Environment variables to load into the deployment
   env:
@@ -28,6 +35,18 @@ generic-service:
   namespace_secrets:
     hmpps-court-data-ingestion-api-application-insights:
       APPLICATIONINSIGHTS_CONNECTION_STRING: "APPLICATIONINSIGHTS_CONNECTION_STRING"
+    rds-instance-output:
+      DB_SERVER: "rds_instance_address"
+      DB_NAME: "database_name"
+      DB_USER: "database_username"
+      DB_PASS: "database_password"
+    sqs-court-data-ingestion-queue-secret:
+      HMPPS_SQS_QUEUES_COURTDATAINGESTION_QUEUE_NAME: "sqs_queue_name"
+    sqs-court-data-ingestion-dlq-secret:
+      HMPPS_SQS_QUEUES_COURTDATAINGESTION_DLQ_NAME: "sqs_queue_name"
+
+  retryDlqCronjob:
+    enabled: true
 
   allowlist:
     groups:

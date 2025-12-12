@@ -15,3 +15,9 @@ generic-service:
 # See https://user-guide.cloud-platform.service.justice.gov.uk/documentation/monitoring-an-app/how-to-create-alarms.html#creating-your-own-custom-alerts
 generic-prometheus-alerts:
   alertSeverity: legacy-replacement-alerts-non-prod
+  businessHoursOnly: true
+  sqsAlertsQueueNames:
+    - "calculate-release-dates-team-dev-hmpps_court_data_ingestion_queue"
+    - "calculate-release-dates-team-dev-hmpps_court_data_ingestion_dlq"
+  sqsAlertsOldestThreshold: 2
+  sqsAlertsTotalMessagesThreshold: 1
