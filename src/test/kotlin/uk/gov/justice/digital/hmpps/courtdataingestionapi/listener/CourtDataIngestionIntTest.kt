@@ -20,12 +20,13 @@ class CourtDataIngestionIntTest : IntegrationTestBase() {
 
   @Test
   fun `Test receiving a message from the queue`() {
+    val defendantId = UUID.randomUUID()
     val event = SQSMessage(
       Type = CourtDataIngestionListener.MESSAGE_TYPE,
       Message = mapper.writeValueAsString(
         InternalMessage(
           CourtDataIngestionEvent(
-            defendantId = "defendantId-123",
+            defendantId = defendantId,
             fileId = "file-123",
           ),
         ),
@@ -44,7 +45,7 @@ class CourtDataIngestionIntTest : IntegrationTestBase() {
       val files = repository.findAll()
 
       assertThat(files.size).isEqualTo(1)
-      assertThat(files[0].defendantId).isEqualTo("defendantId-123")
+      assertThat(files[0].defendantId).isEqualTo(defendantId)
       assertThat(files[0].externalFileId).isEqualTo("file-123")
     }
   }

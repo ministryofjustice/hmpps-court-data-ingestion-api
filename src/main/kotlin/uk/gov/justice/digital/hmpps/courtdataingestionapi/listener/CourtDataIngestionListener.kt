@@ -10,6 +10,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtDataIngestionService
+import java.util.UUID
 
 @Service
 class CourtDataIngestionListener(
@@ -44,7 +45,7 @@ data class InternalMessage<T>(
 )
 
 data class CourtDataIngestionEvent(
-  val defendantId: String,
+  val defendantId: UUID,
   val fileId: String,
 )
 
