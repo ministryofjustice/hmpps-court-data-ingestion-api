@@ -1,6 +1,7 @@
 generic-service:
   nameOverride: hmpps-court-data-ingestion-api
   productId: "DPS014" # productId for the product that this belongs too, i.e. DPS001, see README.md for details
+  serviceAccountName: hmpps-court-data-ingestion-api
 
   replicaCount: 4
 
