@@ -45,6 +45,9 @@ generic-service:
       HMPPS_SQS_QUEUES_COURTDATAINGESTION_QUEUE_NAME: "sqs_queue_name"
     sqs-court-data-ingestion-dlq-secret:
       HMPPS_SQS_QUEUES_COURTDATAINGESTION_DLQ_NAME: "sqs_queue_name"
+    hmpps-court-data-ingestion-api-client-creds:
+      CLIENT_CREDS_CLIENT_ID: 'CLIENT_CREDS_CLIENT_ID'
+      CLIENT_CREDS_CLIENT_SECRET: 'CLIENT_CREDS_CLIENT_SECRET'
 
   retryDlqCronjob:
     enabled: true
