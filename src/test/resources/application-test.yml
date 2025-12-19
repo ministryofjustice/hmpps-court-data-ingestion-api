@@ -23,9 +23,17 @@ core:
 
 hmpps.sqs:
   provider: localstack
+  topics:
+    domainevents:
+      arn: arn:aws:sns:eu-west-2:000000000000:11111111-2222-3333-4444-555555555555
   queues:
     courtdataingestion:
       queueName: "courtdataingestion-${random.uuid}"
       dlqName: "courtdataingestion-dlq-${random.uuid}"
       dlqMaxReceiveCount: 3
       visibilityTimeout: 120
+    courtwarranttest:
+      queueName: court-warrant-test-event-queue
+      dlqName: court-warrant-test-event-dlq
+      subscribeTopicId: domainevents
+      subscribeFilter: '{"eventType":[ "court-warrant.file.received" ] }'

@@ -13,6 +13,6 @@ data class WarrantFile(
   var defendantId: UUID,
   var externalFileId: String,
   val ingestionAt: LocalDateTime = LocalDateTime.now(),
-  @OneToMany
+  @OneToMany(mappedBy = "warrantFile")
   val identifiedWarrantFiles: List<IdentifiedWarrantFile> = emptyList(),
 )

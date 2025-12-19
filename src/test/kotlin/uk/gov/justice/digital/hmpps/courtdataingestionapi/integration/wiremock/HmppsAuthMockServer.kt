@@ -25,10 +25,12 @@ class HmppsAuthApiExtension :
 
   override fun beforeAll(context: ExtensionContext) {
     hmppsAuth.start()
+    hmppsAuth.stubGrantToken()
   }
 
   override fun beforeEach(context: ExtensionContext) {
     hmppsAuth.resetRequests()
+    hmppsAuth.stubGrantToken()
   }
 
   override fun afterAll(context: ExtensionContext) {

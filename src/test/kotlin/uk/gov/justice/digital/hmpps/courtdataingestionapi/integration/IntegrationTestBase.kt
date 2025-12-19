@@ -21,6 +21,8 @@ import org.testcontainers.containers.localstack.LocalStackContainer
 import org.testcontainers.containers.localstack.LocalStackContainer.Service
 import org.testcontainers.utility.DockerImageName
 import software.amazon.awssdk.services.sqs.model.PurgeQueueRequest
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.CorePersonApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsAuthApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsAuthApiExtension.Companion.hmppsAuth
@@ -44,14 +46,22 @@ abstract class IntegrationTestBase {
   protected lateinit var hmppsSqsPropertiesSpy: HmppsSqsProperties
 
   protected val courtDataIngestionQueue by lazy { hmppsQueueService.findByQueueId("courtdataingestion") as HmppsQueue }
+  protected val courtWarrantTestQueue by lazy { hmppsQueueService.findByQueueId("courtwarranttest") as HmppsQueue }
 
   @BeforeEach
   fun cleanQueue() {
+    cleanQueue(courtDataIngestionQueue)
+    cleanQueue(courtWarrantTestQueue)
+  }
+
+  fun cleanQueue(queue: HmppsQueue) {
     await untilCallTo {
-      courtDataIngestionQueue.sqsClient.purgeQueue(PurgeQueueRequest.builder().queueUrl(courtDataIngestionQueue.queueUrl).build())
-      courtDataIngestionQueue.sqsClient.countMessagesOnQueue(courtDataIngestionQueue.queueUrl).get()
+      queue.sqsClient.purgeQueue(PurgeQueueRequest.builder().queueUrl(queue.queueUrl).build())
+      queue.sqsClient.countMessagesOnQueue(queue.queueUrl).get()
     } matches { it == 0 }
   }
+
+  fun getLatestMessage(queue: HmppsQueue): ReceiveMessageResponse? = queue.sqsClient.receiveMessage(ReceiveMessageRequest.builder().maxNumberOfMessages(1).queueUrl(queue.queueUrl).build()).get()
 
   @Autowired
   protected lateinit var webTestClient: WebTestClient
