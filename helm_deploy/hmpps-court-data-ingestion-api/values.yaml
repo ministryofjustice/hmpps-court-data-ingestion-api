@@ -41,6 +41,8 @@ generic-service:
       DB_NAME: "database_name"
       DB_USER: "database_username"
       DB_PASS: "database_password"
+    hmpps-domain-events-topic:
+      HMPPS_SQS_TOPICS_DOMAINEVENTS_ARN: "topic_arn"
     sqs-court-data-ingestion-queue-secret:
       HMPPS_SQS_QUEUES_COURTDATAINGESTION_QUEUE_NAME: "sqs_queue_name"
     sqs-court-data-ingestion-dlq-secret:
