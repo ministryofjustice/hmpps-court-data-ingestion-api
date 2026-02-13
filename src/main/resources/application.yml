@@ -65,7 +65,7 @@ spring:
       max-in-memory-size: 10MB
 
 server:
-  port: 8080w
+  port: 8080
   servlet:
     context-path: /
   forward-headers-strategy: native
