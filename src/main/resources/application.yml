@@ -60,6 +60,8 @@ spring:
             client-id: ${hmcts.client.creds.client.id}
             client-secret: ${hmcts.client.creds.client.secret}
             authorization-grant-type: client_credentials
+            scope:
+              - ${hmcts.client.creds.client.scope}
   http:
     codecs:
       max-in-memory-size: 10MB
