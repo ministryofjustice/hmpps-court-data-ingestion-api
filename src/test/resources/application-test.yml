@@ -14,12 +14,21 @@ management.endpoint:
 
 hmpps-auth:
   url: "http://localhost:8090/auth"
+hmcts-auth:
+  url: "http://localhost:8091"
 
-# Wiremock prison-api
+# Wiremock core-person-api
 core:
   person:
     api:
       url: http://localhost:8332
+
+# Wiremock hmcts-api
+hmcts:
+  subscription:
+    api:
+      url: http://localhost:8333
+
 
 hmpps.sqs:
   provider: localstack

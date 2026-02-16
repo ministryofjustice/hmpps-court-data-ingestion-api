@@ -46,12 +46,19 @@ spring:
         provider:
           hmpps-auth:
             token-uri: ${hmpps-auth.url}/oauth/token
+          hmcts-auth:
+            token-uri: ${hmcts-auth.url}/oauth2/v2.0/token
 
         registration:
           core-person-api:
             provider: hmpps-auth
             client-id: ${client.creds.client.id}
             client-secret: ${client.creds.client.secret}
+            authorization-grant-type: client_credentials
+          hmcts-subscription-api:
+            provider: hmcts-auth
+            client-id: ${hmcts.client.creds.client.id}
+            client-secret: ${hmcts.client.creds.client.secret}
             authorization-grant-type: client_credentials
   http:
     codecs:
@@ -88,3 +95,7 @@ management:
     info:
       cache:
         time-to-live: 2000ms
+
+subscription-callback-config:
+  callback-url: ${HMCTS_SUBSCRIPTION_CALLBACK_URL}
+  subscription-key: ${HMCTS_SUBSCRIPTION_KEY}

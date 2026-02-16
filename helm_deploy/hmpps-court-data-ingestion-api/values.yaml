@@ -50,7 +50,10 @@ generic-service:
     hmpps-court-data-ingestion-api-client-creds:
       CLIENT_CREDS_CLIENT_ID: 'CLIENT_CREDS_CLIENT_ID'
       CLIENT_CREDS_CLIENT_SECRET: 'CLIENT_CREDS_CLIENT_SECRET'
-
+    hmpps-court-data-ingestion-api-hmcts-client-creds:
+      HMCTS_CLIENT_CREDS_CLIENT_ID: 'CLIENT_CREDS_CLIENT_ID'
+      HMCTS_CLIENT_CREDS_CLIENT_SECRET: 'CLIENT_CREDS_CLIENT_SECRET'
+      HMCTS_SUBSCRIPTION_KEY: 'HMCTS_SUBSCRIPTION_KEY'
   retryDlqCronjob:
     enabled: true
 
