@@ -18,6 +18,6 @@ class HmctsSubscriptionApiClient(@Qualifier("hmctsSubscriptionApiWebClient") pri
     .block()!!
 
   companion object {
-    const val SUBSCRIPTION_KEY_HEADER = "X-HMCTS-Subscription-Key"
+    const val SUBSCRIPTION_KEY_HEADER = "Ocp-Apim-Subscription-Key"
   }
 }
