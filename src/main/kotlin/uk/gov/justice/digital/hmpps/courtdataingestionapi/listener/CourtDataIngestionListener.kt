@@ -10,6 +10,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtDataIngestionService
+import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.UUID
 
 @Service
@@ -34,7 +36,7 @@ class CourtDataIngestionListener(
     val sqsMessage: SQSMessage = objectMapper.readValue(rawMessage)
     return when (sqsMessage.Type) {
       MESSAGE_TYPE -> {
-        val message = objectMapper.readValue<InternalMessage<CourtDataIngestionEvent>>(sqsMessage.Message)
+        val message = objectMapper.readValue<InternalMessage<HmctsSubscriptionRequestBody>>(sqsMessage.Message)
         courtDataIngestionService.receiveMessage(message.body)
       } else -> {}
     }
@@ -44,9 +46,18 @@ data class InternalMessage<T>(
   val body: T,
 )
 
-data class CourtDataIngestionEvent(
-  val defendantId: UUID,
-  val fileId: String,
+data class HmctsSubscriptionRequestBody(
+  val cases: List<HmctsCase>,
+  val masterDefendantId: UUID,
+  val defendantName: String,
+  val defendantDateOfBirth: LocalDate,
+  val documentId: String,
+  val documentGeneratedTimestamp: LocalDateTime,
+  val prisonEmailAddress: String,
+)
+
+data class HmctsCase(
+  val urn: String,
 )
 
 @JsonNaming(value = PropertyNamingStrategies.UpperCamelCaseStrategy::class)

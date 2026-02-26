@@ -11,6 +11,8 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.WarrantFileRepository
 import uk.gov.justice.hmpps.sqs.countMessagesOnQueue
+import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.UUID
 
 @Transactional(readOnly = true)
@@ -65,9 +67,15 @@ class CourtDataIngestionIntTest : IntegrationTestBase() {
       Type = CourtDataIngestionListener.MESSAGE_TYPE,
       Message = mapper.writeValueAsString(
         InternalMessage(
-          CourtDataIngestionEvent(
-            defendantId = defendantId,
-            fileId = FILE_ID,
+          HmctsSubscriptionRequestBody(
+            masterDefendantId = defendantId,
+            documentId = FILE_ID,
+            // TODO CDIA-9
+            cases = listOf(),
+            defendantName = "",
+            prisonEmailAddress = "",
+            defendantDateOfBirth = LocalDate.now(),
+            documentGeneratedTimestamp = LocalDateTime.now(),
           ),
         ),
       ),

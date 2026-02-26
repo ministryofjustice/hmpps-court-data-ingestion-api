@@ -9,7 +9,7 @@ import software.amazon.awssdk.services.sns.model.MessageAttributeValue
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.CorePersonApiClient
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.IdentifiedWarrantFile
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.WarrantFile
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.CourtDataIngestionEvent
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsSubscriptionRequestBody
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.IdentifiedWarrantFileRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.WarrantFileRepository
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
@@ -27,15 +27,15 @@ class CourtDataIngestionService(
   private val eventTopic by lazy { hmppsQueueService.findByTopicId("domainevents") as HmppsTopic }
 
   @Transactional
-  fun receiveMessage(message: CourtDataIngestionEvent) {
+  fun receiveMessage(message: HmctsSubscriptionRequestBody) {
     val warrantFile = warrantFileRepository.save(
       WarrantFile(
-        defendantId = message.defendantId,
-        externalFileId = message.fileId,
+        defendantId = message.masterDefendantId,
+        externalFileId = message.documentId,
       ),
     )
     val person = try {
-      corePersonApiClient.getPerson(message.defendantId)
+      corePersonApiClient.getPerson(message.masterDefendantId)
     } catch (e: WebClientResponseException) {
       if (HttpStatus.NOT_FOUND.isSameCodeAs(e.statusCode)) {
         return
@@ -56,7 +56,7 @@ class CourtDataIngestionService(
     if (person.identifiers.prisonNumbers.isNotEmpty()) {
       eventTopic.publish(
         EVENT_TYPE,
-        objectMapper.writeValueAsString(IdentifiedCourtWarrantEventPayload(person.identifiers.prisonNumbers, message.fileId)),
+        objectMapper.writeValueAsString(IdentifiedCourtWarrantEventPayload(person.identifiers.prisonNumbers, message.documentId)),
         attributes = mapOf(
           "type" to MessageAttributeValue.builder().dataType("String").stringValue(EVENT_TYPE).build(),
         ),
