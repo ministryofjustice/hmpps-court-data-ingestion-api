@@ -54,7 +54,9 @@ class CourtDataIngestionIntTest : IntegrationTestBase() {
     assertThat(file.identifiedWarrantFiles[0].prisonerNumber).isEqualTo("ABC123")
     assertThat(file.identifiedWarrantFiles[1].prisonerNumber).isEqualTo("XYZ987")
 
-    awaitAtMost30Secs untilCallTo { courtWarrantTestQueue.sqsClient.countMessagesOnQueue(courtWarrantTestQueue.queueUrl).get() } matches { it == 1 }
+    awaitAtMost30Secs untilCallTo {
+      courtWarrantTestQueue.sqsClient.countMessagesOnQueue(courtWarrantTestQueue.queueUrl).get()
+    } matches { it == 1 }
     val latestMessage: String = getLatestMessage(courtWarrantTestQueue)!!.messages()[0].body()
     assertThat(latestMessage).contains("court-warrant.file.received")
     assertThat(latestMessage).contains("ABC123")
@@ -63,25 +65,17 @@ class CourtDataIngestionIntTest : IntegrationTestBase() {
   }
 
   private fun sendMessage(defendantId: UUID) {
-    val event = SQSMessage(
-      Type = CourtDataIngestionListener.MESSAGE_TYPE,
-      Message = mapper.writeValueAsString(
-        InternalMessage(
-          HmctsSubscriptionRequestBody(
-            masterDefendantId = defendantId,
-            documentId = FILE_ID,
-            // TODO CDIA-9
-            cases = listOf(),
-            defendantName = "",
-            prisonEmailAddress = "",
-            defendantDateOfBirth = LocalDate.now(),
-            documentGeneratedTimestamp = LocalDateTime.now(),
-          ),
-        ),
-      ),
-      MessageId = UUID.randomUUID().toString(),
-      MessageAttributes = null,
-    )
+    val event =
+      HmctsSubscriptionRequestBody(
+        masterDefendantId = defendantId,
+        documentId = FILE_ID,
+        // TODO CDIA-9
+        cases = listOf(),
+        defendantName = "",
+        prisonEmailAddress = "",
+        defendantDateOfBirth = LocalDate.now(),
+        documentGeneratedTimestamp = LocalDateTime.now(),
+      )
     courtDataIngestionQueue.sqsClient.sendMessage(
       SendMessageRequest.builder()
         .queueUrl(courtDataIngestionQueue.queueUrl)
