@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config
+package uk.gov.justice.digital.hmpps.courtdataingestionapi.config
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
