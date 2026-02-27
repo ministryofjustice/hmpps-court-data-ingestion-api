@@ -19,7 +19,6 @@ class CourtDataIngestionListener(
 
   companion object {
     val log: Logger = LoggerFactory.getLogger(this::class.java)
-    const val MESSAGE_TYPE = "court-data-ingestion.message"
   }
 
   @SqsListener(
