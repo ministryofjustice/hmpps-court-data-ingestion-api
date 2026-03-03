@@ -9,6 +9,7 @@ import software.amazon.awssdk.services.sns.model.MessageAttributeValue
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.CorePersonApiClient
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.IdentifiedWarrantFile
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.WarrantFile
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.WarrantFileCase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsSubscriptionRequestBody
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.IdentifiedWarrantFileRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.WarrantFileRepository
@@ -32,6 +33,11 @@ class CourtDataIngestionService(
       WarrantFile(
         defendantId = message.masterDefendantId,
         externalFileId = message.documentId,
+        defendantName = message.defendantName,
+        prisonEmailAddress = message.prisonEmailAddress,
+        defendantDateOfBirth = message.defendantDateOfBirth,
+        documentGeneratedTimestamp = message.documentGeneratedTimestamp,
+        warrantFileCases = message.cases.map { WarrantFileCase(caseReference = it.urn) },
       ),
     )
     val person = try {
