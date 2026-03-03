@@ -83,7 +83,7 @@ class CourtDataIngestionIntTest : IntegrationTestBase() {
         defendantName = "John Doe",
         prisonEmailAddress = "prison@aol.com",
         defendantDateOfBirth = LocalDate.of(1950, 1, 1),
-        documentGeneratedTimestamp = LocalDateTime.now().minusMinutes(1),
+        documentGeneratedTimestamp = LocalDateTime.now().minusMinutes(1).withNano(0),
       )
     courtDataIngestionQueue.sqsClient.sendMessage(
       SendMessageRequest.builder()
