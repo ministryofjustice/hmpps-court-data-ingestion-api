@@ -25,13 +25,20 @@ class CourtDataIngestionIntTest : IntegrationTestBase() {
   private lateinit var repository: WarrantFileRepository
 
   @Test
-  fun `Test receiving a message from the queue not found response for core person api`() {
-    sendMessage(NOT_FOUND_CORE_PERSON)
+  fun `Test receiving a message from the queue not found response for core person api and all data is ingested`() {
+    val event = sendMessage(NOT_FOUND_CORE_PERSON)
 
     val file = repository.findFirstByDefendantId(NOT_FOUND_CORE_PERSON)!!
     assertThat(file.defendantId).isEqualTo(NOT_FOUND_CORE_PERSON)
     assertThat(file.externalFileId).isEqualTo(FILE_ID)
     assertThat(file.identifiedWarrantFiles.size).isEqualTo(0)
+    assertThat(file.warrantFileCases.size).isEqualTo(2)
+    assertThat(file.warrantFileCases[0].caseReference).isEqualTo(event.cases[0].urn)
+    assertThat(file.warrantFileCases[1].caseReference).isEqualTo(event.cases[1].urn)
+    assertThat(file.defendantName).isEqualTo(event.defendantName)
+    assertThat(file.defendantDateOfBirth).isEqualTo(event.defendantDateOfBirth)
+    assertThat(file.documentGeneratedTimestamp).isEqualTo(event.documentGeneratedTimestamp)
+    assertThat(file.prisonEmailAddress).isEqualTo(event.prisonEmailAddress)
   }
 
   @Test
@@ -64,17 +71,19 @@ class CourtDataIngestionIntTest : IntegrationTestBase() {
     assertThat(latestMessage).contains(FILE_ID)
   }
 
-  private fun sendMessage(defendantId: UUID) {
+  private fun sendMessage(defendantId: UUID): HmctsSubscriptionRequestBody {
     val event =
       HmctsSubscriptionRequestBody(
         masterDefendantId = defendantId,
         documentId = FILE_ID,
-        // TODO CDIA-9
-        cases = listOf(),
-        defendantName = "",
-        prisonEmailAddress = "",
-        defendantDateOfBirth = LocalDate.now(),
-        documentGeneratedTimestamp = LocalDateTime.now(),
+        cases = listOf(
+          HmctsCase("Case123"),
+          HmctsCase("Case456"),
+        ),
+        defendantName = "John Doe",
+        prisonEmailAddress = "prison@aol.com",
+        defendantDateOfBirth = LocalDate.of(1950, 1, 1),
+        documentGeneratedTimestamp = LocalDateTime.now().minusMinutes(1),
       )
     courtDataIngestionQueue.sqsClient.sendMessage(
       SendMessageRequest.builder()
@@ -86,10 +95,12 @@ class CourtDataIngestionIntTest : IntegrationTestBase() {
     awaitAtMost30Secs untilCallTo {
       repository.countByDefendantId(defendantId)
     } matches { it == 1L }
+    return event
   }
 
   companion object {
     const val FILE_ID = "file-123"
+
     val NOT_FOUND_CORE_PERSON = UUID.randomUUID()
     val NO_MATCHING_IDS_PERSON = UUID.randomUUID()
     val MATCHING_CORE_PERSON = UUID.randomUUID()
