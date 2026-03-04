@@ -9,5 +9,5 @@ class Subscription(
   @Id
   val id: String,
   val subscribedAt: LocalDateTime = LocalDateTime.now(),
-  val updatedAt: LocalDateTime = LocalDateTime.now(),
+  var updatedAt: LocalDateTime = LocalDateTime.now(),
 )

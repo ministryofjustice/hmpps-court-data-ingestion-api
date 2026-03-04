@@ -9,8 +9,16 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.Subscri
 @Component
 class HmctsSubscriptionApiClient(@Qualifier("hmctsSubscriptionApiWebClient") private val webClient: WebClient) {
 
-  fun subscribe(request: SubscriptionRequest, subscriptionKey: String): SubscriptionResponse = webClient.post()
+  fun createSubscription(request: SubscriptionRequest, subscriptionKey: String): SubscriptionResponse = webClient.post()
     .uri("/client-subscriptions")
+    .header(SUBSCRIPTION_KEY_HEADER, subscriptionKey)
+    .bodyValue(request)
+    .retrieve()
+    .bodyToMono(SubscriptionResponse::class.java)
+    .block()!!
+
+  fun updateSubscription(request: SubscriptionRequest, subscriptionKey: String, subscriptionId: String): SubscriptionResponse = webClient.put()
+    .uri("/client-subscriptions/$subscriptionId")
     .header(SUBSCRIPTION_KEY_HEADER, subscriptionKey)
     .bodyValue(request)
     .retrieve()
