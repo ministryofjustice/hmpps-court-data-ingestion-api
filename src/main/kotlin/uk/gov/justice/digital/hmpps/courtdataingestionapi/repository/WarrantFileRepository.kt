@@ -9,4 +9,5 @@ import java.util.UUID
 interface WarrantFileRepository : JpaRepository<WarrantFile, UUID> {
   fun countByDefendantId(defendantId: UUID): Long
   fun findFirstByDefendantId(defendantId: UUID): WarrantFile?
+  fun findByDefendantIdIn(defendantIds: List<UUID>): List<WarrantFile>
 }

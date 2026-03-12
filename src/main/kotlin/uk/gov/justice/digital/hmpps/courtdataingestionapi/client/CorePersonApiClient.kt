@@ -9,9 +9,16 @@ import java.util.UUID
 @Component
 class CorePersonApiClient(@Qualifier("corePersonApiWebClient") private val webClient: WebClient) {
 
-  fun getPerson(defendantId: UUID): CanonicalRecord = webClient
+  fun getPersonByCommonPlatformId(defendantId: UUID): CanonicalRecord = webClient
     .get()
     .uri("/person/commonplatform/$defendantId")
+    .retrieve()
+    .bodyToMono(CanonicalRecord::class.java)
+    .block()!!
+
+  fun getPersonByPrisonerNumber(prisonerNumber: String): CanonicalRecord = webClient
+    .get()
+    .uri("/person/prison/$prisonerNumber")
     .retrieve()
     .bodyToMono(CanonicalRecord::class.java)
     .block()!!

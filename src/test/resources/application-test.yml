@@ -46,3 +46,8 @@ hmpps.sqs:
       dlqName: court-warrant-test-event-dlq
       subscribeTopicId: domainevents
       subscribeFilter: '{"eventType":[ "court-warrant.file.received" ] }'
+    prisonercreated:
+      queueName: "prisonercreated-${random.uuid}"
+      dlqName: "prisonercreated-dlq-${random.uuid}"
+      dlqMaxReceiveCount: 3
+      visibilityTimeout: 120

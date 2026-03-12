@@ -10,14 +10,16 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.CorePersonApiCl
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.IdentifiedWarrantFile
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.WarrantFile
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.WarrantFileCase
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsSubscriptionRequestBody
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsSubscriptionNotificationRequestBody
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.IdentifiedWarrantFileRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.WarrantFileRepository
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.HmppsTopic
 import uk.gov.justice.hmpps.sqs.publish
+import java.util.UUID
 
 @Service
+@Transactional
 class CourtDataIngestionService(
   private val warrantFileRepository: WarrantFileRepository,
   private val identifiedWarrantFileRepository: IdentifiedWarrantFileRepository,
@@ -27,8 +29,7 @@ class CourtDataIngestionService(
 ) {
   private val eventTopic by lazy { hmppsQueueService.findByTopicId("domainevents") as HmppsTopic }
 
-  @Transactional
-  fun receiveMessage(message: HmctsSubscriptionRequestBody) {
+  fun receiveMessage(message: HmctsSubscriptionNotificationRequestBody) {
     val warrantFile = warrantFileRepository.save(
       WarrantFile(
         defendantId = message.masterDefendantId,
@@ -41,7 +42,7 @@ class CourtDataIngestionService(
       ),
     )
     val person = try {
-      corePersonApiClient.getPerson(message.masterDefendantId)
+      corePersonApiClient.getPersonByCommonPlatformId(message.masterDefendantId)
     } catch (e: WebClientResponseException) {
       if (HttpStatus.NOT_FOUND.isSameCodeAs(e.statusCode)) {
         return
@@ -50,7 +51,25 @@ class CourtDataIngestionService(
       }
     }
 
-    person.identifiers.prisonNumbers.forEach {
+    createMatches(warrantFile, person.identifiers.prisonNumbers)
+  }
+
+  fun attemptToMatchForNewPrisoner(prisonerNumber: String) {
+    val previouslyIdentified = identifiedWarrantFileRepository.countByPrisonerNumber(prisonerNumber)
+    if (previouslyIdentified == 0L) {
+      val person = corePersonApiClient.getPersonByPrisonerNumber(prisonerNumber)
+      if (person.identifiers.defendantIds.isNotEmpty()) {
+        val files =
+          warrantFileRepository.findByDefendantIdIn(person.identifiers.defendantIds.map { UUID.fromString(it) })
+        files.forEach {
+          createMatches(it, listOf(prisonerNumber))
+        }
+      }
+    }
+  }
+
+  private fun createMatches(warrantFile: WarrantFile, prisonerNumbers: List<String>) {
+    prisonerNumbers.forEach {
       identifiedWarrantFileRepository.save(
         IdentifiedWarrantFile(
           warrantFile = warrantFile,
@@ -59,16 +78,22 @@ class CourtDataIngestionService(
       )
     }
 
-    if (person.identifiers.prisonNumbers.isNotEmpty()) {
+    if (prisonerNumbers.isNotEmpty()) {
       eventTopic.publish(
         EVENT_TYPE,
-        objectMapper.writeValueAsString(IdentifiedCourtWarrantEventPayload(person.identifiers.prisonNumbers, message.documentId)),
+        objectMapper.writeValueAsString(
+          IdentifiedCourtWarrantEventPayload(
+            prisonerNumbers,
+            warrantFile.externalFileId,
+          ),
+        ),
         attributes = mapOf(
           "type" to MessageAttributeValue.builder().dataType("String").stringValue(EVENT_TYPE).build(),
         ),
       )
     }
   }
+
   companion object {
     private const val EVENT_TYPE = "court-warrant.file.received"
   }

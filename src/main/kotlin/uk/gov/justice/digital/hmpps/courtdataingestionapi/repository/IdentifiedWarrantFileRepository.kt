@@ -6,4 +6,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.IdentifiedWarra
 import java.util.UUID
 
 @Repository
-interface IdentifiedWarrantFileRepository : JpaRepository<IdentifiedWarrantFile, UUID>
+interface IdentifiedWarrantFileRepository : JpaRepository<IdentifiedWarrantFile, UUID> {
+
+  fun countByPrisonerNumber(prisonerNumber: String): Long
+}
