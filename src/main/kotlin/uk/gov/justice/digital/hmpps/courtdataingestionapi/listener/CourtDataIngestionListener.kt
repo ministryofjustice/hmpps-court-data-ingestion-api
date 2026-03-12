@@ -29,12 +29,12 @@ class CourtDataIngestionListener(
     rawMessage: String,
   ) {
     log.debug("Received message {}", rawMessage)
-    val message = objectMapper.readValue<HmctsSubscriptionRequestBody>(rawMessage)
+    val message = objectMapper.readValue<HmctsSubscriptionNotificationRequestBody>(rawMessage)
     courtDataIngestionService.receiveMessage(message)
   }
 }
 
-data class HmctsSubscriptionRequestBody(
+data class HmctsSubscriptionNotificationRequestBody(
   val cases: List<HmctsCase>,
   val masterDefendantId: UUID,
   val defendantName: String,

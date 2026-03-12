@@ -1,0 +1,42 @@
+package uk.gov.justice.digital.hmpps.courtdataingestionapi.listener
+
+import org.assertj.core.api.Assertions.assertThat
+import org.awaitility.kotlin.matches
+import org.awaitility.kotlin.untilCallTo
+import org.junit.jupiter.api.Test
+import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
+import uk.gov.justice.hmpps.sqs.countMessagesOnQueue
+import java.util.UUID
+import kotlin.String
+
+@Transactional
+class PrisonerCreatedListenerIntTest : IntegrationTestBase() {
+
+  @Test
+  fun `Test previously ingested warrant file matches once prisoner is created in NOMIS`() {
+    // Send a notification which has no matching prisoner id in core person.
+    sendSubscriptionNotification(DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION)
+
+    // Later a prisoner is created matching the file created above.
+    sendPrisonerCreatedMessage(PRISONER_NUMBER_WITH_MATCH)
+
+    awaitAtMost30Secs untilCallTo {
+      courtWarrantTestQueue.sqsClient.countMessagesOnQueue(courtWarrantTestQueue.queueUrl).get()
+    } matches { it == 1 }
+    val latestMessage: String = getLatestMessage(courtWarrantTestQueue)!!.messages()[0].body()
+    assertThat(latestMessage).contains("court-warrant.file.received")
+    assertThat(latestMessage).contains(PRISONER_NUMBER_WITH_MATCH)
+    assertThat(latestMessage).contains(FILE_ID)
+
+    val file = warrantFileRepository.findFirstByDefendantId(DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION)!!
+
+    assertThat(file.identifiedWarrantFiles.size).isEqualTo(1)
+    assertThat(file.identifiedWarrantFiles[0].prisonerNumber).isEqualTo(PRISONER_NUMBER_WITH_MATCH)
+  }
+
+  companion object {
+    const val PRISONER_NUMBER_WITH_MATCH = "EFG456"
+    val DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION = UUID.randomUUID()
+  }
+}

@@ -17,7 +17,8 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.coreperson.model.Canon
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.coreperson.model.CanonicalReligion
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.coreperson.model.CanonicalSex
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.coreperson.model.CanonicalTitle
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.CourtDataIngestionIntTest
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.PrisonerCreatedListenerIntTest
 import java.util.UUID
 
 class CorePersonApiExtension :
@@ -30,9 +31,12 @@ class CorePersonApiExtension :
   }
 
   override fun beforeAll(context: ExtensionContext) {
-    corePersonApi.stubCorePersonNotFound(CourtDataIngestionIntTest.NOT_FOUND_CORE_PERSON)
-    corePersonApi.stubCorePersonNoPrisonNumber(CourtDataIngestionIntTest.NO_MATCHING_IDS_PERSON)
-    corePersonApi.stubCorePersonWithPrisonNumber(CourtDataIngestionIntTest.MATCHING_CORE_PERSON, CourtDataIngestionIntTest.MATCHING_PRISONER_NUMBERS)
+    corePersonApi.stubCommonPlatformCorePersonNotFound(IntegrationTestBase.NOT_FOUND_CORE_PERSON)
+    corePersonApi.stubCommonPlatformCorePerson(IntegrationTestBase.NO_MATCHING_IDS_PERSON, emptyList())
+    corePersonApi.stubCommonPlatformCorePerson(IntegrationTestBase.MATCHING_CORE_PERSON, IntegrationTestBase.MATCHING_PRISONER_NUMBERS)
+
+    corePersonApi.stubCommonPlatformCorePerson(PrisonerCreatedListenerIntTest.DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION, emptyList())
+    corePersonApi.stubPrisonerCorePerson(PrisonerCreatedListenerIntTest.PRISONER_NUMBER_WITH_MATCH, listOf(PrisonerCreatedListenerIntTest.DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION))
     corePersonApi.start()
   }
 
@@ -50,7 +54,7 @@ class CorePersonApiMockServer : WireMockServer(WIREMOCK_PORT) {
     private const val WIREMOCK_PORT = 8332
   }
 
-  fun stubCorePersonNotFound(defendantId: UUID) {
+  fun stubCommonPlatformCorePersonNotFound(defendantId: UUID) {
     stubFor(
       get(urlEqualTo("/person/commonplatform/$defendantId"))
         .willReturn(
@@ -59,33 +63,33 @@ class CorePersonApiMockServer : WireMockServer(WIREMOCK_PORT) {
     )
   }
 
-  fun stubCorePersonNoPrisonNumber(defendantId: UUID) {
+  fun stubCommonPlatformCorePerson(defendantId: UUID, prisonerNumbers: List<String>) {
     stubFor(
       get(urlEqualTo("/person/commonplatform/$defendantId"))
         .willReturn(
           aResponse()
             .withHeaders(HttpHeaders(HttpHeader("Content-Type", "application/json")))
             .withBody(
-              TestUtil.objectMapper().writeValueAsString(canonicalRecord(defendantId, emptyList())),
+              TestUtil.objectMapper().writeValueAsString(canonicalRecord(listOf(defendantId), prisonerNumbers)),
             ),
         ),
     )
   }
 
-  fun stubCorePersonWithPrisonNumber(defendantId: UUID, prisonerNumbers: List<String>) {
+  fun stubPrisonerCorePerson(prisonerNumber: String, defendantIds: List<UUID>) {
     stubFor(
-      get(urlEqualTo("/person/commonplatform/$defendantId"))
+      get(urlEqualTo("/person/prison/$prisonerNumber"))
         .willReturn(
           aResponse()
             .withHeaders(HttpHeaders(HttpHeader("Content-Type", "application/json")))
             .withBody(
-              TestUtil.objectMapper().writeValueAsString(canonicalRecord(defendantId, prisonerNumbers)),
+              TestUtil.objectMapper().writeValueAsString(canonicalRecord(defendantIds, listOf(prisonerNumber))),
             ),
         ),
     )
   }
 
-  private fun canonicalRecord(defendantId: UUID, prisonerNumbers: List<String>) = CanonicalRecord(
+  private fun canonicalRecord(defendantId: List<UUID>, prisonerNumbers: List<String>) = CanonicalRecord(
     title = CanonicalTitle(),
     sex = CanonicalSex(),
     religion = CanonicalReligion(),
@@ -96,7 +100,7 @@ class CorePersonApiMockServer : WireMockServer(WIREMOCK_PORT) {
     identifiers = CanonicalIdentifiers(
       crns = listOf(),
       prisonNumbers = prisonerNumbers,
-      defendantIds = listOf(defendantId.toString()),
+      defendantIds = defendantId.map { it.toString() },
       cids = listOf(),
       pncs = listOf(),
       cros = listOf(),

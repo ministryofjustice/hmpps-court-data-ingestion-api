@@ -23,23 +23,37 @@ import org.testcontainers.utility.DockerImageName
 import software.amazon.awssdk.services.sqs.model.PurgeQueueRequest
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse
+import software.amazon.awssdk.services.sqs.model.SendMessageRequest
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.TestUtil
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.CorePersonApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsAuthApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsSubscriptionApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsAuthApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsAuthApiExtension.Companion.hmppsAuth
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HMPPSPrisonerCreatedDomainEvent
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsCase
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsSubscriptionNotificationRequestBody
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.PrisonerCreatedAdditionalInformation
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.SQSMessage
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.WarrantFileRepository
 import uk.gov.justice.hmpps.sqs.HmppsQueue
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.HmppsSqsProperties
 import uk.gov.justice.hmpps.sqs.countMessagesOnQueue
 import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
 import java.time.Duration
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.util.UUID
 
 @ExtendWith(HmppsAuthApiExtension::class, HmctsAuthApiExtension::class, CorePersonApiExtension::class, HmctsSubscriptionApiExtension::class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
 abstract class IntegrationTestBase {
   protected val awaitAtMost30Secs: ConditionFactory get() = await.atMost(Duration.ofSeconds(30))
+
+  @Autowired
+  protected lateinit var warrantFileRepository: WarrantFileRepository
 
   @Autowired
   private lateinit var hmppsQueueService: HmppsQueueService
@@ -49,11 +63,13 @@ abstract class IntegrationTestBase {
 
   protected val courtDataIngestionQueue by lazy { hmppsQueueService.findByQueueId("courtdataingestion") as HmppsQueue }
   protected val courtWarrantTestQueue by lazy { hmppsQueueService.findByQueueId("courtwarranttest") as HmppsQueue }
+  protected val prisonerCreatedQueue by lazy { hmppsQueueService.findByQueueId("prisonercreated") as HmppsQueue }
 
   @BeforeEach
   fun cleanQueue() {
     cleanQueue(courtDataIngestionQueue)
     cleanQueue(courtWarrantTestQueue)
+    cleanQueue(prisonerCreatedQueue)
   }
 
   fun cleanQueue(queue: HmppsQueue) {
@@ -81,7 +97,61 @@ abstract class IntegrationTestBase {
     hmppsAuth.stubHealthPing(status)
   }
 
+  protected fun sendSubscriptionNotification(defendantId: UUID): HmctsSubscriptionNotificationRequestBody {
+    val event =
+      HmctsSubscriptionNotificationRequestBody(
+        masterDefendantId = defendantId,
+        documentId = FILE_ID,
+        cases = listOf(
+          HmctsCase("Case123"),
+          HmctsCase("Case456"),
+        ),
+        defendantName = "John Doe",
+        prisonEmailAddress = "prison@aol.com",
+        defendantDateOfBirth = LocalDate.of(1950, 1, 1),
+        documentGeneratedTimestamp = LocalDateTime.now().minusMinutes(1).withNano(0),
+      )
+    courtDataIngestionQueue.sqsClient.sendMessage(
+      SendMessageRequest.builder()
+        .queueUrl(courtDataIngestionQueue.queueUrl)
+        .messageBody(TestUtil.objectMapper().writeValueAsString(event))
+        .build(),
+    )
+
+    awaitAtMost30Secs untilCallTo {
+      warrantFileRepository.countByDefendantId(defendantId)
+    } matches { it == 1L }
+    return event
+  }
+
+  protected fun sendPrisonerCreatedMessage(prisonerNumber: String) {
+    val event = SQSMessage(
+      Type = "Notification",
+      MessageId = UUID.randomUUID().toString(),
+      Message = TestUtil.objectMapper().writeValueAsString(
+        HMPPSPrisonerCreatedDomainEvent(
+          eventType = "prisoner-offender-search.prisoner.created",
+          additionalInformation = PrisonerCreatedAdditionalInformation(
+            prisonerNumber,
+          ),
+        ),
+      ),
+    )
+    prisonerCreatedQueue.sqsClient.sendMessage(
+      SendMessageRequest.builder()
+        .queueUrl(prisonerCreatedQueue.queueUrl)
+        .messageBody(TestUtil.objectMapper().writeValueAsString(event))
+        .build(),
+    )
+  }
+
   companion object {
+    const val FILE_ID = "file-123"
+
+    val NOT_FOUND_CORE_PERSON = UUID.randomUUID()
+    val NO_MATCHING_IDS_PERSON = UUID.randomUUID()
+    val MATCHING_CORE_PERSON = UUID.randomUUID()
+    val MATCHING_PRISONER_NUMBERS = listOf("ABC123", "XYZ987")
 
     @JvmStatic
     private val localStackContainer: LocalStackContainer =
