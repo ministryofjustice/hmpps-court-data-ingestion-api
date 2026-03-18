@@ -33,6 +33,7 @@ dependencies {
   runtimeOnly("org.postgresql:postgresql")
 
   // AWS
+  implementation("software.amazon.awssdk:secretsmanager")
   implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:5.6.2")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 

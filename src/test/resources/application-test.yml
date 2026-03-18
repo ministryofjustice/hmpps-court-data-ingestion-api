@@ -51,3 +51,7 @@ hmpps.sqs:
       dlqName: "prisonercreated-dlq-${random.uuid}"
       dlqMaxReceiveCount: 3
       visibilityTimeout: 120
+
+hmpps.secret:
+  provider: localstack
+  localstackUrl: http://localhost:4566
