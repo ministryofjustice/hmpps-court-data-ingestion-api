@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.StartupLock
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.StartupLockRepository
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.SubscriptionService
 
 @Component
 class SubscriptionStartupTaskRunner(

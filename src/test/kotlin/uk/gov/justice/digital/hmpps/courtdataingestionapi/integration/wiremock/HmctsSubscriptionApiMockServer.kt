@@ -38,6 +38,7 @@ class HmctsSubscriptionApiMockServer : WireMockServer(WIREMOCK_PORT) {
   companion object {
     private const val WIREMOCK_PORT = 8333
     const val TEST_SUBSCRIPTION_ID = "a5c06879-ee4e-4ebd-90ec-8a85efc1aed2"
+    const val TEST_HMAC_KEY = "ef026f37-7552-4fb7-8e22-72243188b4a3"
   }
 
   fun stubCreateSubscription() {
@@ -50,7 +51,10 @@ class HmctsSubscriptionApiMockServer : WireMockServer(WIREMOCK_PORT) {
             .withBody(
               """
               {
-                "clientSubscriptionId": "$TEST_SUBSCRIPTION_ID"
+                "clientSubscriptionId": "$TEST_SUBSCRIPTION_ID",
+                "hmac": {
+                  "secret": "$TEST_HMAC_KEY"
+                }
               }
               """.trimIndent(),
             ),
@@ -68,7 +72,10 @@ class HmctsSubscriptionApiMockServer : WireMockServer(WIREMOCK_PORT) {
             .withBody(
               """
               {
-                "clientSubscriptionId": "$TEST_SUBSCRIPTION_ID"
+                "clientSubscriptionId": "$TEST_SUBSCRIPTION_ID",
+                "hmac": {
+                  "secret": "$TEST_HMAC_KEY"
+                }
               }
               """.trimIndent(),
             ),

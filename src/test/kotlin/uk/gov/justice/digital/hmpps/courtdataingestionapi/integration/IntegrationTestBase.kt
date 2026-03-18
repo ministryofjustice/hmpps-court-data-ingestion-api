@@ -158,7 +158,7 @@ abstract class IntegrationTestBase {
       LocalStackContainer(DockerImageName.parse("localstack/localstack"))
         .apply {
           withEnv("DEFAULT_REGION", "eu-west-2")
-          withServices(Service.SNS, Service.SQS)
+          withServices(Service.SNS, Service.SQS, Service.SECRETSMANAGER)
         }
 
     @JvmStatic
@@ -180,8 +180,9 @@ abstract class IntegrationTestBase {
     @DynamicPropertySource
     @JvmStatic
     fun setUpProperties(registry: DynamicPropertyRegistry) {
-      registry.add("hmpps.sqs.localstackUrl") { localStackContainer.getEndpointOverride(org.testcontainers.containers.localstack.LocalStackContainer.Service.SNS).toString() }
+      registry.add("hmpps.sqs.localstackUrl") { localStackContainer.getEndpointOverride(Service.SNS).toString() }
       registry.add("hmpps.sqs.region") { localStackContainer.region }
+      registry.add("hmpps.secret.localstackUrl") { localStackContainer.getEndpointOverride(Service.SECRETSMANAGER).toString() }
       registry.add("spring.datasource.url") { postgresContainer.jdbcUrl }
       registry.add("spring.datasource.username") { postgresContainer.username }
       registry.add("spring.datasource.password") { postgresContainer.password }
