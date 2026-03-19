@@ -37,7 +37,7 @@ class SubscriptionStartupTaskRunner(
     }
 
     try {
-      subscriptionService.subscribe()
+      subscriptionService.writeDummyStringToSecret()
     } finally {
       lockRepository.deleteById(LOCK_NAME)
       log.info("Lock released")
