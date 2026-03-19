@@ -17,6 +17,7 @@ class SecretsManagerService(private val secretsManagerClient: SecretsManagerClie
    * Returns the value of the specified secret, or an empty string if no value is found.
    */
   fun getSecretValue(): String {
+    log.info("Retrieving secret value ${properties.secretId}")
     val getSecretValueRequest = GetSecretValueRequest.builder()
       .secretId(properties.secretId)
       .build()
@@ -29,6 +30,7 @@ class SecretsManagerService(private val secretsManagerClient: SecretsManagerClie
   }
 
   fun setSecretValue(secretValue: String) {
+    log.info("Setting secret value ${properties.secretId}")
     val putSecretValueRequest = PutSecretValueRequest.builder()
       .secretId(properties.secretId)
       .secretString(secretValue)
