@@ -34,7 +34,9 @@ class PrisonerCreatedListener(
         } else {
           throw IllegalArgumentException("Received a message I wasn't expecting: ${event.eventType}")
         }
-      } else -> {}
+      }
+
+      else -> {}
     }
   }
 }
