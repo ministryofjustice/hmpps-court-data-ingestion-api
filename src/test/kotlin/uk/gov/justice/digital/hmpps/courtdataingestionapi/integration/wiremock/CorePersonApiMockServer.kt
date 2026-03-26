@@ -33,7 +33,8 @@ class CorePersonApiExtension :
   override fun beforeAll(context: ExtensionContext) {
     corePersonApi.stubCommonPlatformCorePersonNotFound(IntegrationTestBase.NOT_FOUND_CORE_PERSON)
     corePersonApi.stubCommonPlatformCorePerson(IntegrationTestBase.NO_MATCHING_IDS_PERSON, emptyList())
-    corePersonApi.stubCommonPlatformCorePerson(IntegrationTestBase.MATCHING_CORE_PERSON, IntegrationTestBase.MATCHING_PRISONER_NUMBERS)
+    corePersonApi.stubCommonPlatformCorePerson(IntegrationTestBase.MATCHING_CORE_PERSON, listOf(IntegrationTestBase.MATCHING_PRISONER_NUMBER))
+    corePersonApi.stubCommonPlatformCorePerson(IntegrationTestBase.MATCHING_CORE_ALIASES, listOf("QWE123", "RTY123"))
 
     corePersonApi.stubCommonPlatformCorePerson(PrisonerCreatedListenerIntTest.DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION, emptyList())
     corePersonApi.stubPrisonerCorePerson(PrisonerCreatedListenerIntTest.PRISONER_NUMBER_WITH_MATCH, listOf(PrisonerCreatedListenerIntTest.DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION))

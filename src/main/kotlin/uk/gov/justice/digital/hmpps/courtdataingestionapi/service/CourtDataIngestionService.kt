@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -17,6 +18,7 @@ import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.HmppsTopic
 import uk.gov.justice.hmpps.sqs.publish
 import java.util.UUID
+import kotlin.math.log
 
 @Service
 @Transactional
@@ -26,6 +28,7 @@ class CourtDataIngestionService(
   private val corePersonApiClient: CorePersonApiClient,
   private val hmppsQueueService: HmppsQueueService,
   private val objectMapper: ObjectMapper,
+  private val fileService: FileService,
 ) {
   private val eventTopic by lazy { hmppsQueueService.findByTopicId("domainevents") as HmppsTopic }
 
@@ -51,7 +54,11 @@ class CourtDataIngestionService(
       }
     }
 
-    createMatches(warrantFile, person.identifiers.prisonNumbers)
+    if (person.identifiers.prisonNumbers.size == 1) {
+      createMatch(warrantFile, person.identifiers.prisonNumbers[0])
+    } else if (person.identifiers.prisonNumbers.size > 1) {
+      log.info("Found more than one prisonNumber from core person: ${person.identifiers.prisonNumbers}")
+    }
   }
 
   fun attemptToMatchForNewPrisoner(prisonerNumber: String) {
@@ -62,44 +69,44 @@ class CourtDataIngestionService(
         val files =
           warrantFileRepository.findByDefendantIdIn(person.identifiers.defendantIds.map { UUID.fromString(it) })
         files.forEach {
-          createMatches(it, listOf(prisonerNumber))
+          createMatch(it, prisonerNumber)
         }
       }
     }
   }
 
-  private fun createMatches(warrantFile: WarrantFile, prisonerNumbers: List<String>) {
-    prisonerNumbers.forEach {
-      identifiedWarrantFileRepository.save(
-        IdentifiedWarrantFile(
-          warrantFile = warrantFile,
-          prisonerNumber = it,
-        ),
-      )
-    }
+  private fun createMatch(warrantFile: WarrantFile, prisonerNumber: String) {
+    identifiedWarrantFileRepository.save(
+      IdentifiedWarrantFile(
+        warrantFile = warrantFile,
+        prisonerNumber = prisonerNumber,
+      ),
+    )
 
-    if (prisonerNumbers.isNotEmpty()) {
-      eventTopic.publish(
-        EVENT_TYPE,
-        objectMapper.writeValueAsString(
-          IdentifiedCourtWarrantEventPayload(
-            prisonerNumbers,
-            warrantFile.externalFileId,
-          ),
-        ),
-        attributes = mapOf(
-          "type" to MessageAttributeValue.builder().dataType("String").stringValue(EVENT_TYPE).build(),
-        ),
-      )
-    }
+    val document = fileService.ingestFile(warrantFile.externalFileId, prisonerNumber)
+    val payload = IdentifiedCourtWarrantEventPayload(
+      hmctsFileId = warrantFile.externalFileId,
+      hmppsDocumentId = document.documentUuid,
+      prisonerNumber = prisonerNumber,
+    )
+
+    eventTopic.publish(
+      EVENT_TYPE,
+      objectMapper.writeValueAsString(payload),
+      attributes = mapOf(
+        "type" to MessageAttributeValue.builder().dataType("String").stringValue(EVENT_TYPE).build(),
+      ),
+    )
   }
 
   companion object {
     private const val EVENT_TYPE = "court-warrant.file.received"
+    private val log = LoggerFactory.getLogger(this::class.java)
   }
 }
 
 data class IdentifiedCourtWarrantEventPayload(
-  val prisonerNumbers: List<String>,
-  val filename: String,
+  val hmctsFileId: String,
+  val hmppsDocumentId: UUID,
+  val prisonerNumber: String,
 )

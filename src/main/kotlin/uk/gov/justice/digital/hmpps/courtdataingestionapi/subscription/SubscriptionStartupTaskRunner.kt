@@ -37,7 +37,9 @@ class SubscriptionStartupTaskRunner(
     }
 
     try {
+      // TODO remove dummy string once AWS integration is complete.
       subscriptionService.writeDummyStringToSecret()
+      subscriptionService.subscribe()
     } finally {
       lockRepository.deleteById(LOCK_NAME)
       log.info("Lock released")

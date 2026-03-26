@@ -14,6 +14,7 @@ generic-service:
     HMCTS_SUBSCRIPTION_CALLBACK_URL: "https://7cb6ai54b1.execute-api.eu-west-2.amazonaws.com/development/ingest"
     HMCTS_SUBSCRIPTION_API_URL: "https://tmc.dev.cjscp.org.uk/hces"
     HMCTS_AUTH_URL: "https://login.microsoftonline.com/e2995d11-9947-4e78-9de6-d44e0603518e"
+    HMPPS_DOCUMENT_MANAGEMENT_API_URL: "https://document-api-dev.hmpps.service.justice.gov.uk"
 
 # CloudPlatform AlertManager receiver to route prometheus alerts to slack
 # See https://user-guide.cloud-platform.service.justice.gov.uk/documentation/monitoring-an-app/how-to-create-alarms.html#creating-your-own-custom-alerts

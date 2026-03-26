@@ -6,8 +6,10 @@ import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.core.io.ClassPathResource
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsDocumentManagementApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.WarrantFileRepository
 import uk.gov.justice.hmpps.sqs.countMessagesOnQueue
 
@@ -55,7 +57,6 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
     assertThat(file.defendantId).isEqualTo(MATCHING_CORE_PERSON)
     assertThat(file.externalFileId).isEqualTo(FILE_ID)
     assertThat(file.identifiedWarrantFiles[0].prisonerNumber).isEqualTo("ABC123")
-    assertThat(file.identifiedWarrantFiles[1].prisonerNumber).isEqualTo("XYZ987")
 
     awaitAtMost30Secs untilCallTo {
       courtWarrantTestQueue.sqsClient.countMessagesOnQueue(courtWarrantTestQueue.queueUrl).get()
@@ -63,7 +64,26 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
     val latestMessage: String = getLatestMessage(courtWarrantTestQueue)!!.messages()[0].body()
     assertThat(latestMessage).contains("court-warrant.file.received")
     assertThat(latestMessage).contains("ABC123")
-    assertThat(latestMessage).contains("XYZ987")
     assertThat(latestMessage).contains(FILE_ID)
+
+    HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.verifyUploadedDocument(
+      1,
+      fileWasUploaded = ClassPathResource("test.txt").contentAsByteArray,
+      withMetadata = mapOf(
+        "prisonerId" to "ABC123",
+        "source" to "court-data-ingestion-api",
+      ),
+
+    )
+  }
+
+  @Test
+  fun `Test receiving a message for a person with aliases`() {
+    sendSubscriptionNotification(MATCHING_CORE_ALIASES)
+
+    val file = repository.findFirstByDefendantId(MATCHING_CORE_ALIASES)!!
+    assertThat(file.defendantId).isEqualTo(MATCHING_CORE_ALIASES)
+    assertThat(file.externalFileId).isEqualTo(FILE_ID)
+    assertThat(file.identifiedWarrantFiles.size).isEqualTo(0)
   }
 }
