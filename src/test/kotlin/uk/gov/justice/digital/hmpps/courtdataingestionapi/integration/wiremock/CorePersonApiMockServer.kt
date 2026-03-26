@@ -11,14 +11,10 @@ import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.TestUtil
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.coreperson.model.CanonicalEthnicity
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.coreperson.model.CanonicalIdentifiers
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.coreperson.model.CanonicalRecord
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.coreperson.model.CanonicalReligion
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.coreperson.model.CanonicalSex
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.coreperson.model.CanonicalTitle
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.PrisonerCreatedListenerIntTest
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.coreperson.CorePersonCanonicalIdentifiers
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.coreperson.CorePersonCanonicalRecord
 import java.util.UUID
 
 class CorePersonApiExtension :
@@ -90,24 +86,10 @@ class CorePersonApiMockServer : WireMockServer(WIREMOCK_PORT) {
     )
   }
 
-  private fun canonicalRecord(defendantId: List<UUID>, prisonerNumbers: List<String>) = CanonicalRecord(
-    title = CanonicalTitle(),
-    sex = CanonicalSex(),
-    religion = CanonicalReligion(),
-    ethnicity = CanonicalEthnicity(),
-    aliases = listOf(),
-    nationalities = listOf(),
-    addresses = listOf(),
-    identifiers = CanonicalIdentifiers(
-      crns = listOf(),
+  private fun canonicalRecord(defendantId: List<UUID>, prisonerNumbers: List<String>) = CorePersonCanonicalRecord(
+    identifiers = CorePersonCanonicalIdentifiers(
       prisonNumbers = prisonerNumbers,
       defendantIds = defendantId.map { it.toString() },
-      cids = listOf(),
-      pncs = listOf(),
-      cros = listOf(),
-      nationalInsuranceNumbers = listOf(),
-      driverLicenseNumbers = listOf(),
-      arrestSummonsNumbers = listOf(),
     ),
   )
 }
