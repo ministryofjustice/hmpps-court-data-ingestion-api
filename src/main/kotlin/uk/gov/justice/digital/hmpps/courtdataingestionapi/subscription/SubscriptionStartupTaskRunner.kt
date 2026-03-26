@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.subscription
 
 import org.slf4j.LoggerFactory
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.event.EventListener
 import org.springframework.dao.DataIntegrityViolationException
@@ -11,6 +12,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.StartupLock
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.SubscriptionService
 
 @Component
+@ConditionalOnProperty(name = ["subscription-on-startup"], havingValue = "true")
 class SubscriptionStartupTaskRunner(
   private val lockRepository: StartupLockRepository,
   private val subscriptionService: SubscriptionService,
