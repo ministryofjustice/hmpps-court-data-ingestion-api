@@ -29,6 +29,10 @@ hmcts:
     api:
       url: http://localhost:8333
 
+hmpps.document:
+  management:
+    api:
+      url: http://localhost:8334
 
 hmpps.sqs:
   provider: localstack

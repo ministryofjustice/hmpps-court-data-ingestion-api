@@ -52,7 +52,7 @@ class SubscriptionService(
     }
   }
 
-  fun subscriptionRequest() = SubscriptionRequest(
+  private fun subscriptionRequest() = SubscriptionRequest(
     notificationEndpoint = NotificationEndpoint(
       callbackUrl = subscriptionCallbackConfig.callbackUrl,
     ),

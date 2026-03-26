@@ -15,6 +15,7 @@ class WebClientConfiguration(
   @param:Value("\${api.health-timeout:2s}") val healthTimeout: Duration,
   @param:Value("\${api.timeout:20s}") val timeout: Duration,
   @param:Value("\${core.person.api.url}") private val corePersonApiUrl: String,
+  @param:Value("\${hmpps.document.management.api.url}") private val hmppsDocumentManagementApiUrl: String,
   @param:Value("\${hmcts.subscription.api.url}") private val hmctsSubscriptionApiUrl: String,
 ) {
   // HMPPS Auth health ping is required if your service calls HMPPS Auth to get a token to call other services
@@ -29,6 +30,16 @@ class WebClientConfiguration(
     authorizedClientManager,
     "core-person-api",
     corePersonApiUrl,
+  )
+
+  @Bean
+  fun hmppsDocumentManagementApiWebClient(
+    authorizedClientManager: OAuth2AuthorizedClientManager,
+    builder: WebClient.Builder,
+  ): WebClient = builder.authorisedWebClient(
+    authorizedClientManager,
+    "hmpps-document-management-api",
+    hmppsDocumentManagementApiUrl,
   )
 
   @Bean

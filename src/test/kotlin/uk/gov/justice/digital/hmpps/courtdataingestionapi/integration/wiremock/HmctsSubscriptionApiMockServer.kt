@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock
 
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
+import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.put
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
@@ -9,6 +10,8 @@ import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
+import org.springframework.core.io.ClassPathResource
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 
 class HmctsSubscriptionApiExtension :
   BeforeAllCallback,
@@ -22,6 +25,7 @@ class HmctsSubscriptionApiExtension :
   override fun beforeAll(context: ExtensionContext) {
     hmctsSubscriptionApi.stubCreateSubscription()
     hmctsSubscriptionApi.stubUpdateSubscription()
+    hmctsSubscriptionApi.stubFile()
     hmctsSubscriptionApi.start()
   }
 
@@ -79,6 +83,19 @@ class HmctsSubscriptionApiMockServer : WireMockServer(WIREMOCK_PORT) {
               }
               """.trimIndent(),
             ),
+        ),
+    )
+  }
+
+  fun stubFile() {
+    stubFor(
+      get(urlEqualTo("/client-subscriptions/$TEST_SUBSCRIPTION_ID/documents/${IntegrationTestBase.FILE_ID}"))
+        .willReturn(
+          aResponse()
+            .withHeader("Content-Type", "text/plain")
+            .withStatus(200)
+            .withBody(ClassPathResource("test.txt").contentAsByteArray)
+            .withHeader("Content-Disposition", "attachment; filename=\"test.txt\""),
         ),
     )
   }

@@ -30,6 +30,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.H
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsSubscriptionApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsAuthApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsAuthApiExtension.Companion.hmppsAuth
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsDocumentManagementApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HMPPSPrisonerCreatedDomainEvent
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsCase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsSubscriptionNotificationRequestBody
@@ -46,7 +47,13 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
-@ExtendWith(HmppsAuthApiExtension::class, HmctsAuthApiExtension::class, CorePersonApiExtension::class, HmctsSubscriptionApiExtension::class)
+@ExtendWith(
+  HmppsAuthApiExtension::class,
+  HmctsAuthApiExtension::class,
+  CorePersonApiExtension::class,
+  HmctsSubscriptionApiExtension::class,
+  HmppsDocumentManagementApiExtension::class,
+)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
 abstract class IntegrationTestBase {
@@ -151,11 +158,12 @@ abstract class IntegrationTestBase {
     val NOT_FOUND_CORE_PERSON = UUID.randomUUID()
     val NO_MATCHING_IDS_PERSON = UUID.randomUUID()
     val MATCHING_CORE_PERSON = UUID.randomUUID()
-    val MATCHING_PRISONER_NUMBERS = listOf("ABC123", "XYZ987")
+    val MATCHING_CORE_ALIASES = UUID.randomUUID()
+    val MATCHING_PRISONER_NUMBER = "ABC123"
 
     @JvmStatic
     private val localStackContainer: LocalStackContainer =
-      LocalStackContainer(DockerImageName.parse("localstack/localstack"))
+      LocalStackContainer(DockerImageName.parse("localstack/localstack:3"))
         .apply {
           withEnv("DEFAULT_REGION", "eu-west-2")
           withServices(Service.SNS, Service.SQS, Service.SECRETSMANAGER)
