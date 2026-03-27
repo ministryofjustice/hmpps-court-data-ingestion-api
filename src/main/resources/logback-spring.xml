@@ -36,11 +36,6 @@
     <appender-ref ref="consoleAppender"/>
   </logger>
 
-    <logger name="reactor.netty.http.client" additivity="false" level="DEBUG">
-        <appender-ref ref="consoleAppender"/>
-    </logger>
-
-
   <root level="INFO">
     <appender-ref ref="consoleAppender"/>
   </root>
