@@ -65,7 +65,7 @@ class CourtDataIngestionService(
     val previouslyIdentified = identifiedWarrantFileRepository.countByPrisonerNumber(prisonerNumber)
     if (previouslyIdentified == 0L) {
       val person = corePersonApiClient.getPersonByPrisonerNumber(prisonerNumber)
-      if (person.identifiers.defendantIds.isNotEmpty()) {
+      if (person?.identifiers?.defendantIds?.isNotEmpty() == true) {
         val files =
           warrantFileRepository.findByDefendantIdIn(person.identifiers.defendantIds.map { UUID.fromString(it) })
         files.forEach {
