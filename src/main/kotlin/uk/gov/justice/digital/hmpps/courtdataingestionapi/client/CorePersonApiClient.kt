@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.client
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
@@ -9,7 +8,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.coreperson.CoreP
 import java.util.UUID
 
 @Component
-class CorePersonApiClient(@Qualifier("corePersonApiWebClient") private val webClient: WebClient, private val objectMapper: ObjectMapper) {
+class CorePersonApiClient(@Qualifier("corePersonApiWebClient") private val webClient: WebClient) {
 
   fun getPersonByCommonPlatformId(defendantId: UUID): CorePersonCanonicalRecord {
     log.info("Getting core person record record for $defendantId")
