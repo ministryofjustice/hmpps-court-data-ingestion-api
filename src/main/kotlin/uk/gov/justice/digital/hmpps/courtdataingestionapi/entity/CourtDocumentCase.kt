@@ -6,10 +6,10 @@ import jakarta.persistence.ManyToOne
 import java.util.UUID
 
 @Entity
-data class WarrantFileCase(
+data class CourtDocumentCase(
   @Id
   val id: UUID = UUID.randomUUID(),
   val caseReference: String? = null,
   @ManyToOne
-  var warrantFile: WarrantFile? = null,
+  var courtDocument: CourtDocument? = null,
 )

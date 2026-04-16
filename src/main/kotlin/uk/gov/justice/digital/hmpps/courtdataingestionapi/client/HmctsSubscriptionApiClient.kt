@@ -7,6 +7,7 @@ import org.springframework.web.reactive.function.client.WebClient
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsFile
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.SubscriptionRequest
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.SubscriptionResponse
+import java.util.UUID
 
 @Component
 class HmctsSubscriptionApiClient(@Qualifier("hmctsSubscriptionApiWebClient") private val webClient: WebClient) {
@@ -31,7 +32,7 @@ class HmctsSubscriptionApiClient(@Qualifier("hmctsSubscriptionApiWebClient") pri
     .bodyToMono(SubscriptionResponse::class.java)
     .block()!!
 
-  fun getFile(clientSubscriptionId: String, externalFileId: String): HmctsFile = webClient.get()
+  fun getFile(clientSubscriptionId: String, externalFileId: UUID): HmctsFile = webClient.get()
     .uri("/client-subscriptions/$clientSubscriptionId/documents/$externalFileId")
     .retrieve()
     .toEntity(ByteArray::class.java)

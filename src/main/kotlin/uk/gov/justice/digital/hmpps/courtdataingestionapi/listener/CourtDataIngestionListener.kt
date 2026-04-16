@@ -7,7 +7,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtDataIngestionService
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -37,9 +36,7 @@ class CourtDataIngestionListener(
 data class HmctsSubscriptionNotificationRequestBody(
   val cases: List<HmctsCase>,
   val masterDefendantId: UUID,
-  val defendantName: String,
-  val defendantDateOfBirth: LocalDate,
-  val documentId: String,
+  val documentId: UUID,
   val documentGeneratedTimestamp: LocalDateTime,
   val prisonEmailAddress: String,
 )

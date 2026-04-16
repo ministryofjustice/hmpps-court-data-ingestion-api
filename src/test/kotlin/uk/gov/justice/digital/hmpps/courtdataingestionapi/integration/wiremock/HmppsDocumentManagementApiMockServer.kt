@@ -8,12 +8,15 @@ import com.github.tomakehurst.wiremock.client.WireMock.equalToJson
 import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor
+import com.github.tomakehurst.wiremock.client.WireMock.put
+import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import com.github.tomakehurst.wiremock.client.WireMock.urlMatching
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.TestUtil
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentType
 import java.util.UUID
 
@@ -28,6 +31,7 @@ class HmppsDocumentManagementApiExtension :
 
   override fun beforeAll(context: ExtensionContext) {
     hmppsDocumentManagementApi.stubUploadDocument()
+    hmppsDocumentManagementApi.stubUpdateMetadata()
     hmppsDocumentManagementApi.start()
   }
 
@@ -57,6 +61,18 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
     )
   }
 
+  fun stubUpdateMetadata() {
+    stubFor(
+      put(urlEqualTo("/documents/${IntegrationTestBase.PRISON_DOCUMENT_ID}/metadata"))
+        .willReturn(
+          aResponse()
+            .withHeader("Content-Type", "application/json")
+            .withBody(happyResponse)
+            .withStatus(200),
+        ),
+    )
+  }
+
   fun verifyUploadedDocument(
     didHappenXTimes: Int = 1,
     withUuid: String = "[a-z0-9A-Z|-]{36}",
@@ -79,7 +95,7 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
 
   private var happyResponse = """
     {
-      "documentUuid": "e2487a03-7cf9-4a9c-85e4-1d51efd7b3f1",
+      "documentUuid": "${IntegrationTestBase.PRISON_DOCUMENT_ID}",
       "documentType": "HMCTS_WARRANT",
       "documentFilename": "warrant_for_remand",
       "filename": "test",
