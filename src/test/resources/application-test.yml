@@ -49,7 +49,7 @@ hmpps.sqs:
       queueName: court-warrant-test-event-queue
       dlqName: court-warrant-test-event-dlq
       subscribeTopicId: domainevents
-      subscribeFilter: '{"eventType":[ "court-warrant.file.received" ] }'
+      subscribeFilter: '{"eventType":[ "court-document.file.received" ] }'
     prisonercreated:
       queueName: "prisonercreated-${random.uuid}"
       dlqName: "prisonercreated-dlq-${random.uuid}"

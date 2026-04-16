@@ -36,14 +36,13 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsCase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsSubscriptionNotificationRequestBody
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.PrisonerCreatedAdditionalInformation
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.SQSMessage
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.WarrantFileRepository
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import uk.gov.justice.hmpps.sqs.HmppsQueue
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.HmppsSqsProperties
 import uk.gov.justice.hmpps.sqs.countMessagesOnQueue
 import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
 import java.time.Duration
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -60,7 +59,7 @@ abstract class IntegrationTestBase {
   protected val awaitAtMost30Secs: ConditionFactory get() = await.atMost(Duration.ofSeconds(30))
 
   @Autowired
-  protected lateinit var warrantFileRepository: WarrantFileRepository
+  protected lateinit var courtDocumentRepository: CourtDocumentRepository
 
   @Autowired
   private lateinit var hmppsQueueService: HmppsQueueService
@@ -108,14 +107,12 @@ abstract class IntegrationTestBase {
     val event =
       HmctsSubscriptionNotificationRequestBody(
         masterDefendantId = defendantId,
-        documentId = FILE_ID,
+        documentId = COURT_DOCUMENT_ID,
         cases = listOf(
           HmctsCase("Case123"),
           HmctsCase("Case456"),
         ),
-        defendantName = "John Doe",
         prisonEmailAddress = "prison@aol.com",
-        defendantDateOfBirth = LocalDate.of(1950, 1, 1),
         documentGeneratedTimestamp = LocalDateTime.now().minusMinutes(1).withNano(0),
       )
     courtDataIngestionQueue.sqsClient.sendMessage(
@@ -126,7 +123,7 @@ abstract class IntegrationTestBase {
     )
 
     awaitAtMost30Secs untilCallTo {
-      warrantFileRepository.countByDefendantId(defendantId)
+      courtDocumentRepository.countByDefendantId(defendantId)
     } matches { it == 1L }
     return event
   }
@@ -153,8 +150,8 @@ abstract class IntegrationTestBase {
   }
 
   companion object {
-    const val FILE_ID = "file-123"
-
+    val COURT_DOCUMENT_ID = UUID.randomUUID()
+    val PRISON_DOCUMENT_ID = UUID.randomUUID()
     val NOT_FOUND_CORE_PERSON = UUID.randomUUID()
     val NO_MATCHING_IDS_PERSON = UUID.randomUUID()
     val MATCHING_CORE_PERSON = UUID.randomUUID()

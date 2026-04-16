@@ -40,4 +40,12 @@ class HmppsDocumentManagementApi(@Qualifier("hmppsDocumentManagementApiWebClient
       .bodyToMono(Document::class.java)
       .block() ?: error("Error during uploading document (UUID=$documentUuid)")
   }
+
+  fun updateMetadata(documentId: UUID, metadata: Map<String, String> = mapOf()): Document = webClient
+    .put()
+    .uri("/documents/$documentId/metadata")
+    .bodyValue(metadata)
+    .retrieve()
+    .bodyToMono(Document::class.java)
+    .block()!!
 }

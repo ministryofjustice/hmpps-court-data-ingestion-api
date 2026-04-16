@@ -25,14 +25,14 @@ class PrisonerCreatedListenerIntTest : IntegrationTestBase() {
       courtWarrantTestQueue.sqsClient.countMessagesOnQueue(courtWarrantTestQueue.queueUrl).get()
     } matches { it == 1 }
     val latestMessage: String = getLatestMessage(courtWarrantTestQueue)!!.messages()[0].body()
-    assertThat(latestMessage).contains("court-warrant.file.received")
+    assertThat(latestMessage).contains("court-document.file.received")
     assertThat(latestMessage).contains(PRISONER_NUMBER_WITH_MATCH)
-    assertThat(latestMessage).contains(FILE_ID)
+    assertThat(latestMessage).contains(COURT_DOCUMENT_ID.toString())
+    assertThat(latestMessage).contains(PRISON_DOCUMENT_ID.toString())
 
-    val file = warrantFileRepository.findFirstByDefendantId(DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION)!!
+    val file = courtDocumentRepository.findFirstByDefendantId(DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION)!!
 
-    assertThat(file.identifiedWarrantFiles.size).isEqualTo(1)
-    assertThat(file.identifiedWarrantFiles[0].prisonerNumber).isEqualTo(PRISONER_NUMBER_WITH_MATCH)
+    assertThat(file.prisonerNumber).isEqualTo(PRISONER_NUMBER_WITH_MATCH)
   }
 
   companion object {

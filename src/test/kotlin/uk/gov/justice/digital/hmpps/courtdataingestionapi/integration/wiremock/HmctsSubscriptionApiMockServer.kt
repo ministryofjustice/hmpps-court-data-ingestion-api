@@ -89,7 +89,7 @@ class HmctsSubscriptionApiMockServer : WireMockServer(WIREMOCK_PORT) {
 
   fun stubFile() {
     stubFor(
-      get(urlEqualTo("/client-subscriptions/$TEST_SUBSCRIPTION_ID/documents/${IntegrationTestBase.FILE_ID}"))
+      get(urlEqualTo("/client-subscriptions/$TEST_SUBSCRIPTION_ID/documents/${IntegrationTestBase.COURT_DOCUMENT_ID}"))
         .willReturn(
           aResponse()
             .withHeader("Content-Type", "text/plain")

@@ -6,6 +6,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmctsSubscripti
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsDocumentManagementApi
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Document
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.SubscriptionRepository
+import java.util.UUID
 
 @Service
 @Transactional
@@ -15,17 +16,23 @@ class FileService(
   private val hmppsDocumentManagementApi: HmppsDocumentManagementApi,
 ) {
 
-  fun ingestFile(externalFileId: String, prisonerId: String): Document {
+  fun ingestFile(courtDocumentId: UUID): Document {
     val subscription = subscriptionRepository.findAll()[0]
 
-    val file = hmctsSubscriptionApiClient.getFile(subscription.id, externalFileId)
+    val file = hmctsSubscriptionApiClient.getFile(subscription.id, courtDocumentId)
 
     return hmppsDocumentManagementApi.uploadDocument(
       file,
       mapOf(
-        "prisonerId" to prisonerId,
         "source" to "court-data-ingestion-api",
       ),
     )
   }
+
+  fun setPrisonerId(prisonDocumentId: UUID, prisonerId: String): Document = hmppsDocumentManagementApi.updateMetadata(
+    prisonDocumentId,
+    mapOf(
+      "prisonerId" to prisonerId,
+    ),
+  )
 }
