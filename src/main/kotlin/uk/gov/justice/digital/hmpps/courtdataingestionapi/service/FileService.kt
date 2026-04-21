@@ -33,6 +33,7 @@ class FileService(
     prisonDocumentId,
     mapOf(
       "prisonerId" to prisonerId,
+      "source" to "court-data-ingestion-api",
     ),
   )
 }

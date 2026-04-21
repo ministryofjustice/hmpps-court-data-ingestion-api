@@ -4,7 +4,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient
 import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueRequest
-import software.amazon.awssdk.services.secretsmanager.model.UpdateSecretRequest
+import software.amazon.awssdk.services.secretsmanager.model.PutSecretValueRequest
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.config.HmppsSecretManagerProperties
 
 @Service
@@ -32,13 +32,12 @@ class SecretsManagerService(private val secretsManagerClient: SecretsManagerClie
   fun setSecretValue(secretValue: String) {
     log.info("Setting secret value ${properties.secretId}")
 
-    val updateSecret = UpdateSecretRequest.builder()
+    val updateSecret = PutSecretValueRequest.builder()
       .secretId(properties.secretId)
-      .kmsKeyId(properties.keyId)
       .secretString(secretValue)
       .build()
 
-    val response = secretsManagerClient.updateSecret(updateSecret)
+    val response = secretsManagerClient.putSecretValue(updateSecret)
 
     log.info("Secret version created ${response.versionId()} for secret ${properties.secretId}")
   }

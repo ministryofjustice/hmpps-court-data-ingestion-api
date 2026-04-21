@@ -54,9 +54,8 @@ generic-service:
     hmpps-court-data-ingestion-api-client-creds:
       CLIENT_CREDS_CLIENT_ID: 'CLIENT_CREDS_CLIENT_ID'
       CLIENT_CREDS_CLIENT_SECRET: 'CLIENT_CREDS_CLIENT_SECRET'
-    secret-manager-modernisation-platform:
+    secret-manager-hmac-auth:
       HMPPS_SECRET_SECRET_ID: 'secret_id'
-      HMPPS_SECRET_KEY_ID: 'key_id'
     hmpps-court-data-ingestion-api-hmcts-client-creds:
       HMCTS_CLIENT_CREDS_CLIENT_ID: 'HMCTS_CLIENT_CREDS_CLIENT_ID'
       HMCTS_CLIENT_CREDS_CLIENT_SECRET: 'HMCTS_CLIENT_CREDS_CLIENT_SECRET'
