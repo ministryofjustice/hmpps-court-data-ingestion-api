@@ -19,10 +19,6 @@ class SubscriptionService(
   private val secretsManagerService: SecretsManagerService,
 ) {
 
-  fun writeDummyStringToSecret() {
-    secretsManagerService.setSecretValue("THIS IS A TEST")
-  }
-
   @Transactional
   fun subscribe() {
     val subscription = subscriptionRepository.findAll().firstOrNull()

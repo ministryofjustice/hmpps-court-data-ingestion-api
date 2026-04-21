@@ -59,5 +59,3 @@ hmpps.sqs:
 hmpps.secret:
   provider: localstack
   localstackUrl: http://localhost:4566
-
-subscription-on-startup: true
