@@ -20,18 +20,6 @@ class HmctsSubscriptionApiClient(@Qualifier("hmctsSubscriptionApiWebClient") pri
     .bodyToMono(SubscriptionResponse::class.java)
     .block()!!
 
-  fun updateSubscription(
-    request: SubscriptionRequest,
-    subscriptionKey: String,
-    subscriptionId: String,
-  ): SubscriptionResponse = webClient.put()
-    .uri("/client-subscriptions/$subscriptionId")
-    .header(SUBSCRIPTION_KEY_HEADER, subscriptionKey)
-    .bodyValue(request)
-    .retrieve()
-    .bodyToMono(SubscriptionResponse::class.java)
-    .block()!!
-
   fun getFile(clientSubscriptionId: String, externalFileId: UUID): HmctsFile = webClient.get()
     .uri("/client-subscriptions/$clientSubscriptionId/documents/$externalFileId")
     .retrieve()
