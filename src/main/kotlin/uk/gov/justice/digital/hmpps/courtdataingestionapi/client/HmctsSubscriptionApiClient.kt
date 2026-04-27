@@ -20,8 +20,9 @@ class HmctsSubscriptionApiClient(@Qualifier("hmctsSubscriptionApiWebClient") pri
     .bodyToMono(SubscriptionResponse::class.java)
     .block()!!
 
-  fun getFile(clientSubscriptionId: String, externalFileId: UUID): HmctsFile = webClient.get()
+  fun getFile(clientSubscriptionId: String, externalFileId: UUID, subscriptionKey: String): HmctsFile = webClient.get()
     .uri("/client-subscriptions/$clientSubscriptionId/documents/$externalFileId")
+    .header(SUBSCRIPTION_KEY_HEADER, subscriptionKey)
     .retrieve()
     .toEntity(ByteArray::class.java)
     .map { response ->
