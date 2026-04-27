@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmctsSubscriptionApiClient
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsDocumentManagementApi
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Document
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.SubscriptionRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.subscription.SubscriptionCallbackConfig
 import java.util.UUID
@@ -24,6 +25,7 @@ class FileService(
     val file = hmctsSubscriptionApiClient.getFile(subscription.id, courtDocumentId, subscriptionCallbackConfig.subscriptionKey)
 
     return hmppsDocumentManagementApi.uploadDocument(
+      DocumentType.PRISON_COURT_REGISTER,
       file,
       mapOf(
         "source" to "court-data-ingestion-api",

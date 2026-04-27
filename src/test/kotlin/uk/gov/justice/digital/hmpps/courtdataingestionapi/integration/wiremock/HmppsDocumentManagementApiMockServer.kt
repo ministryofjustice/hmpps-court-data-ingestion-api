@@ -51,7 +51,7 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
 
   fun stubUploadDocument() {
     stubFor(
-      post(urlMatching("/documents/${DocumentType.HMCTS_WARRANT}/[a-z0-9A-Z|-]{36}"))
+      post(urlMatching("/documents/${DocumentType.PRISON_COURT_REGISTER}/[a-z0-9A-Z|-]{36}"))
         .willReturn(
           aResponse()
             .withHeader("Content-Type", "application/json")
@@ -76,7 +76,7 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
   fun verifyUploadedDocument(
     didHappenXTimes: Int = 1,
     withUuid: String = "[a-z0-9A-Z|-]{36}",
-    withType: DocumentType = DocumentType.HMCTS_WARRANT,
+    withType: DocumentType = DocumentType.PRISON_COURT_REGISTER,
     fileWasUploaded: ByteArray = ByteArray(0),
     withMetadata: Map<String, String> = mapOf(),
   ): UUID? {

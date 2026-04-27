@@ -16,10 +16,10 @@ import java.util.UUID
 class HmppsDocumentManagementApi(@Qualifier("hmppsDocumentManagementApiWebClient") private val webClient: WebClient) {
 
   fun uploadDocument(
+    documentType: DocumentType,
     file: HmctsFile,
     metadata: Map<String, String> = mapOf(),
   ): Document {
-    val documentType = DocumentType.HMCTS_WARRANT
     val documentUuid = UUID.randomUUID().toString()
     return webClient.post()
       .uri("/documents/$documentType/$documentUuid")
