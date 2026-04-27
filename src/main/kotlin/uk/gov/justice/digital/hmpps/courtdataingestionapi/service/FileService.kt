@@ -6,6 +6,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmctsSubscripti
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsDocumentManagementApi
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Document
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.SubscriptionRepository
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.subscription.SubscriptionCallbackConfig
 import java.util.UUID
 
 @Service
@@ -14,12 +15,13 @@ class FileService(
   private val hmctsSubscriptionApiClient: HmctsSubscriptionApiClient,
   private val subscriptionRepository: SubscriptionRepository,
   private val hmppsDocumentManagementApi: HmppsDocumentManagementApi,
+  private val subscriptionCallbackConfig: SubscriptionCallbackConfig,
 ) {
 
   fun ingestFile(courtDocumentId: UUID): Document {
     val subscription = subscriptionRepository.findAll()[0]
 
-    val file = hmctsSubscriptionApiClient.getFile(subscription.id, courtDocumentId)
+    val file = hmctsSubscriptionApiClient.getFile(subscription.id, courtDocumentId, subscriptionCallbackConfig.subscriptionKey)
 
     return hmppsDocumentManagementApi.uploadDocument(
       file,
