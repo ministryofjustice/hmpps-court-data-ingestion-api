@@ -4,11 +4,13 @@ import jakarta.persistence.CascadeType
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.OneToMany
+import jakarta.persistence.Table
 import java.time.LocalDateTime
 import java.util.UUID
 
 @Entity
-data class CourtDocument(
+@Table(name = "court_document")
+data class CourtDocumentEntity(
   @Id
   val id: UUID = UUID.randomUUID(),
   var defendantId: UUID,
@@ -18,7 +20,9 @@ data class CourtDocument(
   val documentGeneratedTimestamp: LocalDateTime,
   var ingestionAt: LocalDateTime = LocalDateTime.now(),
   @OneToMany(mappedBy = "courtDocument", cascade = [CascadeType.ALL])
-  val courtDocumentCases: List<CourtDocumentCase> = emptyList(),
+  val courtDocumentCases: MutableList<CourtDocumentCaseEntity> = mutableListOf(),
+  @OneToMany(mappedBy = "courtDocument", cascade = [CascadeType.ALL])
+  val courtDocumentViews: MutableList<CourtDocumentViewEntity> = mutableListOf(),
 
   // Updated once identified
   var prisonerNumber: String? = null,

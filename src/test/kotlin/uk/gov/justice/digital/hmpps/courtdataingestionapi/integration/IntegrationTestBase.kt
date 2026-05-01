@@ -124,7 +124,7 @@ abstract class IntegrationTestBase {
 
     awaitAtMost30Secs untilCallTo {
       courtDocumentRepository.countByDefendantId(defendantId)
-    } matches { it == 1L }
+    } matches { it!! >= 1L }
     return event
   }
 

@@ -8,8 +8,8 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import software.amazon.awssdk.services.sns.model.MessageAttributeValue
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.CorePersonApiClient
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocument
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentCase
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentCaseEntity
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsSubscriptionNotificationRequestBody
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
@@ -31,13 +31,13 @@ class CourtDataIngestionService(
 
   fun receiveMessage(message: HmctsSubscriptionNotificationRequestBody) {
     val prisonDocument = fileService.ingestFile(message.documentId)
-    val courtDocument = courtDocumentRepository.save(
-      CourtDocument(
+    val courtDocumentEntity = courtDocumentRepository.save(
+      CourtDocumentEntity(
         defendantId = message.masterDefendantId,
         courtDocumentId = message.documentId,
         prisonEmailAddress = message.prisonEmailAddress,
         documentGeneratedTimestamp = message.documentGeneratedTimestamp,
-        courtDocumentCases = message.cases.map { CourtDocumentCase(caseReference = it.urn) },
+        courtDocumentCases = message.cases.map { CourtDocumentCaseEntity(caseReference = it.urn) }.toMutableList(),
         prisonDocumentId = prisonDocument.documentUuid,
       ),
     )
@@ -52,7 +52,7 @@ class CourtDataIngestionService(
     }
 
     if (person.identifiers.prisonNumbers.size == 1) {
-      createMatch(courtDocument, person.identifiers.prisonNumbers[0])
+      createMatch(courtDocumentEntity, person.identifiers.prisonNumbers[0])
     } else if (person.identifiers.prisonNumbers.size > 1) {
       log.info("Found more than one prisonNumber from core person: ${person.identifiers.prisonNumbers}")
     }
@@ -72,15 +72,15 @@ class CourtDataIngestionService(
     }
   }
 
-  private fun createMatch(courtDocument: CourtDocument, prisonerNumber: String) {
-    courtDocument.prisonerNumber = prisonerNumber
-    courtDocument.ingestionAt = LocalDateTime.now()
-    courtDocumentRepository.save(courtDocument)
+  private fun createMatch(courtDocumentEntity: CourtDocumentEntity, prisonerNumber: String) {
+    courtDocumentEntity.prisonerNumber = prisonerNumber
+    courtDocumentEntity.ingestionAt = LocalDateTime.now()
+    courtDocumentRepository.save(courtDocumentEntity)
 
-    fileService.setPrisonerId(courtDocument.prisonDocumentId, prisonerNumber)
+    fileService.setPrisonerId(courtDocumentEntity.prisonDocumentId, prisonerNumber)
     val payload = IdentifiedCourtWarrantEventPayload(
-      courtDocumentId = courtDocument.courtDocumentId,
-      prisonDocumentId = courtDocument.prisonDocumentId,
+      courtDocumentId = courtDocumentEntity.courtDocumentId,
+      prisonDocumentId = courtDocumentEntity.prisonDocumentId,
       prisonerNumber = prisonerNumber,
     )
 
