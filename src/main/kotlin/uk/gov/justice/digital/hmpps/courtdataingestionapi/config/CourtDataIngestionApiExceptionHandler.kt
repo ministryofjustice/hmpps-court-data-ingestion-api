@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.config
 
+import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.ValidationException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus.BAD_REQUEST
@@ -58,6 +59,20 @@ class CourtDataIngestionApiExceptionHandler {
         developerMessage = e.message,
       ),
     ).also { log.error("Unexpected exception", e) }
+
+  @ExceptionHandler(EntityNotFoundException::class)
+  fun handleEntityNotFoundException(e: EntityNotFoundException): ResponseEntity<ErrorResponse> {
+    log.error("Entity not found exception:", e)
+    return ResponseEntity
+      .status(NOT_FOUND)
+      .body(
+        ErrorResponse(
+          status = NOT_FOUND,
+          userMessage = "not found: ${e.message}",
+          developerMessage = e.message,
+        ),
+      )
+  }
 
   private companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
