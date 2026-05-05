@@ -19,16 +19,17 @@ class FileService(
   private val subscriptionCallbackConfig: SubscriptionCallbackConfig,
 ) {
 
-  fun ingestFile(courtDocumentId: UUID): Document {
+  fun ingestFile(courtDocumentId: UUID, documentType: DocumentType): Document {
     val subscription = subscriptionRepository.findAll()[0]
 
     val file = hmctsSubscriptionApiClient.getFile(subscription.id, courtDocumentId, subscriptionCallbackConfig.subscriptionKey)
 
     return hmppsDocumentManagementApi.uploadDocument(
-      DocumentType.PRISON_COURT_REGISTER,
+      documentType,
       file,
       mapOf(
         "source" to "court-data-ingestion-api",
+        "status" to "LIVE",
       ),
     )
   }
@@ -38,6 +39,7 @@ class FileService(
     mapOf(
       "prisonerId" to prisonerId,
       "source" to "court-data-ingestion-api",
+      "status" to "LIVE",
     ),
   )
 }

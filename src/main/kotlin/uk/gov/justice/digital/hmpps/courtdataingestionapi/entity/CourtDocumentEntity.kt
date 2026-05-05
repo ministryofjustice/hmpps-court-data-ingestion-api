@@ -2,9 +2,12 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.entity
 
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -17,6 +20,8 @@ data class CourtDocumentEntity(
   var courtDocumentId: UUID,
   var prisonDocumentId: UUID,
   val prisonEmailAddress: String,
+  @Enumerated(EnumType.STRING)
+  val eventType: HmctsEventType,
   val documentGeneratedTimestamp: LocalDateTime,
   var ingestionAt: LocalDateTime = LocalDateTime.now(),
   @OneToMany(mappedBy = "courtDocument", cascade = [CascadeType.ALL])

@@ -7,6 +7,7 @@ CREATE TABLE court_document
     ingestion_at                            timestamp with time zone        NOT NULL,
     document_generated_timestamp            timestamp with time zone        NOT NULL,
     prison_email_address                    varchar(255)                    NOT NULL,
+    event_type                              varchar(255)                    NOT NULL,
     prisoner_number                         varchar(255)                    NULL,
     identified_at                           timestamp with time zone        NULL
 );
