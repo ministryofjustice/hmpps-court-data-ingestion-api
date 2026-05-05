@@ -44,6 +44,7 @@ class HmppsDocumentManagementApi(@Qualifier("hmppsDocumentManagementApiWebClient
   fun updateMetadata(documentId: UUID, metadata: Map<String, String> = mapOf()): Document = webClient
     .put()
     .uri("/documents/$documentId/metadata")
+    .header("Service-Name", "court-data-ingestion-api")
     .bodyValue(metadata)
     .retrieve()
     .bodyToMono(Document::class.java)

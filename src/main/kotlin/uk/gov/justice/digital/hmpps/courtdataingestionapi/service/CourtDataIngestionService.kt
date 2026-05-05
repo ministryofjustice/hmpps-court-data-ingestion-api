@@ -85,13 +85,17 @@ class CourtDataIngestionService(
       prisonerNumber = prisonerNumber,
     )
 
-    eventTopic.publish(
-      EVENT_TYPE,
-      objectMapper.writeValueAsString(payload),
-      attributes = mapOf(
-        "type" to MessageAttributeValue.builder().dataType("String").stringValue(EVENT_TYPE).build(),
-      ),
-    )
+    try {
+      eventTopic.publish(
+        EVENT_TYPE,
+        objectMapper.writeValueAsString(payload),
+        attributes = mapOf(
+          "type" to MessageAttributeValue.builder().dataType("String").stringValue(EVENT_TYPE).build(),
+        ),
+      )
+    } catch (e: Exception) {
+      log.error("Error publishing event", e)
+    }
   }
 
   companion object {
