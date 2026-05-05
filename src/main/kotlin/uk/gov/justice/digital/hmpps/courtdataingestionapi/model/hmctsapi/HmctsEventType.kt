@@ -4,6 +4,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Docume
 
 @Suppress("ktlint:standard:enum-entry-name-case")
 enum class HmctsEventType(
+  // TODO find out document types for each of the HMCTS event types.
   val documentType: DocumentType = DocumentType.HMCTS_WARRANT,
 ) {
   PRISON_COURT_REGISTER_GENERATED(DocumentType.PRISON_COURT_REGISTER),
