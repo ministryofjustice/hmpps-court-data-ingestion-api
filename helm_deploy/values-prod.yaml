@@ -10,7 +10,7 @@ generic-service:
     CORE_PERSON_API_URL: "https://hmpps-person-record.hmpps.service.justice.gov.uk"
     HMPPS_DOCUMENT_MANAGEMENT_API_URL: "https://document-api.hmpps.service.justice.gov.uk"
     HMCTS_SUBSCRIPTION_CALLBACK_URL: "https://czbsgqfdwd.execute-api.eu-west-2.amazonaws.com/production/ingest"
-    HMCTS_SUBSCRIPTION_API_URL: "https://tmc.dev.cjscp.org.uk/hrds"
+    HMCTS_SUBSCRIPTION_API_URL: "https://tmc.cjscp.org.uk/hrds"
     HMCTS_AUTH_URL: "https://login.microsoftonline.com/77f54315-6dde-4fe7-9e17-74762c3eb096"
     HMCTS_EVENT_TYPES: "PRISON_COURT_REGISTER_GENERATED"
 
