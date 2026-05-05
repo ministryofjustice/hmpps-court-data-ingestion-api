@@ -17,6 +17,7 @@ data class CourtDocumentEntity(
   var courtDocumentId: UUID,
   var prisonDocumentId: UUID,
   val prisonEmailAddress: String,
+  val eventType: String,
   val documentGeneratedTimestamp: LocalDateTime,
   var ingestionAt: LocalDateTime = LocalDateTime.now(),
   @OneToMany(mappedBy = "courtDocument", cascade = [CascadeType.ALL])
