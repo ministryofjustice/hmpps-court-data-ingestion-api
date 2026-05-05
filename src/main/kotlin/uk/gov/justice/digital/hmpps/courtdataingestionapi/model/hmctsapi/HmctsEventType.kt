@@ -1,7 +1,12 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi
 
-enum class HmctsEventType {
-  PRISON_COURT_REGISTER_GENERATED,
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentType
+
+@Suppress("ktlint:standard:enum-entry-name-case")
+enum class HmctsEventType(
+  val documentType: DocumentType = DocumentType.HMCTS_WARRANT,
+) {
+  PRISON_COURT_REGISTER_GENERATED(DocumentType.PRISON_COURT_REGISTER),
   WEE_Layout5,
   NEE_DetentionOnRecommendationForDeportation,
   OEE_MedicalRemandAdditionalDetails,
@@ -16,7 +21,30 @@ enum class HmctsEventType {
   WEE_NonPaymentOfMoneyOwedCivilDebt,
   WEE_CustodyWarrantOnDischargeOfExtraditionPendingAppeal,
   WEE_CustodyWarrantOnDischargeOfExtraditionPendingAppealPart2,
-
-
-
+  WEE_CustodyWarrantOnExtradition,
+  WEE_CustodyWarrantOnExtraditionWithConsent,
+  WEE_CustodyWarrantOnExtraditionWithBailDirection,
+  WEE_CustodyWarrantOnExtraditionWithBailDirectionWithConsent,
+  WEE_CustodyWarrantWithBailDirectionOnDischargeOfExtraditionPendingAppeal,
+  WEE_CustodyWarrantWithBailDirectionOnDischargeOfExtraditionPendingAppealPart2,
+  WEE_ExtraditionRemandAfterBailAppealByProsecutor,
+  WEE_ExtraditionSupplementToCustodyWarrant,
+  OBE_TerminationOfFootballBanning,
+  OBE_ChangeOfFootballBanning,
+  NEE_FootballBanning,
+  WEE_Remand,
+  WXE_RemandWarrantYouthDetentionAccommodation,
+  OXE_DetentionAndTraining,
+  WEE_InjunctionDetention,
+  OPE_SupervisionOnBreachOfDetentionAndTraining,
+  WEE_CommittalToCrownCourtAuthorityToHoldInYouthDetentionAccommodation,
+  WEE_Detention,
+  WEE_DetentionInYouthDetentionAccommodationBreach,
+  WEE_SendingToCrownCourtAuthorityToHoldInYouthDetentionAccommodation,
+  WEE_CustodyWarrantOnExtraditionCategory2Territory,
+  WEE_CustodyWarrantOnExtraditionWithBailDirectionCategory2Territory,
+  WEE_CustodyWarrantSendingToSecretaryOfStateCategory2Territory,
+  WEE_CustodyWarrantSendingToSecretaryOfStateOnConsentCategory2Territory,
+  WEE_CustodyWarrantWithBailDirectionSendingToSecretaryOfStateCategory2Territory,
+  WEE_CustodyWarrantWithBailDirectionSendingToSecretaryOfStateOnConsentCategory2Territory,
 }

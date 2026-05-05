@@ -42,9 +42,7 @@ class SubscriptionService(
     notificationEndpoint = NotificationEndpoint(
       callbackUrl = subscriptionCallbackConfig.callbackUrl,
     ),
-    eventTypes = listOf(
-      "PRISON_COURT_REGISTER_GENERATED",
-    ),
+    eventTypes = subscriptionCallbackConfig.eventTypes,
   )
 
   companion object {

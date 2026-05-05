@@ -67,6 +67,7 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
       fileWasUploaded = ClassPathResource("test.txt").contentAsByteArray,
       withMetadata = mapOf(
         "source" to "court-data-ingestion-api",
+        "status" to "LIVE",
       ),
 
     )
