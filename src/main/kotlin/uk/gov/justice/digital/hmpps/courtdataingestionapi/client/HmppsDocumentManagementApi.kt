@@ -28,7 +28,7 @@ class HmppsDocumentManagementApi(@Qualifier("hmppsDocumentManagementApiWebClient
       .header("Service-Name", "court-data-ingestion-api")
       .bodyValue(
         MultipartBodyBuilder().apply {
-          part("file", ByteArrayResource(file.bytes), MediaType.valueOf(file.contentType)).filename(file.name)
+          part("file", ByteArrayResource(file.bytes), MediaType.valueOf(file.contentType)).filename(file.originalFilename)
           part("metadata", metadata)
         }.build(),
       )

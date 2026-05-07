@@ -69,7 +69,7 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
         "source" to "court-data-ingestion-api",
         "status" to "LIVE",
       ),
-
+      withFilename = "test.txt",
     )
   }
 
