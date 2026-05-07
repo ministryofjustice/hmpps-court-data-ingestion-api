@@ -6,11 +6,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocument
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentView
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtDocumentService
 import java.util.UUID
@@ -20,6 +23,21 @@ import java.util.UUID
 class CourtDocumentController(
   private val courtDocumentService: CourtDocumentService,
 ) {
+
+  @GetMapping("/person/{personId}")
+  @PreAuthorize("hasAnyRole('COURT_DATA_INGESTION__COURT_DATA_RO', 'COURT_DATA_INGESTION__COURT_DATA_RW')")
+  @Operation(
+    summary = "Record a viewing of a court document",
+    description = "Records that a given user has viewed a court document.",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Successfully recorded a viewing of court document."),
+      ApiResponse(responseCode = "401", description = "Unauthorized - valid Oauth2 token required"),
+      ApiResponse(responseCode = "403", description = "Forbidden - requires appropriate role"),
+    ],
+  )
+  fun getCourtDocuments(@PathVariable("personId") personId: String, @RequestParam(name = "prisonDocumentIds", required = true) @PathVariable prisonDocumentIds: List<UUID>): List<CourtDocument> = courtDocumentService.getCourtDocumentsByPersonIdAndPrisonDocumentIds(personId, prisonDocumentIds)
 
   @PostMapping("/{courtDocumentId}/view")
   @PreAuthorize("hasRole('COURT_DATA_INGESTION__COURT_DATA_RW')")
