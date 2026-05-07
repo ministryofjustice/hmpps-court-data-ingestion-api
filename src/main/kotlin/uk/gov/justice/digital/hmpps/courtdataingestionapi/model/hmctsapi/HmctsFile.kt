@@ -28,4 +28,6 @@ class HmctsFile(
   override fun transferTo(dest: java.io.File) {
     dest.writeBytes(bytes)
   }
+
+  override fun toString(): String = "HmctsFile(name='$name', originalFilename='$originalFilename', contentType=$contentType)"
 }

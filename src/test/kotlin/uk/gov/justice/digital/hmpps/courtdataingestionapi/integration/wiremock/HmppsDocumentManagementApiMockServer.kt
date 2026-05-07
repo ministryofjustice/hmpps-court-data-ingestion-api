@@ -79,9 +79,11 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
     withType: DocumentType = DocumentType.PRISON_COURT_REGISTER,
     fileWasUploaded: ByteArray = ByteArray(0),
     withMetadata: Map<String, String> = mapOf(),
+    withFilename: String = "file.txt",
   ): UUID? {
     val request = postRequestedFor(urlMatching("/documents/$withType/$withUuid"))
       .withRequestBodyPart(aMultipart("file").withBody(binaryEqualTo(fileWasUploaded)).build())
+      .withRequestBodyPart(aMultipart("file").withFileName(withFilename).build())
       .withRequestBodyPart(aMultipart("metadata").withBody(equalToJson(TestUtil.objectMapper().writeValueAsString(withMetadata))).build())
 
     verify(didHappenXTimes, request)
