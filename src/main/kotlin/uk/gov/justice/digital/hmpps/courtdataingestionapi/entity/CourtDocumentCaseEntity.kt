@@ -11,7 +11,7 @@ import java.util.UUID
 data class CourtDocumentCaseEntity(
   @Id
   val id: UUID = UUID.randomUUID(),
-  val caseReference: String? = null,
+  val caseReference: String,
   @ManyToOne
   var courtDocument: CourtDocumentEntity? = null,
 )

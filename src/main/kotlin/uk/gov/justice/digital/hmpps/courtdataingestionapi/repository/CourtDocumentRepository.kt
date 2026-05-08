@@ -12,4 +12,5 @@ interface CourtDocumentRepository : JpaRepository<CourtDocumentEntity, UUID> {
   fun findByDefendantIdIn(defendantIds: List<UUID>): List<CourtDocumentEntity>
   fun countByPrisonerNumber(prisonerNumber: String): Long
   fun findByPrisonerNumber(prisonerNumber: String): List<CourtDocumentEntity>
+  fun findByPrisonerNumberAndPrisonDocumentIdIn(personId: String, prisonDocumentIds: List<UUID>): List<CourtDocumentEntity>
 }

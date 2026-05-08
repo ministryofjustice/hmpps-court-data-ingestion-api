@@ -1,64 +1,109 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.controller
 
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.TestUtil
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocument
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentView
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.typeReference
 import java.util.UUID
 
 @Transactional
 class CourtDocumentControllerIntTest : IntegrationTestBase() {
 
-  @Test
-  fun `View document ingested`() {
-    sendSubscriptionNotification(MATCHING_CORE_PERSON)
+  @Nested
+  @DisplayName("View court document tests")
+  inner class GetCourtDocumentsTests {
 
-    var courtDocument = courtDocumentRepository.findAll()[0]
-    webTestClient
-      .post()
-      .uri("/court-document/${courtDocument.id}/view")
-      .headers {
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RW")))
-      .bodyValue(
-        TestUtil.objectMapper().writeValueAsString(
-          CourtDocumentView(
-            username = "testuser",
-          ),
-        ),
-      )
-      .exchange()
-      .expectStatus()
-      .isOk
+    @Test
+    fun `Get court documents for person and document id matching`() {
+      sendSubscriptionNotification(MATCHING_CORE_PERSON)
+      val dbCourtDocument = courtDocumentRepository.findAll()[0]
+      val documents = webTestClient
+        .get()
+        .uri("/court-document/person/${MATCHING_PRISONER_NUMBER}?prisonDocumentIds=${dbCourtDocument.prisonDocumentId}")
+        .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RO")))
+        .exchange()
+        .expectBody(typeReference<List<CourtDocument>>())
+        .returnResult().responseBody!!
 
-    courtDocument = courtDocumentRepository.findAll()[0]
+      assertThat(documents).hasSize(1)
+      assertThat(documents[0].isUnread).isTrue
+      assertThat(documents[0].caseReferences).isEqualTo(listOf("Case123", "Case456"))
+    }
 
-    assertThat(courtDocument.courtDocumentViews).hasSize(1)
-    assertThat(courtDocument.courtDocumentViews[0].username).isEqualTo("testuser")
+    @Test
+    fun `Get court documents for document id matching but not person`() {
+      sendSubscriptionNotification(MATCHING_CORE_PERSON)
+      val dbCourtDocument = courtDocumentRepository.findAll()[0]
+      val documents = webTestClient
+        .get()
+        .uri("/court-document/person/XYZ1234?prisonDocumentIds=${dbCourtDocument.prisonDocumentId}")
+        .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RO")))
+        .exchange()
+        .expectBody(typeReference<List<CourtDocument>>())
+        .returnResult().responseBody!!
+
+      assertThat(documents).hasSize(0)
+    }
   }
 
-  @Test
-  fun `View document not found`() {
-    webTestClient
-      .post()
-      .uri("/court-document/${UUID.randomUUID()}/view")
-      .headers {
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RW")))
-      .bodyValue(
-        TestUtil.objectMapper().writeValueAsString(
-          CourtDocumentView(
-            username = "testuser",
+  @Nested
+  @DisplayName("View court document tests")
+  inner class ViewDocumentTests {
+    @Test
+    fun `View document ingested`() {
+      sendSubscriptionNotification(MATCHING_CORE_PERSON)
+
+      var courtDocument = courtDocumentRepository.findAll()[0]
+      webTestClient
+        .post()
+        .uri("/court-document/${courtDocument.id}/view")
+        .headers {
+          it.contentType = MediaType.APPLICATION_JSON
+        }
+        .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RW")))
+        .bodyValue(
+          TestUtil.objectMapper().writeValueAsString(
+            CourtDocumentView(
+              username = "testuser",
+            ),
           ),
-        ),
-      )
-      .exchange()
-      .expectStatus()
-      .isNotFound
+        )
+        .exchange()
+        .expectStatus()
+        .isOk
+
+      courtDocument = courtDocumentRepository.findAll()[0]
+
+      assertThat(courtDocument.courtDocumentViews).hasSize(1)
+      assertThat(courtDocument.courtDocumentViews[0].username).isEqualTo("testuser")
+    }
+
+    @Test
+    fun `View document not found`() {
+      webTestClient
+        .post()
+        .uri("/court-document/${UUID.randomUUID()}/view")
+        .headers {
+          it.contentType = MediaType.APPLICATION_JSON
+        }
+        .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RW")))
+        .bodyValue(
+          TestUtil.objectMapper().writeValueAsString(
+            CourtDocumentView(
+              username = "testuser",
+            ),
+          ),
+        )
+        .exchange()
+        .expectStatus()
+        .isNotFound
+    }
   }
 }
