@@ -31,7 +31,7 @@ data class CourtDocumentEntity(
 
   // Updated once identified
   var prisonerNumber: String? = null,
-  val identifiedAt: LocalDateTime? = null,
+  var identifiedAt: LocalDateTime? = null,
 ) {
   init {
     courtDocumentCases.forEach { case -> case.courtDocument = this }
