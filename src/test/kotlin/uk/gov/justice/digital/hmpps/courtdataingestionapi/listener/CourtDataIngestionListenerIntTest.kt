@@ -27,6 +27,7 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
     assertThat(file.courtDocumentId).isEqualTo(COURT_DOCUMENT_ID)
     assertThat(file.prisonDocumentId).isEqualTo(PRISON_DOCUMENT_ID)
     assertThat(file.prisonerNumber).isNull()
+    assertThat(file.identifiedAt).isNull()
     assertThat(file.courtDocumentCases.size).isEqualTo(2)
     assertThat(file.courtDocumentCases[0].caseReference).isEqualTo(event.cases[0].urn)
     assertThat(file.courtDocumentCases[1].caseReference).isEqualTo(event.cases[1].urn)
@@ -42,6 +43,7 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
     assertThat(file.defendantId).isEqualTo(NO_MATCHING_IDS_PERSON)
     assertThat(file.courtDocumentId).isEqualTo(COURT_DOCUMENT_ID)
     assertThat(file.prisonerNumber).isNull()
+    assertThat(file.identifiedAt).isNull()
   }
 
   @Test
@@ -52,6 +54,7 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
     assertThat(file.defendantId).isEqualTo(MATCHING_CORE_PERSON)
     assertThat(file.courtDocumentId).isEqualTo(COURT_DOCUMENT_ID)
     assertThat(file.prisonerNumber).isEqualTo("ABC123")
+    assertThat(file.identifiedAt).isNotNull
 
     awaitAtMost30Secs untilCallTo {
       courtWarrantTestQueue.sqsClient.countMessagesOnQueue(courtWarrantTestQueue.queueUrl).get()
@@ -81,5 +84,6 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
     assertThat(file.defendantId).isEqualTo(MATCHING_CORE_ALIASES)
     assertThat(file.courtDocumentId).isEqualTo(COURT_DOCUMENT_ID)
     assertThat(file.prisonerNumber).isNull()
+    assertThat(file.identifiedAt).isNull()
   }
 }

@@ -35,6 +35,8 @@ class CourtDocumentControllerIntTest : IntegrationTestBase() {
       assertThat(documents).hasSize(1)
       assertThat(documents[0].isUnread).isTrue
       assertThat(documents[0].caseReferences).isEqualTo(listOf("Case123", "Case456"))
+      assertThat(documents[0].prisonDocumentId).isEqualTo(dbCourtDocument.prisonDocumentId)
+      assertThat(documents[0].courtDocumentId).isEqualTo(dbCourtDocument.id)
     }
 
     @Test

@@ -75,7 +75,7 @@ class CourtDataIngestionService(
 
   private fun createMatch(courtDocumentEntity: CourtDocumentEntity, prisonerNumber: String) {
     courtDocumentEntity.prisonerNumber = prisonerNumber
-    courtDocumentEntity.ingestionAt = LocalDateTime.now()
+    courtDocumentEntity.identifiedAt = LocalDateTime.now()
     courtDocumentRepository.save(courtDocumentEntity)
 
     fileService.setPrisonerId(courtDocumentEntity.prisonDocumentId, prisonerNumber)

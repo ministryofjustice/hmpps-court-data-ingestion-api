@@ -33,6 +33,7 @@ class PrisonerCreatedListenerIntTest : IntegrationTestBase() {
     val file = courtDocumentRepository.findFirstByDefendantId(DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION)!!
 
     assertThat(file.prisonerNumber).isEqualTo(PRISONER_NUMBER_WITH_MATCH)
+    assertThat(file.identifiedAt).isNotNull
   }
 
   companion object {
