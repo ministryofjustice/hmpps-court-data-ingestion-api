@@ -35,6 +35,8 @@ class CourtDocumentService(
     prisonDocumentIds: List<UUID>,
   ): List<CourtDocument> = courtDocumentRepository.findByPrisonerNumberAndPrisonDocumentIdIn(personId, prisonDocumentIds).map { document ->
     CourtDocument(
+      courtDocumentId = document.id,
+      prisonDocumentId = document.prisonDocumentId,
       caseReferences = document.courtDocumentCases.map { it.caseReference },
       isUnread = document.courtDocumentViews.isEmpty(),
     )
