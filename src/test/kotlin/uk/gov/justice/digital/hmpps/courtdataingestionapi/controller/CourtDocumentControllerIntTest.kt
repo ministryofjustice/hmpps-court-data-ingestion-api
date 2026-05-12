@@ -36,7 +36,6 @@ class CourtDocumentControllerIntTest : IntegrationTestBase() {
       assertThat(documents[0].isUnread).isTrue
       assertThat(documents[0].caseReferences).isEqualTo(listOf("Case123", "Case456"))
       assertThat(documents[0].prisonDocumentId).isEqualTo(dbCourtDocument.prisonDocumentId)
-      assertThat(documents[0].courtDocumentId).isEqualTo(dbCourtDocument.id)
     }
 
     @Test
@@ -65,7 +64,7 @@ class CourtDocumentControllerIntTest : IntegrationTestBase() {
       var courtDocument = courtDocumentRepository.findAll()[0]
       webTestClient
         .post()
-        .uri("/court-document/${courtDocument.id}/view")
+        .uri("/court-document/${courtDocument.prisonDocumentId}/view")
         .headers {
           it.contentType = MediaType.APPLICATION_JSON
         }

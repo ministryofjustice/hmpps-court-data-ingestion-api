@@ -39,7 +39,7 @@ class CourtDocumentController(
   )
   fun getCourtDocuments(@PathVariable("personId") personId: String, @RequestParam(name = "prisonDocumentIds", required = true) @PathVariable prisonDocumentIds: List<UUID>): List<CourtDocument> = courtDocumentService.getCourtDocumentsByPersonIdAndPrisonDocumentIds(personId, prisonDocumentIds)
 
-  @PostMapping("/{courtDocumentId}/view")
+  @PostMapping("/{prisonDocumentId}/view")
   @PreAuthorize("hasRole('COURT_DATA_INGESTION__COURT_DATA_RW')")
   @Operation(
     summary = "Record a viewing of a court document",
@@ -52,8 +52,8 @@ class CourtDocumentController(
       ApiResponse(responseCode = "403", description = "Forbidden - requires appropriate role"),
     ],
   )
-  fun view(@PathVariable courtDocumentId: UUID, @RequestBody courtDocumentView: CourtDocumentView): ResponseEntity<CourtDocumentView> {
-    courtDocumentService.recordDocumentView(courtDocumentId, courtDocumentView)
+  fun view(@PathVariable prisonDocumentId: UUID, @RequestBody courtDocumentView: CourtDocumentView): ResponseEntity<CourtDocumentView> {
+    courtDocumentService.recordDocumentView(prisonDocumentId, courtDocumentView)
     return ResponseEntity.ok(courtDocumentView)
   }
 }
