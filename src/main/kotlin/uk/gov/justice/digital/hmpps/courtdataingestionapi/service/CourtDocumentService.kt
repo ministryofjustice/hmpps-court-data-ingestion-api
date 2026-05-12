@@ -18,8 +18,8 @@ class CourtDocumentService(
 ) {
 
   @Transactional
-  fun recordDocumentView(courtDocumentId: UUID, courtDocumentView: CourtDocumentView) {
-    val courtDocument = courtDocumentRepository.findById(courtDocumentId).getOrElse { throw EntityNotFoundException("Court document not found $courtDocumentId") }
+  fun recordDocumentView(prisonDocumentId: UUID, courtDocumentView: CourtDocumentView) {
+    val courtDocument = courtDocumentRepository.findFirstByPrisonDocumentId(prisonDocumentId).getOrElse { throw EntityNotFoundException("Court document not found $prisonDocumentId") }
 
     courtDocument.courtDocumentViews.add(
       CourtDocumentViewEntity(
@@ -35,7 +35,6 @@ class CourtDocumentService(
     prisonDocumentIds: List<UUID>,
   ): List<CourtDocument> = courtDocumentRepository.findByPrisonerNumberAndPrisonDocumentIdIn(personId, prisonDocumentIds).map { document ->
     CourtDocument(
-      courtDocumentId = document.id,
       prisonDocumentId = document.prisonDocumentId,
       caseReferences = document.courtDocumentCases.map { it.caseReference },
       isUnread = document.courtDocumentViews.isEmpty(),
