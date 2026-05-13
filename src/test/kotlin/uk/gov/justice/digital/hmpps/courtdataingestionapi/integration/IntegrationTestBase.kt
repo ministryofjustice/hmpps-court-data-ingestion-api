@@ -30,6 +30,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.H
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsSubscriptionApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsAuthApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsAuthApiExtension.Companion.hmppsAuth
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsCourtCasesReleaseDatesApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsDocumentManagementApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HMPPSPrisonerCreatedDomainEvent
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsCase
@@ -52,6 +53,7 @@ import java.util.UUID
   CorePersonApiExtension::class,
   HmctsSubscriptionApiExtension::class,
   HmppsDocumentManagementApiExtension::class,
+  HmppsCourtCasesReleaseDatesApiExtension::class,
 )
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")

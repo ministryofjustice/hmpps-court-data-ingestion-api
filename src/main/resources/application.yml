@@ -60,6 +60,11 @@ spring:
             client-id: ${client.creds.client.id}
             client-secret: ${client.creds.client.secret}
             authorization-grant-type: client_credentials
+          hmpps-court-cases-release-dates-api:
+            provider: hmpps-auth
+            client-id: ${client.creds.client.id}
+            client-secret: ${client.creds.client.secret}
+            authorization-grant-type: client_credential
           hmcts-subscription-api:
             provider: hmcts-auth
             client-id: ${hmcts.client.creds.client.id}

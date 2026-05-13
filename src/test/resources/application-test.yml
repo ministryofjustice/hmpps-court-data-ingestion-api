@@ -34,6 +34,11 @@ hmpps.document:
     api:
       url: http://localhost:8334
 
+hmpps:
+  court-cases-release-dates:
+    api:
+      url: http://localhost:8335
+
 hmpps.sqs:
   provider: localstack
   topics:

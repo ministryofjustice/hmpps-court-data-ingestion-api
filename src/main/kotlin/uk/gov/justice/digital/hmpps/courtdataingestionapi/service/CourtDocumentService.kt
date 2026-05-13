@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.service
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsCourtCasesReleaseDatesApiClient
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentViewEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocument
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentView
@@ -15,6 +16,7 @@ import kotlin.jvm.optionals.getOrElse
 @Transactional(readOnly = true)
 class CourtDocumentService(
   private val courtDocumentRepository: CourtDocumentRepository,
+  private val courtCasesReleaseDatesApiClient: HmppsCourtCasesReleaseDatesApiClient,
 ) {
 
   @Transactional
@@ -28,6 +30,9 @@ class CourtDocumentService(
         viewedAt = LocalDateTime.now(),
       ),
     )
+    courtDocument.prisonerNumber?.let {
+      courtCasesReleaseDatesApiClient.deleteThingsToDoCache(it)
+    }
   }
 
   fun getCourtDocumentsByPersonIdAndPrisonDocumentIds(
