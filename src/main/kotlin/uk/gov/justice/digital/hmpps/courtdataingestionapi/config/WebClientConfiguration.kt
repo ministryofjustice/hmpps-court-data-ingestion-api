@@ -44,16 +44,6 @@ class WebClientConfiguration(
   )
 
   @Bean
-  fun hmctsSubscriptionApiWebClient(
-    authorizedClientManager: OAuth2AuthorizedClientManager,
-    builder: WebClient.Builder,
-  ): WebClient = builder.authorisedWebClient(
-    authorizedClientManager,
-    "hmcts-subscription-api",
-    hmctsSubscriptionApiUrl,
-  )
-
-  @Bean
   fun hmppsCourtCasesReleaseDatesApiWebClient(
     authorizedClientManager: OAuth2AuthorizedClientManager,
     builder: WebClient.Builder,
@@ -61,5 +51,15 @@ class WebClientConfiguration(
     authorizedClientManager,
     "hmpps-court-cases-release-dates-api",
     courtCasesReleaseDatesApiUrl,
+  )
+
+  @Bean
+  fun hmctsSubscriptionApiWebClient(
+    authorizedClientManager: OAuth2AuthorizedClientManager,
+    builder: WebClient.Builder,
+  ): WebClient = builder.authorisedWebClient(
+    authorizedClientManager,
+    "hmcts-subscription-api",
+    hmctsSubscriptionApiUrl,
   )
 }
