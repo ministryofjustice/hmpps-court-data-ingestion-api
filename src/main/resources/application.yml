@@ -64,7 +64,7 @@ spring:
             provider: hmpps-auth
             client-id: ${client.creds.client.id}
             client-secret: ${client.creds.client.secret}
-            authorization-grant-type: client_credential
+            authorization-grant-type: client_credentials
           hmcts-subscription-api:
             provider: hmcts-auth
             client-id: ${hmcts.client.creds.client.id}
