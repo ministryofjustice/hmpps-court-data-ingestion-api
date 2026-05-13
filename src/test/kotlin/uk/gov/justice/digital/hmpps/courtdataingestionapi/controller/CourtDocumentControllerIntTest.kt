@@ -8,6 +8,7 @@ import org.springframework.http.MediaType
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.TestUtil
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsCourtCasesReleaseDatesApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocument
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentView
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.typeReference
@@ -84,6 +85,7 @@ class CourtDocumentControllerIntTest : IntegrationTestBase() {
 
       assertThat(courtDocument.courtDocumentViews).hasSize(1)
       assertThat(courtDocument.courtDocumentViews[0].username).isEqualTo("testuser")
+      HmppsCourtCasesReleaseDatesApiExtension.hmppsCourtCasesReleaseDatesApi.verifyEvictCache()
     }
 
     @Test
