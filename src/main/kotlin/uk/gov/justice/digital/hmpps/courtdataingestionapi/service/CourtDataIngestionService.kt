@@ -80,9 +80,11 @@ class CourtDataIngestionService(
 
     fileService.setPrisonerId(courtDocumentEntity.prisonDocumentId, prisonerNumber)
     val payload = IdentifiedCourtWarrantEventPayload(
-      courtDocumentId = courtDocumentEntity.courtDocumentId,
-      prisonDocumentId = courtDocumentEntity.prisonDocumentId,
-      prisonerNumber = prisonerNumber,
+      additionalInformation = IdentifiedCourtWarrantAdditionalInformation(
+        courtDocumentId = courtDocumentEntity.courtDocumentId,
+        prisonDocumentId = courtDocumentEntity.prisonDocumentId,
+        prisonerNumber = prisonerNumber,
+      ),
     )
 
     try {
@@ -99,12 +101,17 @@ class CourtDataIngestionService(
   }
 
   companion object {
-    private const val EVENT_TYPE = "court-document.file.received"
+    const val EVENT_TYPE = "court-document.file.received"
     private val log = LoggerFactory.getLogger(this::class.java)
   }
 }
 
 data class IdentifiedCourtWarrantEventPayload(
+  val eventType: String = CourtDataIngestionService.EVENT_TYPE,
+  val additionalInformation: IdentifiedCourtWarrantAdditionalInformation,
+)
+
+data class IdentifiedCourtWarrantAdditionalInformation(
   val courtDocumentId: UUID,
   val prisonDocumentId: UUID,
   val prisonerNumber: String,
