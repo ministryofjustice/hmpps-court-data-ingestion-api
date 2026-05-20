@@ -36,7 +36,7 @@ class SubscriptionService(
       secretsManagerService.setSecretValue(subscriptionResponse.hmac.secret)
 
       log.info("Subscription created")
-    } else {
+    } else if (subscriptionCallbackConfig.updateSubscriptionOnStartup) {
       val subscriptionResponse = hmctsSubscriptionApiClient.updateSubscription(
         subscriptionRequest(),
         subscriptionCallbackConfig.subscriptionKey,
@@ -53,7 +53,7 @@ class SubscriptionService(
     notificationEndpoint = NotificationEndpoint(
       callbackUrl = subscriptionCallbackConfig.callbackUrl,
     ),
-    eventTypes = subscriptionCallbackConfig.eventTypes ?: HmctsEventType.entries,
+    eventTypes = subscriptionCallbackConfig.getEventTypesToSubscribe()
   )
 
   companion object {
