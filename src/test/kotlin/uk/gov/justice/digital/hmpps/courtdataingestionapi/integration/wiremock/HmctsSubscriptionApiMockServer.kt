@@ -4,6 +4,7 @@ import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.post
+import com.github.tomakehurst.wiremock.client.WireMock.put
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
@@ -23,6 +24,7 @@ class HmctsSubscriptionApiExtension :
 
   override fun beforeAll(context: ExtensionContext) {
     hmctsSubscriptionApi.stubCreateSubscription()
+    hmctsSubscriptionApi.stubUpdateSubscription()
     hmctsSubscriptionApi.stubFile()
     hmctsSubscriptionApi.start()
   }
@@ -46,6 +48,27 @@ class HmctsSubscriptionApiMockServer : WireMockServer(WIREMOCK_PORT) {
   fun stubCreateSubscription() {
     stubFor(
       post(urlEqualTo("/client-subscriptions"))
+        .willReturn(
+          aResponse()
+            .withHeader("Content-Type", "application/json")
+            .withStatus(200)
+            .withBody(
+              """
+              {
+                "clientSubscriptionId": "$TEST_SUBSCRIPTION_ID",
+                "hmac": {
+                  "secret": "$TEST_HMAC_KEY"
+                }
+              }
+              """.trimIndent(),
+            ),
+        ),
+    )
+  }
+
+  fun stubUpdateSubscription() {
+    stubFor(
+      put(urlEqualTo("/client-subscriptions/$TEST_SUBSCRIPTION_ID"))
         .willReturn(
           aResponse()
             .withHeader("Content-Type", "application/json")

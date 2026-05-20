@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.Notific
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.SubscriptionRequest
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.SubscriptionRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.subscription.SubscriptionCallbackConfig
+import java.time.LocalDateTime
 
 @Service
 class SubscriptionService(
@@ -35,8 +36,17 @@ class SubscriptionService(
       secretsManagerService.setSecretValue(subscriptionResponse.hmac.secret)
 
       log.info("Subscription created")
+    } else {
+      val subscriptionResponse = hmctsSubscriptionApiClient.updateSubscription(
+        subscriptionRequest(),
+        subscriptionCallbackConfig.subscriptionKey,
+        subscription.id,
+      )
+      subscription.updatedAt = LocalDateTime.now()
+      secretsManagerService.setSecretValue(subscriptionResponse.hmac.secret)
+
+      log.info("Subscription updated")
     }
-    log.info("Subscription already exists")
   }
 
   private fun subscriptionRequest() = SubscriptionRequest(
