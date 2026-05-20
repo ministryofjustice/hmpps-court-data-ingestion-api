@@ -76,10 +76,7 @@ class HmctsSubscriptionApiMockServer : WireMockServer(WIREMOCK_PORT) {
             .withBody(
               """
               {
-                "clientSubscriptionId": "$TEST_SUBSCRIPTION_ID",
-                "hmac": {
-                  "secret": "$TEST_HMAC_KEY"
-                }
+                "clientSubscriptionId": "$TEST_SUBSCRIPTION_ID"
               }
               """.trimIndent(),
             ),

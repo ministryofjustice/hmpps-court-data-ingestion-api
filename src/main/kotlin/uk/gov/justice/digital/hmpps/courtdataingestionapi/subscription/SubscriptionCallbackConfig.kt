@@ -8,16 +8,13 @@ data class SubscriptionCallbackConfig(
   val callbackUrl: String,
   val subscriptionKey: String,
   private val eventTypes: List<String>,
-  val updateSubscriptionOnStartup: Boolean
+  val updateSubscriptionOnStartup: Boolean,
 ) {
 
-
-  fun getEventTypesToSubscribe(): List<HmctsEventType> {
-    return if (eventTypes.contains(SUBSCRIBE_TO_ALL_EVENT_TYPES)) {
-      HmctsEventType.entries
-    } else {
-      eventTypes.map { HmctsEventType.valueOf(it) }
-    }
+  fun getEventTypesToSubscribe(): List<HmctsEventType> = if (eventTypes.contains(SUBSCRIBE_TO_ALL_EVENT_TYPES)) {
+    HmctsEventType.entries
+  } else {
+    eventTypes.map { HmctsEventType.valueOf(it) }
   }
 
   companion object {
