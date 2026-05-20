@@ -5,11 +5,11 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmctsSubscriptionApiClient
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.Subscription
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.NotificationEndpoint
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.SubscriptionRequest
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.SubscriptionRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.subscription.SubscriptionCallbackConfig
+import java.time.LocalDateTime
 
 @Service
 class SubscriptionService(
@@ -35,15 +35,23 @@ class SubscriptionService(
       secretsManagerService.setSecretValue(subscriptionResponse.hmac.secret)
 
       log.info("Subscription created")
+    } else if (subscriptionCallbackConfig.updateSubscriptionOnStartup) {
+      val subscriptionResponse = hmctsSubscriptionApiClient.updateSubscription(
+        subscriptionRequest(),
+        subscriptionCallbackConfig.subscriptionKey,
+        subscription.id,
+      )
+      subscription.updatedAt = LocalDateTime.now()
+
+      log.info("Subscription updated")
     }
-    log.info("Subscription already exists")
   }
 
   private fun subscriptionRequest() = SubscriptionRequest(
     notificationEndpoint = NotificationEndpoint(
       callbackUrl = subscriptionCallbackConfig.callbackUrl,
     ),
-    eventTypes = subscriptionCallbackConfig.eventTypes ?: HmctsEventType.entries,
+    eventTypes = subscriptionCallbackConfig.getEventTypesToSubscribe(),
   )
 
   companion object {

@@ -5,19 +5,32 @@ import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsFile
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.SubscriptionCreatedResponse
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.SubscriptionRequest
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.SubscriptionResponse
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.SubscriptionUpdatedResponse
 import java.util.UUID
 
 @Component
 class HmctsSubscriptionApiClient(@Qualifier("hmctsSubscriptionApiWebClient") private val webClient: WebClient) {
 
-  fun createSubscription(request: SubscriptionRequest, subscriptionKey: String): SubscriptionResponse = webClient.post()
+  fun createSubscription(request: SubscriptionRequest, subscriptionKey: String): SubscriptionCreatedResponse = webClient.post()
     .uri("/client-subscriptions")
     .header(SUBSCRIPTION_KEY_HEADER, subscriptionKey)
     .bodyValue(request)
     .retrieve()
-    .bodyToMono(SubscriptionResponse::class.java)
+    .bodyToMono(SubscriptionCreatedResponse::class.java)
+    .block()!!
+
+  fun updateSubscription(
+    request: SubscriptionRequest,
+    subscriptionKey: String,
+    subscriptionId: String,
+  ): SubscriptionUpdatedResponse = webClient.put()
+    .uri("/client-subscriptions/$subscriptionId")
+    .header(SUBSCRIPTION_KEY_HEADER, subscriptionKey)
+    .bodyValue(request)
+    .retrieve()
+    .bodyToMono(SubscriptionUpdatedResponse::class.java)
     .block()!!
 
   fun getFile(clientSubscriptionId: String, externalFileId: UUID, subscriptionKey: String): HmctsFile = webClient.get()

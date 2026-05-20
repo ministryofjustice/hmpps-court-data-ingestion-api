@@ -112,3 +112,4 @@ subscription-callback-config:
   callback-url: ${HMCTS_SUBSCRIPTION_CALLBACK_URL}
   subscription-key: ${HMCTS_SUBSCRIPTION_KEY}
   event-types: ${HMCTS_EVENT_TYPES}
+  update-subscription-on-startup: ${HMCTS_UPDATE_SUBSCRIPTION_ON_STARTUP}
