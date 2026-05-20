@@ -30,7 +30,7 @@ class CourtDataIngestionService(
   private val eventTopic by lazy { hmppsQueueService.findByTopicId("domainevents") as HmppsTopic }
 
   fun receiveMessage(message: HmctsSubscriptionNotificationRequestBody) {
-    val prisonDocument = fileService.ingestFile(message.documentId, message.eventType.documentType)
+    val prisonDocument = fileService.ingestFile(message.documentId, message.eventType.documentType.documentApiType)
     val courtDocumentEntity = courtDocumentRepository.save(
       CourtDocumentEntity(
         defendantId = message.masterDefendantId,
@@ -40,6 +40,7 @@ class CourtDataIngestionService(
         courtDocumentCases = message.cases.map { CourtDocumentCaseEntity(caseReference = it.urn) }.toMutableList(),
         prisonDocumentId = prisonDocument.documentUuid,
         eventType = message.eventType,
+        courtDocumentType = message.eventType.documentType,
       ),
     )
     val person = try {

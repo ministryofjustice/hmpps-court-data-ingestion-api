@@ -8,7 +8,7 @@ import org.springframework.http.client.MultipartBodyBuilder
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Document
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentType
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentApiType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsFile
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.ResponseUtils.rethrowAnyHttpErrorWithContext
 import java.util.UUID
@@ -17,7 +17,7 @@ import java.util.UUID
 class HmppsDocumentManagementApi(@Qualifier("hmppsDocumentManagementApiWebClient") private val webClient: WebClient) {
 
   fun uploadDocument(
-    documentType: DocumentType,
+    documentType: DocumentApiType,
     file: HmctsFile,
     metadata: Map<String, String> = mapOf(),
   ): Document {

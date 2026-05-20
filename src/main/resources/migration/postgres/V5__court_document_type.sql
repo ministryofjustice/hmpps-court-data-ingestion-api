@@ -1,0 +1,1 @@
+ALTER TABLE court_document ADD COLUMN court_document_type VARCHAR;

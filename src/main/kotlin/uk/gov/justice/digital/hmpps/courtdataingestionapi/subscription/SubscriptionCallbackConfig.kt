@@ -7,5 +7,6 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEv
 data class SubscriptionCallbackConfig(
   val callbackUrl: String,
   val subscriptionKey: String,
-  val eventTypes: List<HmctsEventType>,
+  /* A NULL list of event types will subscribe to all event types. */
+  val eventTypes: List<HmctsEventType>?,
 )

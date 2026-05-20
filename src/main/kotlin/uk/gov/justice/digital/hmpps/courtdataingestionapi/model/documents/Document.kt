@@ -5,7 +5,7 @@ import java.util.UUID
 
 data class Document(
   val documentUuid: UUID,
-  val documentType: DocumentType,
+  val documentType: DocumentApiType,
   val documentFilename: String,
   val filename: String,
   val fileExtension: String,

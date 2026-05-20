@@ -5,7 +5,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmctsSubscriptionApiClient
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsDocumentManagementApi
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Document
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentType
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentApiType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.SubscriptionRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.subscription.SubscriptionCallbackConfig
 import java.util.UUID
@@ -19,7 +19,7 @@ class FileService(
   private val subscriptionCallbackConfig: SubscriptionCallbackConfig,
 ) {
 
-  fun ingestFile(courtDocumentId: UUID, documentType: DocumentType): Document {
+  fun ingestFile(courtDocumentId: UUID, documentType: DocumentApiType): Document {
     val subscription = subscriptionRepository.findAll()[0]
 
     val file = hmctsSubscriptionApiClient.getFile(subscription.id, courtDocumentId, subscriptionCallbackConfig.subscriptionKey)
