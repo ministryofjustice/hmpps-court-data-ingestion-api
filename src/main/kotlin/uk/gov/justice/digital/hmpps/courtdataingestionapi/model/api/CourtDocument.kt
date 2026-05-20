@@ -6,4 +6,5 @@ class CourtDocument(
   val prisonDocumentId: UUID,
   val caseReferences: List<String>,
   val isUnread: Boolean,
+  val documentType: CourtDocumentType,
 )

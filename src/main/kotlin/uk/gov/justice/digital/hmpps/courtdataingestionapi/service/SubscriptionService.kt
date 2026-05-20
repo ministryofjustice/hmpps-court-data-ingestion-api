@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmctsSubscriptionApiClient
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.Subscription
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.NotificationEndpoint
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.SubscriptionRequest
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.SubscriptionRepository
@@ -42,7 +43,7 @@ class SubscriptionService(
     notificationEndpoint = NotificationEndpoint(
       callbackUrl = subscriptionCallbackConfig.callbackUrl,
     ),
-    eventTypes = subscriptionCallbackConfig.eventTypes,
+    eventTypes = subscriptionCallbackConfig.eventTypes ?: HmctsEventType.entries,
   )
 
   companion object {

@@ -5,7 +5,6 @@ import com.github.tomakehurst.wiremock.client.WireMock.aMultipart
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.binaryEqualTo
 import com.github.tomakehurst.wiremock.client.WireMock.equalToJson
-import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor
 import com.github.tomakehurst.wiremock.client.WireMock.put
@@ -17,7 +16,7 @@ import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.TestUtil
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentType
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentApiType
 import java.util.UUID
 
 class HmppsDocumentManagementApiExtension :
@@ -51,7 +50,7 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
 
   fun stubUploadDocument() {
     stubFor(
-      post(urlMatching("/documents/${DocumentType.PRISON_COURT_REGISTER}/[a-z0-9A-Z|-]{36}"))
+      post(urlMatching("/documents/${DocumentApiType.PRISON_COURT_REGISTER}/[a-z0-9A-Z|-]{36}"))
         .willReturn(
           aResponse()
             .withHeader("Content-Type", "application/json")
@@ -76,7 +75,7 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
   fun verifyUploadedDocument(
     didHappenXTimes: Int = 1,
     withUuid: String = "[a-z0-9A-Z|-]{36}",
-    withType: DocumentType = DocumentType.PRISON_COURT_REGISTER,
+    withType: DocumentApiType = DocumentApiType.PRISON_COURT_REGISTER,
     fileWasUploaded: ByteArray = ByteArray(0),
     withMetadata: Map<String, String> = mapOf(),
     withFilename: String = "file.txt",
