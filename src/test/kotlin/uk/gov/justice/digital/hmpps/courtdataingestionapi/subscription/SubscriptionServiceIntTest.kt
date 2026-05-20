@@ -24,7 +24,7 @@ class SubscriptionServiceIntTest : IntegrationTestBase() {
   lateinit var secretsManagerService: SecretsManagerService
 
   @Test
-  fun `should create subscribe on startup if none exists`() {
+  fun `should create subscription on startup if none exists`() {
     val subscriptions = subscriptionRepository.findAll()
 
     assertThat(subscriptions).hasSize(1)
@@ -32,7 +32,7 @@ class SubscriptionServiceIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should update subscribe on startup if one exists`() {
+  fun `should update subscription on startup if one exists`() {
     val subscription = subscriptionRepository.findAll()[0]
     val created = subscription.subscribedAt
 
