@@ -27,7 +27,7 @@ class SubscriptionService(
       val subscriptionResponse = hmctsSubscriptionApiClient.createSubscription(
         subscriptionRequest(),
         subscriptionCallbackConfig.subscriptionKey,
-        xCorrelationId
+        xCorrelationId,
       )
       subscriptionRepository.save(
         Subscription(

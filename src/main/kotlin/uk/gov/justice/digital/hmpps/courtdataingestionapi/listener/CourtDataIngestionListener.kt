@@ -38,7 +38,7 @@ class CourtDataIngestionListener(
       val message = objectMapper.readValue<HmctsSubscriptionNotificationRequestBody>(rawMessage)
       courtDataIngestionService.receiveMessage(message, xCorrelationId)
     } finally {
-        MDC.remove(X_CORRELATION_ID_HEADER)
+      MDC.remove(X_CORRELATION_ID_HEADER)
     }
   }
 }
