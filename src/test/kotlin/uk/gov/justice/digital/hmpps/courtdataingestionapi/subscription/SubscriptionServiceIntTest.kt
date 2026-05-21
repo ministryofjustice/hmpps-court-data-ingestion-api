@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.H
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.SubscriptionRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.SecretsManagerService
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.SubscriptionService
+import java.util.UUID
 
 class SubscriptionServiceIntTest : IntegrationTestBase() {
 
@@ -36,7 +37,7 @@ class SubscriptionServiceIntTest : IntegrationTestBase() {
     val subscription = subscriptionRepository.findAll()[0]
     val created = subscription.subscribedAt
 
-    subscriptionService.subscribe()
+    subscriptionService.subscribe(UUID.randomUUID())
 
     val subscriptions = subscriptionRepository.findAll()
 

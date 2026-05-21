@@ -13,9 +13,10 @@ import java.util.UUID
 @Component
 class HmctsSubscriptionApiClient(@Qualifier("hmctsSubscriptionApiWebClient") private val webClient: WebClient) {
 
-  fun createSubscription(request: SubscriptionRequest, subscriptionKey: String): SubscriptionCreatedResponse = webClient.post()
+  fun createSubscription(request: SubscriptionRequest, subscriptionKey: String, xCorrelationId: UUID): SubscriptionCreatedResponse = webClient.post()
     .uri("/client-subscriptions")
     .header(SUBSCRIPTION_KEY_HEADER, subscriptionKey)
+    .header(X_CORRELATION_ID_HEADER, xCorrelationId.toString())
     .bodyValue(request)
     .retrieve()
     .bodyToMono(SubscriptionCreatedResponse::class.java)
@@ -25,17 +26,20 @@ class HmctsSubscriptionApiClient(@Qualifier("hmctsSubscriptionApiWebClient") pri
     request: SubscriptionRequest,
     subscriptionKey: String,
     subscriptionId: String,
+    xCorrelationId: UUID,
   ): SubscriptionUpdatedResponse = webClient.put()
     .uri("/client-subscriptions/$subscriptionId")
     .header(SUBSCRIPTION_KEY_HEADER, subscriptionKey)
+    .header(X_CORRELATION_ID_HEADER, xCorrelationId.toString())
     .bodyValue(request)
     .retrieve()
     .bodyToMono(SubscriptionUpdatedResponse::class.java)
     .block()!!
 
-  fun getFile(clientSubscriptionId: String, externalFileId: UUID, subscriptionKey: String): HmctsFile = webClient.get()
+  fun getFile(clientSubscriptionId: String, externalFileId: UUID, subscriptionKey: String, xCorrelationId: UUID): HmctsFile = webClient.get()
     .uri("/client-subscriptions/$clientSubscriptionId/documents/$externalFileId")
     .header(SUBSCRIPTION_KEY_HEADER, subscriptionKey)
+    .header(X_CORRELATION_ID_HEADER, xCorrelationId.toString())
     .retrieve()
     .toEntity(ByteArray::class.java)
     .map { response ->
@@ -57,5 +61,6 @@ class HmctsSubscriptionApiClient(@Qualifier("hmctsSubscriptionApiWebClient") pri
 
   companion object {
     const val SUBSCRIPTION_KEY_HEADER = "Ocp-Apim-Subscription-Key"
+    const val X_CORRELATION_ID_HEADER = "X-Correlation-Id"
   }
 }
