@@ -95,7 +95,10 @@ management:
     web:
       base-path: /
       exposure:
-        include: 'info, health', 'extraction-backfill'
+        include:
+          - info
+          - health
+          - extraction-backfill
   endpoint:
     health:
       cache:
