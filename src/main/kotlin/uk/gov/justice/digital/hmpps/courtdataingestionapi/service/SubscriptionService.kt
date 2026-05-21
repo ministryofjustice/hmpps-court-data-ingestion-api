@@ -42,7 +42,7 @@ class SubscriptionService(
         subscriptionRequest(),
         subscriptionCallbackConfig.subscriptionKey,
         subscription.id,
-        xCorrelationId
+        xCorrelationId,
       )
       subscription.updatedAt = LocalDateTime.now()
 
