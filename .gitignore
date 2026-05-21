@@ -74,3 +74,6 @@ sonar-project.properties
 
 #Everything else:
 .DS_Store
+
+# Sensitive court-register sample PDFs used only for local extraction testing
+src/test/resources/local-samples/*.pdf

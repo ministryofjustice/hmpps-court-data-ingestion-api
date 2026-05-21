@@ -5,11 +5,13 @@ import com.github.tomakehurst.wiremock.client.WireMock.aMultipart
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.binaryEqualTo
 import com.github.tomakehurst.wiremock.client.WireMock.equalToJson
+import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor
 import com.github.tomakehurst.wiremock.client.WireMock.put
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import com.github.tomakehurst.wiremock.client.WireMock.urlMatching
+import com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
@@ -29,9 +31,10 @@ class HmppsDocumentManagementApiExtension :
   }
 
   override fun beforeAll(context: ExtensionContext) {
+    hmppsDocumentManagementApi.start()
     hmppsDocumentManagementApi.stubUploadDocument()
     hmppsDocumentManagementApi.stubUpdateMetadata()
-    hmppsDocumentManagementApi.start()
+    hmppsDocumentManagementApi.stubDownloadFile()
   }
 
   override fun beforeEach(context: ExtensionContext) {
@@ -68,6 +71,22 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
             .withHeader("Content-Type", "application/json")
             .withBody(happyResponse)
             .withStatus(200),
+        ),
+    )
+  }
+
+  fun stubDownloadFile(
+    fileBytes: ByteArray = "test file contents".toByteArray(),
+    contentType: String = "application/pdf",
+  ) {
+    stubFor(
+      get(urlPathMatching("/documents/[a-zA-Z0-9\\-]{36}/file"))
+        .willReturn(
+          aResponse()
+            .withStatus(200)
+            .withHeader("Content-Type", contentType)
+            .withHeader("Content-Disposition", "attachment; filename=\"test.pdf\"")
+            .withBody(fileBytes),
         ),
     )
   }

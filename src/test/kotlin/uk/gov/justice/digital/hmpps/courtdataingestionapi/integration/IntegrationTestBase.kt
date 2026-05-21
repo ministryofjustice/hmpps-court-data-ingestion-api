@@ -114,7 +114,7 @@ abstract class IntegrationTestBase {
           HmctsCase("Case123"),
           HmctsCase("Case456"),
         ),
-        prisonEmailAddress = "prison@aol.com",
+        prisonEmailAddress = "prison.email@example.com",
         documentGeneratedTimestamp = LocalDateTime.now().minusMinutes(1).withNano(0),
       )
     courtDataIngestionQueue.sqsClient.sendMessage(
