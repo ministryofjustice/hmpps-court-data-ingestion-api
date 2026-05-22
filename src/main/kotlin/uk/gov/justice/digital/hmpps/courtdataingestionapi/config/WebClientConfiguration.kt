@@ -82,7 +82,7 @@ class WebClientConfiguration(
         return UUID.fromString(convertCorrelationId(traceId))
       } catch (err: IllegalArgumentException) {
         UUID.randomUUID().let {
-          log.info("Using {}=[{}]. Cause was wrong Trace Id format :: {}", X_CORRELATION_ID_HEADER, it, err.message)
+          log.info("Using {}=[{}]. Caused by Trace Id wrong format :: {}", X_CORRELATION_ID_HEADER, it, err.message)
           return it
         }
       }
