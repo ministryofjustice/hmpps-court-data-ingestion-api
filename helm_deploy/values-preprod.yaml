@@ -18,6 +18,7 @@ generic-service:
     HMCTS_AUTH_URL: "https://login.microsoftonline.com/77f54315-6dde-4fe7-9e17-74762c3eb096"
     HMCTS_UPDATE_SUBSCRIPTION_ON_STARTUP: true
     HMCTS_EVENT_TYPES: "PRISON_COURT_REGISTER_GENERATED"
+    HMCTS_SUBSCRIPTION_ENABLED: false
 
 # CloudPlatform AlertManager receiver to route prometheus alerts to slack
 # See https://user-guide.cloud-platform.service.justice.gov.uk/documentation/monitoring-an-app/how-to-create-alarms.html#creating-your-own-custom-alerts

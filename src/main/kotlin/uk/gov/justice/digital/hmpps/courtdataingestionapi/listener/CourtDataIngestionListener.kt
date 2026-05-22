@@ -3,10 +3,14 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.listener
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.awspring.cloud.sqs.annotation.SqsListener
+import io.opentelemetry.api.trace.Span
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
+import org.springframework.messaging.MessageHeaders
+import org.springframework.messaging.handler.annotation.Headers
 import org.springframework.stereotype.Service
+import software.amazon.awssdk.services.sqs.model.Message
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmctsSubscriptionApiClient.Companion.X_CORRELATION_ID_HEADER
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtDataIngestionService
@@ -29,8 +33,13 @@ class CourtDataIngestionListener(
   )
   fun onMessage(
     rawMessage: String,
+    @Headers headers: MessageHeaders
   ) {
     try {
+      log.info("**************************************************************************")
+      log.info("TANQ:: Received message with Header.Sqs_SourceData.messageId=[{}]", (headers["Sqs_SourceData"] as Message).messageId())
+      log.info("TANQ:: Received message with Span.traceId=[{}]", Span.current().spanContext.traceId)
+      log.info("**************************************************************************")
       val xCorrelationId: UUID = UUID.randomUUID()
       MDC.put(X_CORRELATION_ID_HEADER, xCorrelationId.toString())
 

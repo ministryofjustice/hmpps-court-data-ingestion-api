@@ -95,7 +95,10 @@ management:
     web:
       base-path: /
       exposure:
-        include: 'info, health'
+        include:
+          - info
+          - health
+          - extraction-backfill
   endpoint:
     health:
       cache:
@@ -109,6 +112,7 @@ management:
         time-to-live: 2000ms
 
 subscription-callback-config:
+  enabled: ${HMCTS_SUBSCRIPTION_ENABLED}
   callback-url: ${HMCTS_SUBSCRIPTION_CALLBACK_URL}
   subscription-key: ${HMCTS_SUBSCRIPTION_KEY}
   event-types: ${HMCTS_EVENT_TYPES}
