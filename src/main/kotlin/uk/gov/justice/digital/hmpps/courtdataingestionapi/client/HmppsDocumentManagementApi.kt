@@ -70,7 +70,7 @@ class HmppsDocumentManagementApi(
     .uri("/documents/$documentId/file")
     .header("Service-Name", appName)
     .header("Username", SYSTEM_USERNAME)
-    .accept(MediaType.APPLICATION_OCTET_STREAM)
+    .accept(MediaType.APPLICATION_PDF)
     .retrieve()
     .rethrowAnyHttpErrorWithContext { response, body ->
       "Error downloading document file (UUID=$documentId, StatusCode=${response.statusCode().value()}, Response=$body)"
