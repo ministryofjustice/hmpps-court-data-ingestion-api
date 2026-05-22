@@ -6,8 +6,6 @@ import io.awspring.cloud.sqs.annotation.SqsListener
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
-import org.springframework.messaging.MessageHeaders
-import org.springframework.messaging.handler.annotation.Headers
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.config.WebClientConfiguration.Companion.X_CORRELATION_ID_HEADER
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
@@ -30,7 +28,7 @@ class CourtDataIngestionListener(
     factory = "hmppsQueueContainerFactoryProxy",
   )
   fun onMessage(
-    rawMessage: String
+    rawMessage: String,
   ) {
     try {
       log.debug("Received message {}", rawMessage)
