@@ -31,6 +31,8 @@ dependencies {
 
   // Open API
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14")
+  // Spatial PDF text extraction for the court-register engine.
+  implementation("org.apache.pdfbox:pdfbox:3.0.4")
 
   testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:1.8.2")
   testImplementation("io.jsonwebtoken:jjwt-impl:0.13.0")
@@ -55,4 +57,23 @@ tasks {
   withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     compilerOptions.jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_24
   }
+}
+
+// Keep sensitive, local-only tests (e.g. extraction over real PDFs) out of the CI build.
+tasks.named<Test>("test") {
+  useJUnitPlatform {
+    excludeTags("local")
+  }
+}
+
+tasks.register<Test>("localTest") {
+  description = "Runs local-only tests (e.g. extraction over sensitive sample PDFs)."
+  group = "verification"
+  testClassesDirs = sourceSets["test"].output.classesDirs
+  classpath = sourceSets["test"].runtimeClasspath
+  useJUnitPlatform {
+    includeTags("local")
+  }
+  System.getProperty("extractionSampleDir")?.let { systemProperty("extractionSampleDir", it) }
+  shouldRunAfter("test")
 }
