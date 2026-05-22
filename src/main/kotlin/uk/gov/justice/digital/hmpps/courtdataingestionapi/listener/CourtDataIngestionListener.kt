@@ -30,8 +30,7 @@ class CourtDataIngestionListener(
     factory = "hmppsQueueContainerFactoryProxy",
   )
   fun onMessage(
-    rawMessage: String,
-    @Headers headers: MessageHeaders
+    rawMessage: String
   ) {
     try {
       log.debug("Received message {}", rawMessage)
@@ -41,8 +40,6 @@ class CourtDataIngestionListener(
       MDC.remove(X_CORRELATION_ID_HEADER)
     }
   }
-
-
 }
 
 data class HmctsSubscriptionNotificationRequestBody(
