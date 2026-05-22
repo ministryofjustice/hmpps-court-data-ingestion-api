@@ -5,9 +5,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import io.awspring.cloud.sqs.annotation.SqsListener
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.slf4j.MDC
 import org.springframework.stereotype.Service
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.config.WebClientConfiguration.Companion.X_CORRELATION_ID_HEADER
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtDataIngestionService
 import java.time.LocalDateTime
@@ -30,13 +28,9 @@ class CourtDataIngestionListener(
   fun onMessage(
     rawMessage: String,
   ) {
-    try {
-      log.debug("Received message {}", rawMessage)
-      val message = objectMapper.readValue<HmctsSubscriptionNotificationRequestBody>(rawMessage)
-      courtDataIngestionService.receiveMessage(message)
-    } finally {
-      MDC.remove(X_CORRELATION_ID_HEADER)
-    }
+    log.debug("Received message {}", rawMessage)
+    val message = objectMapper.readValue<HmctsSubscriptionNotificationRequestBody>(rawMessage)
+    courtDataIngestionService.receiveMessage(message)
   }
 }
 

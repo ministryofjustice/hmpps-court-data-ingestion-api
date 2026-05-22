@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.config
 
 import io.opentelemetry.api.trace.Span
-import org.jboss.logging.MDC
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -83,8 +82,7 @@ class WebClientConfiguration(
         return UUID.fromString(convertCorrelationId(traceId))
       } catch (err: IllegalArgumentException) {
         UUID.randomUUID().let {
-          log.warn("Wrong Trace Id format :: {}", err.message)
-          MDC.put(X_CORRELATION_ID_HEADER, it)
+          log.info("Using {}=[{}]. Cause was wrong Trace Id format :: {}", X_CORRELATION_ID_HEADER, it, err.message)
           return it
         }
       }

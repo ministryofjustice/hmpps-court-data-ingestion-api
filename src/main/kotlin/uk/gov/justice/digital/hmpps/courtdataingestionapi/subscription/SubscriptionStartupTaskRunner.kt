@@ -1,13 +1,11 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.subscription
 
 import org.slf4j.LoggerFactory
-import org.slf4j.MDC
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.event.EventListener
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.config.WebClientConfiguration.Companion.X_CORRELATION_ID_HEADER
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.StartupLock
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.StartupLockRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.SubscriptionService
@@ -35,7 +33,6 @@ class SubscriptionStartupTaskRunner(
       log.info("Lock acquired")
     } catch (ex: DataIntegrityViolationException) {
       log.info("Another pod already holds the lock. Skipping startup task.")
-      MDC.remove(X_CORRELATION_ID_HEADER)
       return
     }
 
@@ -44,7 +41,6 @@ class SubscriptionStartupTaskRunner(
     } finally {
       lockRepository.deleteById(LOCK_NAME)
       log.info("Lock released")
-      MDC.remove(X_CORRELATION_ID_HEADER)
     }
   }
 }
