@@ -2,12 +2,13 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.config
 
 import io.opentelemetry.api.trace.Span
 import org.jboss.logging.MDC
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager
 import org.springframework.web.reactive.function.client.WebClient
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.CourtDataIngestionListener.Companion.log
 import uk.gov.justice.hmpps.kotlin.auth.authorisedWebClient
 import uk.gov.justice.hmpps.kotlin.auth.healthWebClient
 import java.time.Duration
@@ -73,6 +74,8 @@ class WebClientConfiguration(
     const val TRACE_ID_EMPTY = "00000000000000000000000000000000"
     const val X_CORRELATION_ID_REGEX = "([0-9a-fA-F]{8})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]+)"
     const val X_CORRELATION_ID_RESULT_TEMPLATE = "$1-$2-$3-$4-$5"
+
+    val log: Logger = LoggerFactory.getLogger(this::class.java)
 
     fun getCorrelationId(): UUID {
       try {
