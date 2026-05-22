@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.extraction.ExtractionBackfillService
 
 @Component
-@Endpoint(id = "extraction-backfill")
+@Endpoint(id = "extractionbackfill")
 class ExtractionBackfillEndpoint(
   private val backfillService: ExtractionBackfillService,
 ) {

@@ -98,7 +98,7 @@ management:
         include:
           - info
           - health
-          - extraction-backfill
+          - extractionbackfill
   endpoint:
     health:
       cache:
