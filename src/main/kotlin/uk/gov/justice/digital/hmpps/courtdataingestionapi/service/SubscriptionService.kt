@@ -21,29 +21,33 @@ class SubscriptionService(
 
   @Transactional
   fun subscribe() {
-    val subscription = subscriptionRepository.findAll().firstOrNull()
-    if (subscription == null) {
-      val subscriptionResponse = hmctsSubscriptionApiClient.createSubscription(
-        subscriptionRequest(),
-        subscriptionCallbackConfig.subscriptionKey,
-      )
-      subscriptionRepository.save(
-        Subscription(
-          id = subscriptionResponse.clientSubscriptionId,
-        ),
-      )
-      secretsManagerService.setSecretValue(subscriptionResponse.hmac.secret)
+    if (subscriptionCallbackConfig.enabled) {
+      val subscription = subscriptionRepository.findAll().firstOrNull()
+      if (subscription == null) {
+        val subscriptionResponse = hmctsSubscriptionApiClient.createSubscription(
+          subscriptionRequest(),
+          subscriptionCallbackConfig.subscriptionKey,
+        )
+        subscriptionRepository.save(
+          Subscription(
+            id = subscriptionResponse.clientSubscriptionId,
+          ),
+        )
+        secretsManagerService.setSecretValue(subscriptionResponse.hmac.secret)
 
-      log.info("Subscription created")
-    } else if (subscriptionCallbackConfig.updateSubscriptionOnStartup) {
-      val subscriptionResponse = hmctsSubscriptionApiClient.updateSubscription(
-        subscriptionRequest(),
-        subscriptionCallbackConfig.subscriptionKey,
-        subscription.id,
-      )
-      subscription.updatedAt = LocalDateTime.now()
+        log.info("Subscription created")
+      } else if (subscriptionCallbackConfig.updateSubscriptionOnStartup) {
+        val subscriptionResponse = hmctsSubscriptionApiClient.updateSubscription(
+          subscriptionRequest(),
+          subscriptionCallbackConfig.subscriptionKey,
+          subscription.id,
+        )
+        subscription.updatedAt = LocalDateTime.now()
 
-      log.info("Subscription updated")
+        log.info("Subscription updated")
+      }
+    } else {
+      log.info("Subscription disabled")
     }
   }
 
