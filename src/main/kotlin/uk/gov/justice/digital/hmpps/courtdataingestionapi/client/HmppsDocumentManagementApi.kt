@@ -68,10 +68,8 @@ class HmppsDocumentManagementApi(
   fun downloadFile(documentId: UUID): ByteArray = webClient
     .get()
     .uri("/documents/$documentId/file")
-    .headers {
-      it.add("Service-Name", appName) // from spring.application.name
-      it.add("Username", SYSTEM_USERNAME)
-    }
+    .header("Service-Name", appName)
+    .header("Username", SYSTEM_USERNAME)
     .accept(MediaType.APPLICATION_OCTET_STREAM)
     .retrieve()
     .rethrowAnyHttpErrorWithContext { response, body ->
