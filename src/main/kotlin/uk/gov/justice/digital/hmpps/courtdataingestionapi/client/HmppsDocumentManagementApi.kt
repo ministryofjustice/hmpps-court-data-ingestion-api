@@ -23,12 +23,16 @@ class HmppsDocumentManagementApi(@Qualifier("hmppsDocumentManagementApiWebClient
   ): Document {
     log.info("Uploading document: $file")
     val documentUuid = UUID.randomUUID().toString()
+
+    val contentType = file.contentType?.takeIf { it.isNotBlank() }
+      ?: MediaType.APPLICATION_OCTET_STREAM_VALUE
+
     val prisonDocument = webClient.post()
       .uri("/documents/$documentType/$documentUuid")
       .header("Service-Name", "court-data-ingestion-api")
       .bodyValue(
         MultipartBodyBuilder().apply {
-          part("file", ByteArrayResource(file.bytes), MediaType.valueOf(file.contentType)).filename(file.originalFilename)
+          part("file", ByteArrayResource(file.bytes), MediaType.valueOf(contentType)).filename(file.originalFilename)
           part("metadata", metadata)
         }.build(),
       )
@@ -54,6 +58,15 @@ class HmppsDocumentManagementApi(@Qualifier("hmppsDocumentManagementApiWebClient
     .retrieve()
     .bodyToMono(Document::class.java)
     .block()!!
+
+  fun downloadFile(documentId: UUID): ByteArray = webClient
+    .get()
+    .uri("/documents/$documentId/file")
+    .header("Service-Name", "court-data-ingestion-api")
+    .accept(MediaType.APPLICATION_PDF)
+    .retrieve()
+    .bodyToMono(ByteArray::class.java)
+    .block() ?: error("No file bytes returned for document $documentId")
 
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
