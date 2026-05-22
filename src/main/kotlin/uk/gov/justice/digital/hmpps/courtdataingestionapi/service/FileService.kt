@@ -19,10 +19,10 @@ class FileService(
   private val subscriptionCallbackConfig: SubscriptionCallbackConfig,
 ) {
 
-  fun ingestFile(courtDocumentId: UUID, documentType: DocumentApiType, xCorrelationId: UUID): Document {
+  fun ingestFile(courtDocumentId: UUID, documentType: DocumentApiType): Document {
     val subscription = subscriptionRepository.findAll()[0]
 
-    val file = hmctsSubscriptionApiClient.getFile(subscription.id, courtDocumentId, subscriptionCallbackConfig.subscriptionKey, xCorrelationId)
+    val file = hmctsSubscriptionApiClient.getFile(subscription.id, courtDocumentId, subscriptionCallbackConfig.subscriptionKey)
 
     return hmppsDocumentManagementApi.uploadDocument(
       documentType,

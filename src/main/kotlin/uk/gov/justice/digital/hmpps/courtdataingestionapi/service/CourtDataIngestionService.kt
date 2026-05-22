@@ -31,8 +31,8 @@ class CourtDataIngestionService(
 ) {
   private val eventTopic by lazy { hmppsQueueService.findByTopicId("domainevents") as HmppsTopic }
 
-  fun receiveMessage(message: HmctsSubscriptionNotificationRequestBody, xCorrelationId: UUID) {
-    val prisonDocument = fileService.ingestFile(message.documentId, message.eventType.documentType.documentApiType, xCorrelationId)
+  fun receiveMessage(message: HmctsSubscriptionNotificationRequestBody) {
+    val prisonDocument = fileService.ingestFile(message.documentId, message.eventType.documentType.documentApiType)
     val courtDocumentEntity = courtDocumentRepository.save(
       CourtDocumentEntity(
         defendantId = message.masterDefendantId,

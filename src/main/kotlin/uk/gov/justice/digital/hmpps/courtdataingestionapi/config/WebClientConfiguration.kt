@@ -1,13 +1,18 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.config
 
+import io.opentelemetry.api.trace.Span
+import org.jboss.logging.MDC
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager
 import org.springframework.web.reactive.function.client.WebClient
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.CourtDataIngestionListener.Companion.log
 import uk.gov.justice.hmpps.kotlin.auth.authorisedWebClient
 import uk.gov.justice.hmpps.kotlin.auth.healthWebClient
 import java.time.Duration
+import java.util.UUID
+import java.util.regex.Pattern
 
 @Configuration
 class WebClientConfiguration(
@@ -62,4 +67,30 @@ class WebClientConfiguration(
     "hmcts-subscription-api",
     hmctsSubscriptionApiUrl,
   )
+
+  companion object {
+    const val X_CORRELATION_ID_HEADER = "X-Correlation-Id"
+    const val TRACE_ID_EMPTY = "00000000000000000000000000000000"
+    const val X_CORRELATION_ID_REGEX = "([0-9a-fA-F]{8})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]+)"
+    const val X_CORRELATION_ID_RESULT_TEMPLATE = "$1-$2-$3-$4-$5"
+
+    fun getCorrelationId(): UUID {
+      try {
+        val traceId = Span.current().spanContext.traceId
+        return UUID.fromString(convertCorrelationId(traceId))
+      } catch (err: IllegalArgumentException) {
+        UUID.randomUUID().let {
+          log.warn("Wrong Trace Id format :: {}", err.message)
+          MDC.put(X_CORRELATION_ID_HEADER, it)
+          return it
+        }
+      }
+    }
+
+    fun convertCorrelationId(traceId: String): String {
+      if (traceId == TRACE_ID_EMPTY) return traceId
+
+      return Pattern.compile(X_CORRELATION_ID_REGEX).matcher(traceId).replaceAll(X_CORRELATION_ID_RESULT_TEMPLATE)
+    }
+  }
 }

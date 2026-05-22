@@ -10,7 +10,6 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.Subscri
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.SubscriptionRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.subscription.SubscriptionCallbackConfig
 import java.time.LocalDateTime
-import java.util.UUID
 
 @Service
 class SubscriptionService(
@@ -21,14 +20,13 @@ class SubscriptionService(
 ) {
 
   @Transactional
-  fun subscribe(xCorrelationId: UUID) {
+  fun subscribe() {
     if (subscriptionCallbackConfig.enabled) {
       val subscription = subscriptionRepository.findAll().firstOrNull()
       if (subscription == null) {
         val subscriptionResponse = hmctsSubscriptionApiClient.createSubscription(
           subscriptionRequest(),
           subscriptionCallbackConfig.subscriptionKey,
-          xCorrelationId,
         )
         subscriptionRepository.save(
           Subscription(
@@ -43,7 +41,6 @@ class SubscriptionService(
           subscriptionRequest(),
           subscriptionCallbackConfig.subscriptionKey,
           subscription.id,
-          xCorrelationId,
         )
         subscription.updatedAt = LocalDateTime.now()
 
