@@ -31,7 +31,6 @@ class HmppsDocumentManagementApiExtension :
     val hmppsDocumentManagementApi = HmppsDocumentManagementApiMockServer()
   }
 
-
   override fun beforeAll(context: ExtensionContext) {
     hmppsDocumentManagementApi.start()
     hmppsDocumentManagementApi.stubUploadDocument()
