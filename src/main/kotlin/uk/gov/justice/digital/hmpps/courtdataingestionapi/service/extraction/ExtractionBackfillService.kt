@@ -20,7 +20,7 @@ class ExtractionBackfillService(
   @Value("\${extraction.backfill.batch-size:500}") private val batchSize: Int,
   @Value("\${extraction.backfill.concurrency:4}") private val concurrency: Int,
   @Value("\${extraction.backfill.ingested-from:1970-01-01T00:00:00Z}") ingestedFromIso: String,
-  ) {
+) {
   private val running = AtomicBoolean(false)
   private val ingestedFrom: Instant = Instant.parse(ingestedFromIso)
 
@@ -42,7 +42,8 @@ class ExtractionBackfillService(
           model.version,
           extractorVersion,
           ingestedFrom,
-          batchSize)
+          batchSize,
+        )
         if (batch.isEmpty()) break
         val futures = batch.map { id ->
           CompletableFuture.runAsync(
