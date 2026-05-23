@@ -117,3 +117,7 @@ subscription-callback-config:
   subscription-key: ${HMCTS_SUBSCRIPTION_KEY}
   event-types: ${HMCTS_EVENT_TYPES}
   update-subscription-on-startup: ${HMCTS_UPDATE_SUBSCRIPTION_ON_STARTUP}
+
+extraction:
+  backfill:
+    ingested-from: "2026-05-18T16:38:15Z"

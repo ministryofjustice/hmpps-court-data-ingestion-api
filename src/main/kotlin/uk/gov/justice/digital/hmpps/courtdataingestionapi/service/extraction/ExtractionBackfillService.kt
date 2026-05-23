@@ -9,14 +9,8 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Instant
 
-/**
- * Reprocesses the back-catalogue. Backfill, re-template (new format version) and re-parse (new
- * extractor version) are the same operation: drain the documents lacking a result at the active
- * versions. At a few tens of thousands of documents this is minutes, so it is a bounded-concurrency
- * loop, not a queue fan-out. Resumable, because each pass re-queries and completed/FAILED rows drop
- * out. Safe to overlap with live traffic because ExtractionService is idempotent.
- */
 @Service
 class ExtractionBackfillService(
   private val repository: ExtractionResultRepository,
@@ -25,8 +19,10 @@ class ExtractionBackfillService(
   @Value("\${extraction.extractor-version:dev}") private val extractorVersion: String,
   @Value("\${extraction.backfill.batch-size:500}") private val batchSize: Int,
   @Value("\${extraction.backfill.concurrency:4}") private val concurrency: Int,
-) {
+  @Value("\${extraction.backfill.ingested-from:1970-01-01T00:00:00Z}") ingestedFromIso: String,
+  ) {
   private val running = AtomicBoolean(false)
+  private val ingestedFrom: Instant = Instant.parse(ingestedFromIso)
 
   /** @return false if a backfill is already running on this pod. */
   fun runBackfill(): Boolean {
@@ -37,10 +33,16 @@ class ExtractionBackfillService(
     val model = formatModels.active()
     val pool = Executors.newFixedThreadPool(concurrency)
     val processed = AtomicInteger()
+
     try {
       log.info("Backfill starting for {} v{} extractor={}", model.id, model.version, extractorVersion)
       while (true) {
-        val batch = repository.findDocumentIdsMissingExtraction(model.id, model.version, extractorVersion, batchSize)
+        val batch = repository.findDocumentIdsMissingExtraction(
+          model.id,
+          model.version,
+          extractorVersion,
+          ingestedFrom,
+          batchSize)
         if (batch.isEmpty()) break
         val futures = batch.map { id ->
           CompletableFuture.runAsync(

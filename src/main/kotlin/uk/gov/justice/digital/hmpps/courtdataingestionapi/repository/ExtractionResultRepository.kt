@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.ExtractionResultEntity
 import java.util.UUID
+import kotlin.time.Instant
 
 interface ExtractionResultRepository : JpaRepository<ExtractionResultEntity, UUID> {
 
@@ -27,6 +28,7 @@ interface ExtractionResultRepository : JpaRepository<ExtractionResultEntity, UUI
        AND e.format_version = :formatVersion
        AND e.extractor_version = :extractorVersion
       WHERE e.id IS NULL
+        AND cd.ingestion_at >= :ingestedFrom
       LIMIT :limit
     """,
     nativeQuery = true,
@@ -35,6 +37,7 @@ interface ExtractionResultRepository : JpaRepository<ExtractionResultEntity, UUI
     @Param("formatId") formatId: String,
     @Param("formatVersion") formatVersion: Int,
     @Param("extractorVersion") extractorVersion: String,
+    @Param("ingestedFrom") ingestedFrom: Instant,
     @Param("limit") limit: Int,
   ): List<UUID>
 }
