@@ -38,36 +38,49 @@ class ExtractionService(
     val bytes = documentApi.downloadFile(documentId)
     val sha = sha256(bytes)
 
-    val entity = runCatching {
-      val out = pipeline.extract(ByteArrayInputStream(bytes), documentId.toString(), model)
+    val entity = if (!bytes.looksLikePdf()) {
+      log.warn("Skipping non-PDF document {} (missing %PDF- signature)", documentId)
       ExtractionResultEntity(
         documentId = documentId,
         contentSha256 = sha,
         formatId = model.id,
         formatVersion = model.version,
         extractorVersion = extractorVersion,
-        status = "OK",
-        pageCount = out.pageCount,
-        fieldCount = out.fieldCount,
-        result = objectMapper.writeValueAsString(
-          mapOf(
-            "header" to out.headerFields,
-            "offences" to out.offenceBlocks,
-            "labelSignature" to out.labelSignature,
+        status = "SKIPPED_NON_PDF",
+        result = objectMapper.writeValueAsString(mapOf("reason" to "missing %PDF- signature")),
+      )
+    } else {
+      runCatching {
+        val out = pipeline.extract(ByteArrayInputStream(bytes), documentId.toString(), model)
+        ExtractionResultEntity(
+          documentId = documentId,
+          contentSha256 = sha,
+          formatId = model.id,
+          formatVersion = model.version,
+          extractorVersion = extractorVersion,
+          status = "OK",
+          pageCount = out.pageCount,
+          fieldCount = out.fieldCount,
+          result = objectMapper.writeValueAsString(
+            mapOf(
+              "header" to out.headerFields,
+              "offences" to out.offenceBlocks,
+              "labelSignature" to out.labelSignature,
+            ),
           ),
-        ),
-      )
-    }.getOrElse { ex ->
-      log.warn("Extraction failed for document {}", documentId, ex)
-      ExtractionResultEntity(
-        documentId = documentId,
-        contentSha256 = sha,
-        formatId = model.id,
-        formatVersion = model.version,
-        extractorVersion = extractorVersion,
-        status = "FAILED",
-        result = objectMapper.writeValueAsString(mapOf("error" to (ex.message ?: ex.javaClass.simpleName))),
-      )
+        )
+      }.getOrElse { ex ->
+        log.warn("Extraction failed for document {}", documentId, ex)
+        ExtractionResultEntity(
+          documentId = documentId,
+          contentSha256 = sha,
+          formatId = model.id,
+          formatVersion = model.version,
+          extractorVersion = extractorVersion,
+          status = "FAILED",
+          result = objectMapper.writeValueAsString(mapOf("error" to (ex.message ?: ex.javaClass.simpleName))),
+        )
+      }
     }
 
     return try {

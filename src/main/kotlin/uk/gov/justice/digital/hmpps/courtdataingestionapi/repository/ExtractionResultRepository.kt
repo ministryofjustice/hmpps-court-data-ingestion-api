@@ -4,8 +4,8 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.ExtractionResultEntity
+import java.time.Instant
 import java.util.UUID
-import kotlin.time.Instant
 
 interface ExtractionResultRepository : JpaRepository<ExtractionResultEntity, UUID> {
 

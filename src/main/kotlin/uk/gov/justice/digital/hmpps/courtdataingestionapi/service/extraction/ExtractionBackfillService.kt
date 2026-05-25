@@ -5,11 +5,11 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.extraction.format.FormatModelRegistry
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.ExtractionResultRepository
+import java.time.Instant
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.time.Instant
 
 @Service
 class ExtractionBackfillService(
