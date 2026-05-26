@@ -16,8 +16,6 @@ interface ExtractionResultRepository : JpaRepository<ExtractionResultEntity, UUI
     extractorVersion: String,
   ): ExtractionResultEntity?
 
-  fun findByDocumentId(documentId: UUID): List<ExtractionResultEntity>
-
   @Query(
     value = """
       SELECT DISTINCT cd.prison_document_id
@@ -27,8 +25,11 @@ interface ExtractionResultRepository : JpaRepository<ExtractionResultEntity, UUI
        AND e.format_id = :formatId
        AND e.format_version = :formatVersion
        AND e.extractor_version = :extractorVersion
-      WHERE e.id IS NULL
-        AND cd.ingestion_at >= :ingestedFrom
+      WHERE cd.ingestion_at >= :ingestedFrom
+        AND (
+          e.id IS NULL
+          OR (e.status = 'ERROR' AND e.extracted_at < :retryErrorsBefore)
+        )
       LIMIT :limit
     """,
     nativeQuery = true,
@@ -38,6 +39,9 @@ interface ExtractionResultRepository : JpaRepository<ExtractionResultEntity, UUI
     @Param("formatVersion") formatVersion: Int,
     @Param("extractorVersion") extractorVersion: String,
     @Param("ingestedFrom") ingestedFrom: Instant,
+    @Param("retryErrorsBefore") retryErrorsBefore: Instant,
     @Param("limit") limit: Int,
   ): List<UUID>
+
+  fun findByDocumentId(documentId: UUID): List<ExtractionResultEntity>
 }

@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.extraction.format.FormatModelRegistry
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.ExtractionResultRepository
+import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
@@ -20,9 +21,12 @@ class ExtractionBackfillService(
   @Value("\${extraction.backfill.batch-size:500}") private val batchSize: Int,
   @Value("\${extraction.backfill.concurrency:4}") private val concurrency: Int,
   @Value("\${extraction.backfill.ingested-from:1970-01-01T00:00:00Z}") ingestedFromIso: String,
+  @Value("\${extraction.backfill.error-cooldown:PT3H}") errorCooldownIso: String,
+
 ) {
   private val running = AtomicBoolean(false)
   private val ingestedFrom: Instant = Instant.parse(ingestedFromIso)
+  private val errorCooldown: Duration = Duration.parse(errorCooldownIso)
 
   /** @return false if a backfill is already running on this pod. */
   fun runBackfill(): Boolean {
@@ -42,6 +46,7 @@ class ExtractionBackfillService(
           model.version,
           extractorVersion,
           ingestedFrom,
+          Instant.now().minus(errorCooldown),
           batchSize,
         )
         if (batch.isEmpty()) break
