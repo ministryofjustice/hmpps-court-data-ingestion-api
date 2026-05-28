@@ -42,7 +42,7 @@ class PrisonDocumentNotificationServiceTest : IntegrationTestBase() {
     "1,Mock01,1,false",
     "1,Mock01,-1,false",
   )
-  fun `When court documents have 0 views and based on {prisonId} newDocDateFrom configuration, should return {expected}`(views: Int, prisonId: String?, newDocDateFromAdj: Int, expected: Boolean) {
+  fun `When court documents have {views} views and their linked {prisonId} has newDocDateFrom configured with an adjustment of {newDocDateFromAdj} days, should return {expected}`(views: Int, prisonId: String?, newDocDateFromAdj: Int, expected: Boolean) {
     log.debug("When court documents have [{}] views and their linked prison=[{}] has newDocDateFrom=[{}] configured{}, should return [{}]", views, prisonId, if (prisonId == null) "" else getNewDocNotificationDateFrom(newDocDateFromAdj), if (prisonId == null) "" else (if (newDocDateFromAdj < 0) " in the past" else " in the future"), expected)
     setupPrisonNewDocNotification(prisonId, newDocDateFromAdj)
     val dbCourtDocument = buildTestCourtDocument(views)
