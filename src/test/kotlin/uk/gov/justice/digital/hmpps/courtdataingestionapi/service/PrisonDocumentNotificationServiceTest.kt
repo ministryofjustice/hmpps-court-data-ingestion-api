@@ -18,7 +18,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 @Transactional
-class PrisonDocumentNotificationServiceTest : IntegrationTestBase()  {
+class PrisonDocumentNotificationServiceTest : IntegrationTestBase() {
   @Autowired
   lateinit var notificationConfigRepository: PrisonDocNotificationConfigRepository
 
@@ -49,10 +49,11 @@ class PrisonDocumentNotificationServiceTest : IntegrationTestBase()  {
 
     val result = prisonDocumentNotificationService.isUnread(dbCourtDocument)
 
-    if (expected)
+    if (expected) {
       assertThat(result).isTrue
-    else
+    } else {
       assertThat(result).isFalse
+    }
   }
 
   private fun setupPrisonNewDocNotification(prisonId: String?, newDocDateFromAdj: Int) {
@@ -61,21 +62,20 @@ class PrisonDocumentNotificationServiceTest : IntegrationTestBase()  {
     notificationConfigRepository.save(
       PrisonDocNotificationConfigEntity(
         prisonId,
-        getNewDocNotificationDateFrom(newDocDateFromAdj)
-      )
+        getNewDocNotificationDateFrom(newDocDateFromAdj),
+      ),
     )
   }
 
-  private fun getNewDocNotificationDateFrom(newDocDateFromAdj: Int): LocalDateTime {
-    return LocalDate.now().atStartOfDay().plusDays(newDocDateFromAdj.toLong())
-  }
+  private fun getNewDocNotificationDateFrom(newDocDateFromAdj: Int): LocalDateTime = LocalDate.now().atStartOfDay().plusDays(newDocDateFromAdj.toLong())
 
   private fun buildTestCourtDocument(views: Int): CourtDocumentEntity {
     sendSubscriptionNotification(MATCHING_CORE_PERSON)
     val dbCourtDocument = courtDocumentRepository.findAll()[0]
 
-    if (views <= 0)
+    if (views <= 0) {
       return dbCourtDocument
+    }
 
     sendCourtDocumentViewNotification(dbCourtDocument)
     return courtDocumentRepository.findAll()[0]
