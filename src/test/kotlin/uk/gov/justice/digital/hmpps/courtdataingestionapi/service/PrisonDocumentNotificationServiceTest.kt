@@ -74,6 +74,7 @@ class PrisonDocumentNotificationServiceTest : IntegrationTestBase() {
     val dbCourtDocument = courtDocumentRepository.findAll()[0]
 
     if (views <= 0) {
+      dbCourtDocument.courtDocumentViews = mutableListOf()
       return dbCourtDocument
     }
 
