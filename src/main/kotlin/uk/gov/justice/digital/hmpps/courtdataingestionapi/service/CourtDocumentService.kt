@@ -39,14 +39,12 @@ class CourtDocumentService(
   fun getCourtDocumentsByPersonIdAndPrisonDocumentIds(
     personId: String,
     prisonDocumentIds: List<UUID>,
-  ): List<CourtDocument> {
-    return courtDocumentRepository.findByPrisonerNumberAndPrisonDocumentIdIn(personId, prisonDocumentIds).map { document ->
-      CourtDocument(
-        prisonDocumentId = document.prisonDocumentId,
-        caseReferences = document.courtDocumentCases.map { it.caseReference },
-        isUnread = documentNotificationService.getIsUnread(document),
-        documentType = document.courtDocumentType,
-      )
-    }
+  ): List<CourtDocument> = courtDocumentRepository.findByPrisonerNumberAndPrisonDocumentIdIn(personId, prisonDocumentIds).map { document ->
+    CourtDocument(
+      prisonDocumentId = document.prisonDocumentId,
+      caseReferences = document.courtDocumentCases.map { it.caseReference },
+      isUnread = documentNotificationService.getIsUnread(document),
+      documentType = document.courtDocumentType,
+    )
   }
 }
