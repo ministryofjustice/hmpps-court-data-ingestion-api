@@ -43,7 +43,7 @@ class CourtDocumentService(
     CourtDocument(
       prisonDocumentId = document.prisonDocumentId,
       caseReferences = document.courtDocumentCases.map { it.caseReference },
-      isUnread = documentNotificationService.getIsUnread(document),
+      isUnread = documentNotificationService.isUnread(document),
       documentType = document.courtDocumentType,
     )
   }

@@ -13,7 +13,7 @@ class PrisonDocumentNotificationService(
   private val prisonerSearchService: PrisonerSearchService,
   private val notificationConfigRepository: PrisonDocNotificationConfigRepository,
 ) {
-  fun getIsUnread(document: CourtDocumentEntity): Boolean {
+  fun isUnread(document: CourtDocumentEntity): Boolean {
     if (document.courtDocumentViews.isNotEmpty()) return false
 
     val prisonerNumber = document.prisonerNumber
