@@ -72,6 +72,11 @@ spring:
             authorization-grant-type: client_credentials
             scope:
               - ${hmcts.client.creds.client.scope}
+          prisoner-search-api:
+            provider: hmpps-auth
+            client-id: ${client.creds.client.id}
+            client-secret: ${client.creds.client.secret}
+            authorization-grant-type: client_credentials
   http:
     codecs:
       max-in-memory-size: 10MB

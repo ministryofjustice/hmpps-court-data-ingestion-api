@@ -17,6 +17,7 @@ import kotlin.jvm.optionals.getOrElse
 class CourtDocumentService(
   private val courtDocumentRepository: CourtDocumentRepository,
   private val courtCasesReleaseDatesApiClient: HmppsCourtCasesReleaseDatesApiClient,
+  private val documentNotificationService: PrisonDocumentNotificationService,
 ) {
 
   @Transactional
@@ -38,12 +39,14 @@ class CourtDocumentService(
   fun getCourtDocumentsByPersonIdAndPrisonDocumentIds(
     personId: String,
     prisonDocumentIds: List<UUID>,
-  ): List<CourtDocument> = courtDocumentRepository.findByPrisonerNumberAndPrisonDocumentIdIn(personId, prisonDocumentIds).map { document ->
-    CourtDocument(
-      prisonDocumentId = document.prisonDocumentId,
-      caseReferences = document.courtDocumentCases.map { it.caseReference },
-      isUnread = document.courtDocumentViews.isEmpty(),
-      documentType = document.courtDocumentType,
-    )
+  ): List<CourtDocument> {
+    return courtDocumentRepository.findByPrisonerNumberAndPrisonDocumentIdIn(personId, prisonDocumentIds).map { document ->
+      CourtDocument(
+        prisonDocumentId = document.prisonDocumentId,
+        caseReferences = document.courtDocumentCases.map { it.caseReference },
+        isUnread = documentNotificationService.getIsUnread(document),
+        documentType = document.courtDocumentType,
+      )
+    }
   }
 }

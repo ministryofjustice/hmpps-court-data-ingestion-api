@@ -23,6 +23,7 @@ class WebClientConfiguration(
   @param:Value("\${hmpps.document.management.api.url}") private val hmppsDocumentManagementApiUrl: String,
   @param:Value("\${hmpps.court-cases-release-dates.api.url}") private val courtCasesReleaseDatesApiUrl: String,
   @param:Value("\${hmcts.subscription.api.url}") private val hmctsSubscriptionApiUrl: String,
+  @param:Value("\${prisoner.search.api.url}") private val prisonerSearchApiUrl: String,
 ) {
   // HMPPS Auth health ping is required if your service calls HMPPS Auth to get a token to call other services
   @Bean
@@ -66,6 +67,16 @@ class WebClientConfiguration(
     authorizedClientManager,
     "hmcts-subscription-api",
     hmctsSubscriptionApiUrl,
+  )
+
+  @Bean
+  fun prisonerSearchApiWebClient(
+    authorizedClientManager: OAuth2AuthorizedClientManager,
+    builder: WebClient.Builder,
+  ): WebClient = builder.authorisedWebClient(
+    authorizedClientManager,
+    "prisoner-search-api",
+    prisonerSearchApiUrl,
   )
 
   companion object {
