@@ -160,7 +160,8 @@ abstract class IntegrationTestBase {
     val NO_MATCHING_IDS_PERSON = UUID.randomUUID()
     val MATCHING_CORE_PERSON = UUID.randomUUID()
     val MATCHING_CORE_ALIASES = UUID.randomUUID()
-    val MATCHING_PRISONER_NUMBER = "ABC123"
+    const val MATCHING_PRISONER_NUMBER = "ABC123"
+    const val TEST_USERNAME = "testuser"
 
     @JvmStatic
     private val localStackContainer: LocalStackContainer =
