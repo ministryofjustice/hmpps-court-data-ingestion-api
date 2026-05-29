@@ -39,6 +39,12 @@ hmpps:
     api:
       url: http://localhost:8335
 
+# Wiremock prisoner-search-api
+prisoner:
+  search:
+    api:
+      url: http://localhost:8336
+
 hmpps.sqs:
   provider: localstack
   topics:
