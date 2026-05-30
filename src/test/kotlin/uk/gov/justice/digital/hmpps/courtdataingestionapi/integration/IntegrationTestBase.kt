@@ -47,6 +47,7 @@ import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
 import java.time.Duration
 import java.time.LocalDateTime
 import java.util.UUID
+import javax.sql.DataSource
 
 @ExtendWith(
   HmppsAuthApiExtension::class,
@@ -68,6 +69,9 @@ abstract class IntegrationTestBase {
   @Autowired
   private lateinit var hmppsQueueService: HmppsQueueService
 
+  @Autowired
+  private lateinit var dataSource: DataSource
+
   @MockitoSpyBean
   protected lateinit var hmppsSqsPropertiesSpy: HmppsSqsProperties
 
@@ -80,6 +84,14 @@ abstract class IntegrationTestBase {
     cleanQueue(courtDataIngestionQueue)
     cleanQueue(courtWarrantTestQueue)
     cleanQueue(prisonerCreatedQueue)
+  }
+
+  @BeforeEach
+  fun cleanDatabase() {
+    dataSource.connection.use { connection ->
+      connection.autoCommit = true
+      connection.createStatement().use { it.execute("TRUNCATE court_document CASCADE") }
+    }
   }
 
   fun cleanQueue(queue: HmppsQueue) {
