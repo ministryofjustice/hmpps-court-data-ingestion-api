@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.Notific
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.SubscriptionRequest
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.SubscriptionRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.subscription.SubscriptionCallbackConfig
+import java.time.LocalDateTime
 
 @Service
 class SubscriptionService(
@@ -20,29 +21,41 @@ class SubscriptionService(
 
   @Transactional
   fun subscribe() {
-    val subscription = subscriptionRepository.findAll().firstOrNull()
-    if (subscription == null) {
-      val subscriptionResponse = hmctsSubscriptionApiClient.createSubscription(
-        subscriptionRequest(),
-        subscriptionCallbackConfig.subscriptionKey,
-      )
-      subscriptionRepository.save(
-        Subscription(
-          id = subscriptionResponse.clientSubscriptionId,
-        ),
-      )
-      secretsManagerService.setSecretValue(subscriptionResponse.hmac.secret)
+    if (subscriptionCallbackConfig.enabled) {
+      val subscription = subscriptionRepository.findAll().firstOrNull()
+      if (subscription == null) {
+        val subscriptionResponse = hmctsSubscriptionApiClient.createSubscription(
+          subscriptionRequest(),
+          subscriptionCallbackConfig.subscriptionKey,
+        )
+        subscriptionRepository.save(
+          Subscription(
+            id = subscriptionResponse.clientSubscriptionId,
+          ),
+        )
+        secretsManagerService.setSecretValue(subscriptionResponse.hmac.secret)
 
-      log.info("Subscription created")
+        log.info("Subscription created")
+      } else if (subscriptionCallbackConfig.updateSubscriptionOnStartup) {
+        val subscriptionResponse = hmctsSubscriptionApiClient.updateSubscription(
+          subscriptionRequest(),
+          subscriptionCallbackConfig.subscriptionKey,
+          subscription.id,
+        )
+        subscription.updatedAt = LocalDateTime.now()
+
+        log.info("Subscription updated")
+      }
+    } else {
+      log.info("Subscription disabled")
     }
-    log.info("Subscription already exists")
   }
 
   private fun subscriptionRequest() = SubscriptionRequest(
     notificationEndpoint = NotificationEndpoint(
       callbackUrl = subscriptionCallbackConfig.callbackUrl,
     ),
-    eventTypes = subscriptionCallbackConfig.eventTypes,
+    eventTypes = subscriptionCallbackConfig.getEventTypesToSubscribe(),
   )
 
   companion object {

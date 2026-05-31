@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentCa
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsSubscriptionNotificationRequestBody
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.extraction.ExtractionService
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.HmppsTopic
 import uk.gov.justice.hmpps.sqs.publish
@@ -26,11 +27,12 @@ class CourtDataIngestionService(
   private val hmppsQueueService: HmppsQueueService,
   private val objectMapper: ObjectMapper,
   private val fileService: FileService,
+  private val extractionService: ExtractionService,
 ) {
   private val eventTopic by lazy { hmppsQueueService.findByTopicId("domainevents") as HmppsTopic }
 
   fun receiveMessage(message: HmctsSubscriptionNotificationRequestBody) {
-    val prisonDocument = fileService.ingestFile(message.documentId, message.eventType.documentType)
+    val prisonDocument = fileService.ingestFile(message.documentId, message.eventType.documentType.documentApiType)
     val courtDocumentEntity = courtDocumentRepository.save(
       CourtDocumentEntity(
         defendantId = message.masterDefendantId,
@@ -40,8 +42,11 @@ class CourtDataIngestionService(
         courtDocumentCases = message.cases.map { CourtDocumentCaseEntity(caseReference = it.urn) }.toMutableList(),
         prisonDocumentId = prisonDocument.documentUuid,
         eventType = message.eventType,
+        courtDocumentType = message.eventType.documentType,
       ),
     )
+    runCatching { extractionService.extractAndStore(courtDocumentEntity.prisonDocumentId) }
+      .onFailure { log.warn("Extraction skipped for document {}", courtDocumentEntity.prisonDocumentId, it) }
     val person = try {
       corePersonApiClient.getPersonByCommonPlatformId(message.masterDefendantId)
     } catch (e: WebClientResponseException) {

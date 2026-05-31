@@ -10,6 +10,8 @@ import org.springframework.core.io.ClassPathResource
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsDocumentManagementApiExtension
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
 import uk.gov.justice.hmpps.sqs.countMessagesOnQueue
 
 @Transactional(readOnly = true)
@@ -33,6 +35,8 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
     assertThat(file.courtDocumentCases[1].caseReference).isEqualTo(event.cases[1].urn)
     assertThat(file.documentGeneratedTimestamp).isEqualTo(event.documentGeneratedTimestamp)
     assertThat(file.prisonEmailAddress).isEqualTo(event.prisonEmailAddress)
+    assertThat(file.eventType).isEqualTo(HmctsEventType.PRISON_COURT_REGISTER_GENERATED)
+    assertThat(file.courtDocumentType).isEqualTo(CourtDocumentType.PRISON_COURT_REGISTER)
   }
 
   @Test

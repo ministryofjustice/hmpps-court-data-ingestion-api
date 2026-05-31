@@ -1,51 +1,36 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi
 
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentType
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
 
 @Suppress("ktlint:standard:enum-entry-name-case")
 enum class HmctsEventType(
-  // TODO find out document types for each of the HMCTS event types.
-  val documentType: DocumentType = DocumentType.HMCTS_WARRANT,
+  val documentType: CourtDocumentType,
 ) {
-  PRISON_COURT_REGISTER_GENERATED(DocumentType.PRISON_COURT_REGISTER),
-  WEE_Layout5,
-  NEE_DetentionOnRecommendationForDeportation,
-  OEE_MedicalRemandAdditionalDetails,
-  WEE_RemandAfterBailAppealByProsecutor,
-  WEE_CustodialSentence,
-  WEE_CustodialSentenceWitness,
-  WEE_CommittalToCrownCourtForConsiderationOfTheQuestionOfBailOnAChargeOfMurder,
-  WEE_CommittalToCrownCourtForSentence,
-  WEE_SendingToCrownCourtForTrial,
-  OEE_BailAppealEndOfCustody,
-  WEE_CommitmentPendingTransferToServiceCustody,
-  WEE_NonPaymentOfMoneyOwedCivilDebt,
-  WEE_CustodyWarrantOnDischargeOfExtraditionPendingAppeal,
-  WEE_CustodyWarrantOnDischargeOfExtraditionPendingAppealPart2,
-  WEE_CustodyWarrantOnExtradition,
-  WEE_CustodyWarrantOnExtraditionWithConsent,
-  WEE_CustodyWarrantOnExtraditionWithBailDirection,
-  WEE_CustodyWarrantOnExtraditionWithBailDirectionWithConsent,
-  WEE_CustodyWarrantWithBailDirectionOnDischargeOfExtraditionPendingAppeal,
-  WEE_CustodyWarrantWithBailDirectionOnDischargeOfExtraditionPendingAppealPart2,
-  WEE_ExtraditionRemandAfterBailAppealByProsecutor,
-  WEE_ExtraditionSupplementToCustodyWarrant,
-  OBE_TerminationOfFootballBanning,
-  OBE_ChangeOfFootballBanning,
-  NEE_FootballBanning,
-  WEE_Remand,
-  WXE_RemandWarrantYouthDetentionAccommodation,
-  OXE_DetentionAndTraining,
-  WEE_InjunctionDetention,
-  OPE_SupervisionOnBreachOfDetentionAndTraining,
-  WEE_CommittalToCrownCourtAuthorityToHoldInYouthDetentionAccommodation,
-  WEE_Detention,
-  WEE_DetentionInYouthDetentionAccommodationBreach,
-  WEE_SendingToCrownCourtAuthorityToHoldInYouthDetentionAccommodation,
-  WEE_CustodyWarrantOnExtraditionCategory2Territory,
-  WEE_CustodyWarrantOnExtraditionWithBailDirectionCategory2Territory,
-  WEE_CustodyWarrantSendingToSecretaryOfStateCategory2Territory,
-  WEE_CustodyWarrantSendingToSecretaryOfStateOnConsentCategory2Territory,
-  WEE_CustodyWarrantWithBailDirectionSendingToSecretaryOfStateCategory2Territory,
-  WEE_CustodyWarrantWithBailDirectionSendingToSecretaryOfStateOnConsentCategory2Territory,
+  PRISON_COURT_REGISTER_GENERATED(CourtDocumentType.PRISON_COURT_REGISTER),
+
+  /* Sentencing Warrants */
+  WEE_CustodialSentence(CourtDocumentType.SENTENCING_WARRANT),
+  WEE_CustodialSentenceWitness(CourtDocumentType.SENTENCING_WARRANT),
+  WEE_DetentionInYouthDetentionAccommodationBreach(CourtDocumentType.SENTENCING_WARRANT),
+  OPE_SupervisionOnBreachOfDetentionAndTraining(CourtDocumentType.SENTENCING_WARRANT),
+  OXE_DetentionAndTraining(CourtDocumentType.SENTENCING_WARRANT),
+
+  /* Remand Warrants */
+  WEE_Remand(CourtDocumentType.REMAND_WARRANT),
+  WEE_RemandAfterBailAppealByProsecutor(CourtDocumentType.REMAND_WARRANT),
+  WEE_CommittalToCrownCourtForSentence(CourtDocumentType.REMAND_WARRANT),
+  WEE_CommittalToCrownCourtForConsiderationOfTheQuestionOfBailOnAChargeOfMurder(CourtDocumentType.REMAND_WARRANT),
+  WEE_CommittalToCrownCourtAuthorityToHoldInYouthDetentionAccommodation(CourtDocumentType.REMAND_WARRANT),
+  WEE_SendingToCrownCourtForTrial(CourtDocumentType.REMAND_WARRANT),
+
+  /* Unknown common platform documents. */
+  WEE_SendingToCrownCourtAuthorityToHoldInYouthDetentionAccommodation(CourtDocumentType.COMMON_PLATFORM_DOCUMENT),
+  WEE_CommitmentPendingTransferToServiceCustody(CourtDocumentType.COMMON_PLATFORM_DOCUMENT),
+  WEE_NonPaymentOfMoneyOwedCivilDebt(CourtDocumentType.COMMON_PLATFORM_DOCUMENT),
+  WEE_Detention(CourtDocumentType.COMMON_PLATFORM_DOCUMENT),
+  WEE_InjunctionDetention(CourtDocumentType.COMMON_PLATFORM_DOCUMENT),
+  WEE_ExtraditionSupplementToCustodyWarrant(CourtDocumentType.COMMON_PLATFORM_DOCUMENT),
+  OEE_BailAppealEndOfCustody(CourtDocumentType.COMMON_PLATFORM_DOCUMENT),
+  OEE_MedicalRemandAdditionalDetails(CourtDocumentType.COMMON_PLATFORM_DOCUMENT),
+  NEE_DetentionOnRecommendationForDeportation(CourtDocumentType.COMMON_PLATFORM_DOCUMENT),
 }
