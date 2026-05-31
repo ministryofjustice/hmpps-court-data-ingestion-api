@@ -14,7 +14,7 @@ object ResponseUtils {
 
   private val log = LoggerFactory.getLogger(this::class.java)
 
-  fun <T> Mono<T>.coerce404ToEmptyOrThrow() = this.onErrorResume {
+  fun <T : Any> Mono<T>.coerce404ToEmptyOrThrow() = this.onErrorResume {
     when {
       it is WebClientResponseException && it.statusCode == HttpStatus.NOT_FOUND -> {
         val uri = it.request?.uri?.toString() ?: "Unknown"
@@ -26,7 +26,7 @@ object ResponseUtils {
     }
   }
 
-  fun <T> Mono<T>.propagateAny404(message: () -> String) = this.onErrorResume {
+  fun <T : Any> Mono<T>.propagateAny404(message: () -> String) = this.onErrorResume {
     when {
       it is WebClientResponseException && it.statusCode == HttpStatus.NOT_FOUND -> {
         log.info("No resource found when calling ${it.request?.uri}")
