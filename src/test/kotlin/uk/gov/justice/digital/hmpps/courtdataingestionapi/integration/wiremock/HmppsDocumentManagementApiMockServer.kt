@@ -4,6 +4,7 @@ import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.aMultipart
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.binaryEqualTo
+import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.equalToJson
 import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.post
@@ -49,11 +50,15 @@ class HmppsDocumentManagementApiExtension :
 class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
   companion object {
     private const val WIREMOCK_PORT = 8334
+    private const val SERVICE_NAME = "hmpps-court-data-ingestion-api"
+    private const val USERNAME = "hmcts-getcourtdata"
   }
 
   fun stubUploadDocument() {
     stubFor(
       post(urlMatching("/documents/${DocumentApiType.PRISON_COURT_REGISTER}/[a-z0-9A-Z|-]{36}"))
+        .withHeader("Service-Name", equalTo(SERVICE_NAME))
+        .withHeader("Username", equalTo(USERNAME))
         .willReturn(
           aResponse()
             .withHeader("Content-Type", "application/json")
@@ -66,6 +71,8 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
   fun stubUpdateMetadata() {
     stubFor(
       put(urlEqualTo("/documents/${IntegrationTestBase.PRISON_DOCUMENT_ID}/metadata"))
+        .withHeader("Service-Name", equalTo(SERVICE_NAME))
+        .withHeader("Username", equalTo(USERNAME))
         .willReturn(
           aResponse()
             .withHeader("Content-Type", "application/json")
@@ -81,6 +88,8 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
   ) {
     stubFor(
       get(urlPathMatching("/documents/[a-zA-Z0-9\\-]{36}/file"))
+        .withHeader("Service-Name", equalTo(SERVICE_NAME))
+        .withHeader("Username", equalTo(USERNAME))
         .willReturn(
           aResponse()
             .withStatus(200)

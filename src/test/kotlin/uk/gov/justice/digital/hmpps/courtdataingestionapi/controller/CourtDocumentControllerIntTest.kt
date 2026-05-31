@@ -75,7 +75,7 @@ class CourtDocumentControllerIntTest : IntegrationTestBase() {
         .bodyValue(
           TestUtil.objectMapper().writeValueAsString(
             CourtDocumentView(
-              username = "testuser",
+              username = TEST_USERNAME,
             ),
           ),
         )
@@ -86,7 +86,7 @@ class CourtDocumentControllerIntTest : IntegrationTestBase() {
       courtDocument = courtDocumentRepository.findAll()[0]
 
       assertThat(courtDocument.courtDocumentViews).hasSize(1)
-      assertThat(courtDocument.courtDocumentViews[0].username).isEqualTo("testuser")
+      assertThat(courtDocument.courtDocumentViews[0].username).isEqualTo(TEST_USERNAME)
       HmppsCourtCasesReleaseDatesApiExtension.hmppsCourtCasesReleaseDatesApi.verifyEvictCache()
     }
 
@@ -102,7 +102,7 @@ class CourtDocumentControllerIntTest : IntegrationTestBase() {
         .bodyValue(
           TestUtil.objectMapper().writeValueAsString(
             CourtDocumentView(
-              username = "testuser",
+              username = TEST_USERNAME,
             ),
           ),
         )

@@ -30,7 +30,7 @@ data class CourtDocumentEntity(
   @OneToMany(mappedBy = "courtDocument", cascade = [CascadeType.ALL])
   val courtDocumentCases: MutableList<CourtDocumentCaseEntity> = mutableListOf(),
   @OneToMany(mappedBy = "courtDocument", cascade = [CascadeType.ALL])
-  val courtDocumentViews: MutableList<CourtDocumentViewEntity> = mutableListOf(),
+  var courtDocumentViews: MutableList<CourtDocumentViewEntity> = mutableListOf(),
 
   // Updated once identified
   var prisonerNumber: String? = null,

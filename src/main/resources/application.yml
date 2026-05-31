@@ -72,6 +72,11 @@ spring:
             authorization-grant-type: client_credentials
             scope:
               - ${hmcts.client.creds.client.scope}
+          prisoner-search-api:
+            provider: hmpps-auth
+            client-id: ${client.creds.client.id}
+            client-secret: ${client.creds.client.secret}
+            authorization-grant-type: client_credentials
   http:
     codecs:
       max-in-memory-size: 10MB
@@ -98,7 +103,7 @@ management:
         include:
           - info
           - health
-          - extraction-backfill
+          - extractionbackfill
   endpoint:
     health:
       cache:
@@ -117,3 +122,8 @@ subscription-callback-config:
   subscription-key: ${HMCTS_SUBSCRIPTION_KEY}
   event-types: ${HMCTS_EVENT_TYPES}
   update-subscription-on-startup: ${HMCTS_UPDATE_SUBSCRIPTION_ON_STARTUP}
+
+extraction:
+  backfill:
+    ingested-from: "2026-05-18T16:38:15Z"
+    error-cooldown: PT3H
