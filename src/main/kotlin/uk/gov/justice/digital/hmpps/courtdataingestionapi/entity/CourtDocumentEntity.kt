@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.entity
 
 import jakarta.persistence.CascadeType
+import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -31,6 +32,9 @@ data class CourtDocumentEntity(
   val courtDocumentCases: MutableList<CourtDocumentCaseEntity> = mutableListOf(),
   @OneToMany(mappedBy = "courtDocument", cascade = [CascadeType.ALL])
   var courtDocumentViews: MutableList<CourtDocumentViewEntity> = mutableListOf(),
+
+  @Column(name = "addressed_prison")
+  var addressedPrison: String? = null,
 
   // Updated once identified
   var prisonerNumber: String? = null,
