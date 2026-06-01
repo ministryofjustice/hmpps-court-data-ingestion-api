@@ -24,7 +24,7 @@ class PrisonerCreatedListener(
   fun onDomainEvent(
     rawMessage: String,
   ) {
-    log.debug("Received message {}", rawMessage)
+    log.debug("Received prisoner created message {}", rawMessage)
     val sqsMessage: SQSMessage = objectMapper.readValue(rawMessage)
     return when (sqsMessage.Type) {
       "Notification" -> {

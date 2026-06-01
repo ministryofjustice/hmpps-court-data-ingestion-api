@@ -74,6 +74,9 @@ class CourtDataIngestionService(
         files.forEach {
           createMatch(it, prisonerNumber)
         }
+        log.info("Found ${files.size} files matching newly created prisoner number $prisonerNumber")
+      } else {
+        log.info("Core person record has no defendantIds recorded $prisonerNumber")
       }
     }
   }

@@ -28,7 +28,7 @@ class CourtDataIngestionListener(
   fun onMessage(
     rawMessage: String,
   ) {
-    log.debug("Received message {}", rawMessage)
+    log.debug("Received court data message {}", rawMessage)
     val message = objectMapper.readValue<HmctsSubscriptionNotificationRequestBody>(rawMessage)
     courtDataIngestionService.receiveMessage(message)
   }
@@ -40,8 +40,7 @@ data class HmctsSubscriptionNotificationRequestBody(
   val documentId: UUID,
   val documentGeneratedTimestamp: LocalDateTime,
   val prisonEmailAddress: String,
-  // TODO Default to PCR until this is released to production on hmcts side.
-  val eventType: HmctsEventType = HmctsEventType.PRISON_COURT_REGISTER_GENERATED,
+  val eventType: HmctsEventType
 )
 
 data class HmctsCase(
