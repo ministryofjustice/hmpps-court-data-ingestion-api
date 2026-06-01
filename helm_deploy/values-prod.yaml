@@ -8,6 +8,7 @@ generic-service:
   env:
     HMPPS_AUTH_URL: "https://sign-in.hmpps.service.justice.gov.uk/auth"
     CORE_PERSON_API_URL: "https://hmpps-person-record.hmpps.service.justice.gov.uk"
+    PRISONER_SEARCH_API_URL: "https://prisoner-search.prison.service.justice.gov.uk"
     HMPPS_DOCUMENT_MANAGEMENT_API_URL: "https://document-api.hmpps.service.justice.gov.uk"
     HMPPS_COURT-CASES-RELEASE-DATES_API_URL: "https://court-cases-release-dates-api.hmpps.service.justice.gov.uk"
     HMCTS_SUBSCRIPTION_CALLBACK_URL: "https://czbsgqfdwd.execute-api.eu-west-2.amazonaws.com/production/ingest"
@@ -15,6 +16,7 @@ generic-service:
     HMCTS_AUTH_URL: "https://login.microsoftonline.com/77f54315-6dde-4fe7-9e17-74762c3eb096"
     HMCTS_UPDATE_SUBSCRIPTION_ON_STARTUP: true
     HMCTS_EVENT_TYPES: "PRISON_COURT_REGISTER_GENERATED"
+    HMCTS_SUBSCRIPTION_ENABLED: true
 
 # CloudPlatform AlertManager receiver to route prometheus alerts to slack
 # See https://user-guide.cloud-platform.service.justice.gov.uk/documentation/monitoring-an-app/how-to-create-alarms.html#creating-your-own-custom-alerts

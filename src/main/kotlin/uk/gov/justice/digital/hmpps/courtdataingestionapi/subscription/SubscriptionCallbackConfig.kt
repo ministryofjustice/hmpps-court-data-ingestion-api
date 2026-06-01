@@ -5,6 +5,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEv
 
 @ConfigurationProperties(prefix = "subscription-callback-config")
 data class SubscriptionCallbackConfig(
+  val enabled: Boolean,
   val callbackUrl: String,
   val subscriptionKey: String,
   private val eventTypes: List<String>,

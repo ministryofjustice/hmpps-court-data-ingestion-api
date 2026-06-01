@@ -32,6 +32,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.H
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsAuthApiExtension.Companion.hmppsAuth
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsCourtCasesReleaseDatesApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsDocumentManagementApiExtension
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.PrisonerSearchApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HMPPSPrisonerCreatedDomainEvent
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsCase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsSubscriptionNotificationRequestBody
@@ -54,6 +55,7 @@ import java.util.UUID
   HmctsSubscriptionApiExtension::class,
   HmppsDocumentManagementApiExtension::class,
   HmppsCourtCasesReleaseDatesApiExtension::class,
+  PrisonerSearchApiExtension::class,
 )
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
@@ -114,7 +116,7 @@ abstract class IntegrationTestBase {
           HmctsCase("Case123"),
           HmctsCase("Case456"),
         ),
-        prisonEmailAddress = "prison@aol.com",
+        prisonEmailAddress = "prison.email@example.com",
         documentGeneratedTimestamp = LocalDateTime.now().minusMinutes(1).withNano(0),
       )
     courtDataIngestionQueue.sqsClient.sendMessage(
@@ -158,7 +160,8 @@ abstract class IntegrationTestBase {
     val NO_MATCHING_IDS_PERSON = UUID.randomUUID()
     val MATCHING_CORE_PERSON = UUID.randomUUID()
     val MATCHING_CORE_ALIASES = UUID.randomUUID()
-    val MATCHING_PRISONER_NUMBER = "ABC123"
+    const val MATCHING_PRISONER_NUMBER = "ABC123"
+    const val TEST_USERNAME = "testuser"
 
     @JvmStatic
     private val localStackContainer: LocalStackContainer =

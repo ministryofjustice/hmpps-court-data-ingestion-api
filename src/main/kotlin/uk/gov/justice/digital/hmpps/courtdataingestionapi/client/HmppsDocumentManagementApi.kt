@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.client
 
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.io.ByteArrayResource
 import org.springframework.http.MediaType
 import org.springframework.http.client.MultipartBodyBuilder
@@ -14,7 +15,10 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.ResponseUtils.
 import java.util.UUID
 
 @Component
-class HmppsDocumentManagementApi(@Qualifier("hmppsDocumentManagementApiWebClient") private val webClient: WebClient) {
+class HmppsDocumentManagementApi(
+  @Qualifier("hmppsDocumentManagementApiWebClient") private val webClient: WebClient,
+  @param:Value("\${spring.application.name}") private val appName: String,
+) {
 
   fun uploadDocument(
     documentType: DocumentApiType,
@@ -23,12 +27,17 @@ class HmppsDocumentManagementApi(@Qualifier("hmppsDocumentManagementApiWebClient
   ): Document {
     log.info("Uploading document: $file")
     val documentUuid = UUID.randomUUID().toString()
+
+    val contentType = file.contentType?.takeIf { it.isNotBlank() }
+      ?: MediaType.APPLICATION_OCTET_STREAM_VALUE
+
     val prisonDocument = webClient.post()
       .uri("/documents/$documentType/$documentUuid")
-      .header("Service-Name", "court-data-ingestion-api")
+      .header("Service-Name", appName)
+      .header("Username", SYSTEM_USERNAME)
       .bodyValue(
         MultipartBodyBuilder().apply {
-          part("file", ByteArrayResource(file.bytes), MediaType.valueOf(file.contentType)).filename(file.originalFilename)
+          part("file", ByteArrayResource(file.bytes), MediaType.valueOf(contentType)).filename(file.originalFilename)
           part("metadata", metadata)
         }.build(),
       )
@@ -49,13 +58,29 @@ class HmppsDocumentManagementApi(@Qualifier("hmppsDocumentManagementApiWebClient
   fun updateMetadata(documentId: UUID, metadata: Map<String, String> = mapOf()): Document = webClient
     .put()
     .uri("/documents/$documentId/metadata")
-    .header("Service-Name", "court-data-ingestion-api")
+    .header("Service-Name", appName)
+    .header("Username", SYSTEM_USERNAME)
     .bodyValue(metadata)
     .retrieve()
     .bodyToMono(Document::class.java)
     .block()!!
 
+  fun downloadFile(documentId: UUID): ByteArray = webClient
+    .get()
+    .uri("/documents/$documentId/file")
+    .header("Service-Name", appName)
+    .header("Username", SYSTEM_USERNAME)
+    .accept(MediaType.ALL)
+    .retrieve()
+    .rethrowAnyHttpErrorWithContext { response, body ->
+      "Error downloading document file (UUID=$documentId, StatusCode=${response.statusCode().value()}, Response=$body)"
+    }
+    .bodyToMono(ByteArray::class.java)
+    .block()
+    ?: error("No file bytes returned for document $documentId")
+
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
+    private const val SYSTEM_USERNAME = "hmcts-getcourtdata"
   }
 }

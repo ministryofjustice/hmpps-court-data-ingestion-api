@@ -17,6 +17,7 @@ import kotlin.jvm.optionals.getOrElse
 class CourtDocumentService(
   private val courtDocumentRepository: CourtDocumentRepository,
   private val courtCasesReleaseDatesApiClient: HmppsCourtCasesReleaseDatesApiClient,
+  private val documentNotificationService: PrisonDocumentNotificationService,
 ) {
 
   @Transactional
@@ -42,7 +43,7 @@ class CourtDocumentService(
     CourtDocument(
       prisonDocumentId = document.prisonDocumentId,
       caseReferences = document.courtDocumentCases.map { it.caseReference },
-      isUnread = document.courtDocumentViews.isEmpty(),
+      isUnread = documentNotificationService.isUnread(document),
       documentType = document.courtDocumentType,
     )
   }

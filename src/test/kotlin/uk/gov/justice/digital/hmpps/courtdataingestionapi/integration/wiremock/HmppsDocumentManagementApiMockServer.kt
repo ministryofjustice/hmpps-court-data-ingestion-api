@@ -4,12 +4,15 @@ import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.aMultipart
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.binaryEqualTo
+import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.equalToJson
+import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor
 import com.github.tomakehurst.wiremock.client.WireMock.put
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import com.github.tomakehurst.wiremock.client.WireMock.urlMatching
+import com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
@@ -29,9 +32,10 @@ class HmppsDocumentManagementApiExtension :
   }
 
   override fun beforeAll(context: ExtensionContext) {
+    hmppsDocumentManagementApi.start()
     hmppsDocumentManagementApi.stubUploadDocument()
     hmppsDocumentManagementApi.stubUpdateMetadata()
-    hmppsDocumentManagementApi.start()
+    hmppsDocumentManagementApi.stubDownloadFile()
   }
 
   override fun beforeEach(context: ExtensionContext) {
@@ -46,11 +50,15 @@ class HmppsDocumentManagementApiExtension :
 class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
   companion object {
     private const val WIREMOCK_PORT = 8334
+    private const val SERVICE_NAME = "hmpps-court-data-ingestion-api"
+    private const val USERNAME = "hmcts-getcourtdata"
   }
 
   fun stubUploadDocument() {
     stubFor(
       post(urlMatching("/documents/${DocumentApiType.PRISON_COURT_REGISTER}/[a-z0-9A-Z|-]{36}"))
+        .withHeader("Service-Name", equalTo(SERVICE_NAME))
+        .withHeader("Username", equalTo(USERNAME))
         .willReturn(
           aResponse()
             .withHeader("Content-Type", "application/json")
@@ -63,11 +71,31 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
   fun stubUpdateMetadata() {
     stubFor(
       put(urlEqualTo("/documents/${IntegrationTestBase.PRISON_DOCUMENT_ID}/metadata"))
+        .withHeader("Service-Name", equalTo(SERVICE_NAME))
+        .withHeader("Username", equalTo(USERNAME))
         .willReturn(
           aResponse()
             .withHeader("Content-Type", "application/json")
             .withBody(happyResponse)
             .withStatus(200),
+        ),
+    )
+  }
+
+  fun stubDownloadFile(
+    fileBytes: ByteArray = "test file contents".toByteArray(),
+    contentType: String = "application/pdf",
+  ) {
+    stubFor(
+      get(urlPathMatching("/documents/[a-zA-Z0-9\\-]{36}/file"))
+        .withHeader("Service-Name", equalTo(SERVICE_NAME))
+        .withHeader("Username", equalTo(USERNAME))
+        .willReturn(
+          aResponse()
+            .withStatus(200)
+            .withHeader("Content-Type", contentType)
+            .withHeader("Content-Disposition", "attachment; filename=\"test.pdf\"")
+            .withBody(fileBytes),
         ),
     )
   }
