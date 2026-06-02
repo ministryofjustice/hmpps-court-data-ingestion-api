@@ -1,0 +1,46 @@
+package uk.gov.justice.digital.hmpps.courtdataingestionapi.integration
+
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.jdbc.core.JdbcTemplate
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.PrisonEmailMappingRepository
+
+class AddressedPrisonResolutionIntegrationTest : IntegrationTestBase() {
+
+  @Autowired
+  private lateinit var jdbcTemplate: JdbcTemplate
+
+  @Autowired
+  private lateinit var prisonEmailMappingRepository: PrisonEmailMappingRepository
+
+  @BeforeEach
+  fun seedMapping() {
+    jdbcTemplate.update(
+      """
+      INSERT INTO prison_email_mapping (email, prison_code)
+      VALUES (?, ?)
+      ON CONFLICT (email) DO UPDATE SET prison_code = EXCLUDED.prison_code
+      """.trimIndent(),
+      "prison.email@example.com",
+      "LII",
+    )
+  }
+
+  @Test
+  fun `diagnostic - the seeded mapping is readable through the repository`() {
+    // If this fails, the problem is the seed, the table, or the lookup query, not the enricher.
+    assertThat(prisonEmailMappingRepository.findPrisonCodeByEmail("prison.email@example.com")).isEqualTo("LII")
+  }
+
+  @Test
+  fun `ingesting a document resolves the delivery mailbox to a prison code`() {
+    sendSubscriptionNotification(MATCHING_CORE_PERSON)
+
+    val document = courtDocumentRepository.findFirstByDefendantId(MATCHING_CORE_PERSON)!!
+
+    assertThat(document.prisonEmailAddress).isEqualTo("prison.email@example.com")
+    assertThat(document.addressedPrison).isEqualTo("LII")
+  }
+}

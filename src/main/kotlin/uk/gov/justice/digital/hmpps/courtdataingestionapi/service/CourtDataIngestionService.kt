@@ -10,9 +10,10 @@ import software.amazon.awssdk.services.sns.model.MessageAttributeValue
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.CorePersonApiClient
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentCaseEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionContext
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionEnrichmentFlow
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsSubscriptionNotificationRequestBody
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.extraction.ExtractionService
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.HmppsTopic
 import uk.gov.justice.hmpps.sqs.publish
@@ -22,22 +23,32 @@ import java.util.UUID
 @Service
 @Transactional
 class CourtDataIngestionService(
+
+  private val ingestionEnrichmentFlow: IngestionEnrichmentFlow,
   private val courtDocumentRepository: CourtDocumentRepository,
   private val corePersonApiClient: CorePersonApiClient,
   private val hmppsQueueService: HmppsQueueService,
   private val objectMapper: ObjectMapper,
   private val fileService: FileService,
-  private val extractionService: ExtractionService,
 ) {
   private val eventTopic by lazy { hmppsQueueService.findByTopicId("domainevents") as HmppsTopic }
 
   fun receiveMessage(message: HmctsSubscriptionNotificationRequestBody) {
     val prisonDocument = fileService.ingestFile(message.documentId, message.eventType.documentType.documentApiType)
+
+    val enriched = ingestionEnrichmentFlow.run(
+      IngestionContext(
+        prisonEmailAddress = message.prisonEmailAddress,
+        prisonDocumentId = prisonDocument.documentUuid,
+      ),
+    )
+
     val courtDocumentEntity = courtDocumentRepository.save(
       CourtDocumentEntity(
         defendantId = message.masterDefendantId,
         courtDocumentId = message.documentId,
         prisonEmailAddress = message.prisonEmailAddress,
+        addressedPrison = enriched.addressedPrison,
         documentGeneratedTimestamp = message.documentGeneratedTimestamp,
         courtDocumentCases = message.cases.map { CourtDocumentCaseEntity(caseReference = it.urn) }.toMutableList(),
         prisonDocumentId = prisonDocument.documentUuid,
@@ -45,8 +56,7 @@ class CourtDataIngestionService(
         courtDocumentType = message.eventType.documentType,
       ),
     )
-    runCatching { extractionService.extractAndStore(courtDocumentEntity.prisonDocumentId) }
-      .onFailure { log.warn("Extraction skipped for document {}", courtDocumentEntity.prisonDocumentId, it) }
+
     val person = try {
       corePersonApiClient.getPersonByCommonPlatformId(message.masterDefendantId)
     } catch (e: WebClientResponseException) {
