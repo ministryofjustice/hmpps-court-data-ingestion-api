@@ -104,6 +104,7 @@ management:
           - info
           - health
           - extractionbackfill
+          - corpussample
   endpoint:
     health:
       cache:
@@ -127,3 +128,5 @@ extraction:
   backfill:
     ingested-from: "2026-05-18T16:38:15Z"
     error-cooldown: PT3H
+  corpus-sampler:
+    enabled: false
