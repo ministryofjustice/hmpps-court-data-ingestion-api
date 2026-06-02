@@ -50,4 +50,8 @@ data class CorpusCell(
   val xEnd: Float,
   /** (x / binSize), matching FormatModel.xBin, so candidate labels land at the bins the model keys on. */
   val xBin: Int,
+
+  /** PostScript font name. Bold is encoded here, which is the label signal for warrant-style layouts. */
+  val font: String?,
+  val fontSize: Float,
 )
