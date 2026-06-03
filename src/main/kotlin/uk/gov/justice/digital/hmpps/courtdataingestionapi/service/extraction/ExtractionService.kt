@@ -67,6 +67,60 @@ class ExtractionService(
     return persist(existing, entity)
   }
 
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  fun extractStructuredDataAndStore(
+    documentId: UUID,
+    extractedText: String,
+    downloadedFileSha256: String?,
+    extractedTextSha256: String?,
+  ): ExtractionResultEntity {
+    val model = formatModels.active()
+
+    val existing = repository.findByDocumentIdAndFormatIdAndFormatVersionAndExtractorVersion(
+      documentId,
+      model.id,
+      model.version,
+      extractorVersion,
+    )
+
+    if (existing != null && existing.status != STATUS_ERROR) return existing
+
+    val sha = extractedTextSha256 ?: sha256(extractedText.toByteArray(Charsets.UTF_8))
+
+    val entity = runCatching {
+      val out = pipeline.extractFromText(
+        text = extractedText,
+        documentId = documentId.toString(),
+        model = model,
+      )
+
+      result(
+        documentId = documentId,
+        model = model,
+        sha = sha,
+        status = STATUS_OK,
+        payload = mapOf(
+          "header" to out.headerFields,
+          "offences" to out.offenceBlocks,
+          "labelSignature" to out.labelSignature,
+        ),
+        pageCount = out.pageCount,
+        fieldCount = out.fieldCount,
+      )
+    }.getOrElse { ex ->
+      log.warn("Structured extraction failed for document {}", documentId, ex)
+      result(
+        documentId = documentId,
+        model = model,
+        sha = sha,
+        status = STATUS_FAILED,
+        payload = mapOf("error" to (ex.message ?: ex.javaClass.simpleName)),
+      )
+    }
+
+    return persist(existing, entity)
+  }
+
   private fun result(
     documentId: UUID,
     model: FormatModel,

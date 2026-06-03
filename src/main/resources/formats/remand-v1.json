@@ -1,0 +1,53 @@
+{
+  "id": "remand-warrant",
+  "version": 1,
+  "strategy": "font-anchor",
+  "description": "DRAFT curated from a 200-document corpus and a sample PDF. Requires the font-anchor extractor. Optional flags reflect observed fill rates; capture rules from the observed layout, confirm on a wider sample.",
+  "documentMarker": "remand warrant",
+
+  "anchors": [
+    { "label": "date of warrant", "scope": "HEADER", "capture": "rest-of-line" },
+    { "label": "case reference", "scope": "HEADER", "capture": "rest-of-line" },
+    { "label": "date of birth", "scope": "HEADER", "capture": "rest-of-line" },
+    { "label": "basis of remand", "scope": "HEADER", "capture": "rest-of-line" },
+    { "label": "pnc id", "scope": "HEADER", "capture": "rest-of-line", "optional": true },
+    { "label": "asn", "scope": "HEADER", "capture": "rest-of-line", "optional": true },
+    { "label": "nationality", "scope": "HEADER", "capture": "rest-of-line", "optional": true },
+    { "label": "ethnicity (self defined)", "scope": "HEADER", "capture": "rest-of-line", "optional": true },
+    { "label": "alias info", "scope": "HEADER", "capture": "rest-of-line", "optional": true },
+    { "label": "occupation", "scope": "HEADER", "capture": "rest-of-line", "optional": true },
+    { "label": "defendants’s mobile number", "scope": "HEADER", "capture": "rest-of-line", "optional": true },
+    { "label": "defendants’s landline number", "scope": "HEADER", "capture": "rest-of-line", "optional": true },
+
+    { "label": "defendant", "scope": "HEADER", "capture": "below" },
+    { "label": "date and time:", "scope": "HEADER", "capture": "below" },
+    { "label": "location:", "scope": "HEADER", "capture": "below" },
+
+    { "label": "next hearing details", "scope": "HEADER", "capture": "section" },
+    { "label": "order", "scope": "HEADER", "capture": "section" },
+    { "label": "additional defendant information", "scope": "HEADER", "capture": "section" },
+
+    { "label": "conviction status:", "scope": "BLOCK", "capture": "rest-of-line" },
+    { "label": "on", "scope": "BLOCK", "capture": "rest-of-line" }
+  ],
+
+  "textAnchors": [
+    { "prefix": "to:", "field": "recipient", "capture": "rest-of-line" },
+    { "prefix": "bail exceptions:", "field": "bail exceptions", "capture": "below" },
+    { "prefix": "this was because:", "field": "this was because", "capture": "below" }
+  ],
+
+  "positional": [
+    { "field": "court", "region": "page-top-header" }
+  ],
+
+  "structuralHeaders": [
+    { "label": "case reference:", "fontSize": 14, "note": "page-continuation header repeating the case reference; ignore as a field" }
+  ],
+
+  "dropPatterns": [
+    "the defendant shall be taken to the nominated prison establishment.*",
+    "produced at the court on the next hearing date.*",
+    "page \\d+ of \\d+"
+  ]
+}

@@ -15,4 +15,6 @@ interface CourtDocumentRepository : JpaRepository<CourtDocumentEntity, UUID> {
   fun findByPrisonerNumber(prisonerNumber: String): List<CourtDocumentEntity>
   fun findByPrisonerNumberAndPrisonDocumentIdIn(personId: String, prisonDocumentIds: List<UUID>): List<CourtDocumentEntity>
   fun findFirstByPrisonDocumentId(prisonDocumentId: UUID): Optional<CourtDocumentEntity>
+  fun findByExtractedTextSha256(hash: String): List<CourtDocumentEntity>
+  fun findByDownloadedFileSha256(hash: String): List<CourtDocumentEntity>
 }

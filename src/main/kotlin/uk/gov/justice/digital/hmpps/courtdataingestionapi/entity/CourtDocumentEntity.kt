@@ -28,13 +28,24 @@ data class CourtDocumentEntity(
   val courtDocumentType: CourtDocumentType,
   val documentGeneratedTimestamp: LocalDateTime,
   var ingestionAt: LocalDateTime = LocalDateTime.now(),
+
   @OneToMany(mappedBy = "courtDocument", cascade = [CascadeType.ALL])
   val courtDocumentCases: MutableList<CourtDocumentCaseEntity> = mutableListOf(),
+
   @OneToMany(mappedBy = "courtDocument", cascade = [CascadeType.ALL])
   var courtDocumentViews: MutableList<CourtDocumentViewEntity> = mutableListOf(),
 
   @Column(name = "addressed_prison")
   var addressedPrison: String? = null,
+
+  @Column(name = "downloaded_file_sha256")
+  var downloadedFileSha256: String? = null,
+
+  @Column(name = "extracted_text_sha256")
+  var extractedTextSha256: String? = null,
+
+  @Column(name = "duplicate_of")
+  var duplicateOf: UUID? = null,
 
   // Updated once identified
   var prisonerNumber: String? = null,

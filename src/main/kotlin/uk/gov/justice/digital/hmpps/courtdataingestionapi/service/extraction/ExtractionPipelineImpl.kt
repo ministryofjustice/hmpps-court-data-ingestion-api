@@ -17,4 +17,18 @@ class ExtractionPipelineImpl : ExtractionPipeline {
       fieldCount = doc.fieldCount,
     )
   }
+
+  override fun extractFromText(
+    text: String,
+    documentId: String,
+    model: FormatModel,
+  ): ExtractionOutput {
+    val stream = text.byteInputStream(Charsets.UTF_8)
+
+    return extract(
+      input = stream,
+      sourceName = documentId,
+      model = model,
+    )
+  }
 }
