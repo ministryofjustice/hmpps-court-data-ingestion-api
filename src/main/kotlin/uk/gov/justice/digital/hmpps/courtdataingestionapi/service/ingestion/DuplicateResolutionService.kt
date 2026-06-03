@@ -24,36 +24,37 @@ class DuplicateResolutionService(
     }
 
     extractedTextSha256?.let { hash ->
-      firstOtherMatch(courtDocumentRepository.findByExtractedTextSha256(hash), currentDocumentId)?.let { duplicateId ->
-        log.debug("Duplicate of {} found via extracted text hash", duplicateId)
-        return DuplicateResolutionOutcome(
-          duplicateOf = duplicateId,
-          reason = "matched_on_extracted_text_sha256",
-        )
-      }
+      matchAgainst(
+        duplicateCandidates = courtDocumentRepository.findByExtractedTextSha256(hash),
+        documentId = currentDocumentId,
+        reason = "matched_on_extracted_text_sha256",
+      )?.let { return it }
     }
 
     downloadedFileSha256?.let { hash ->
-      firstOtherMatch(courtDocumentRepository.findByDownloadedFileSha256(hash), currentDocumentId)?.let { duplicateId ->
-        log.debug("Duplicate of {} found via downloaded file hash", duplicateId)
-        return DuplicateResolutionOutcome(
-          duplicateOf = duplicateId,
-          reason = "matched_on_downloaded_file_sha256",
-        )
-      }
+      matchAgainst(
+        duplicateCandidates = courtDocumentRepository.findByDownloadedFileSha256(hash),
+        documentId = currentDocumentId,
+        reason = "matched_on_downloaded_file_sha256",
+      )?.let { return it }
     }
 
     return null
   }
 
-  // Returns the prisonDocumentId of the first candidate that is a different document.
-  // prisonDocumentId is the cross-system identifier the document store understands,
-  // so that is what gets persisted as duplicate_of. mapNotNull guards against a
-  // candidate row with a null prisonDocumentId yielding a duplicateOf of null.
-  private fun firstOtherMatch(
-    candidates: List<CourtDocumentEntity>,
-    currentDocumentId: UUID,
-  ): UUID? = candidates
+  private fun matchAgainst(
+    duplicateCandidates: List<CourtDocumentEntity>,
+    documentId: UUID,
+    reason: String,
+  ): DuplicateResolutionOutcome? = findFirstDuplicateDocumentId(duplicateCandidates, documentId)?.let { duplicateId ->
+    log.debug("Duplicate of {} found via {}", duplicateId, reason)
+    DuplicateResolutionOutcome(duplicateOf = duplicateId, reason = reason)
+  }
+
+  private fun findFirstDuplicateDocumentId(
+    duplicateCandidates: List<CourtDocumentEntity>,
+    documentId: UUID,
+  ): UUID? = duplicateCandidates
     .mapNotNull { it.prisonDocumentId }
-    .firstOrNull { it != currentDocumentId }
+    .firstOrNull { it != documentId }
 }

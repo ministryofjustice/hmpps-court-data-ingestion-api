@@ -12,8 +12,8 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.ExtractionResul
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.extraction.format.FormatModel
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.extraction.format.FormatModelRegistry
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.ExtractionResultRepository
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.util.Sha256
 import java.io.ByteArrayInputStream
-import java.security.MessageDigest
 import java.util.UUID
 
 @Service
@@ -39,7 +39,7 @@ class ExtractionService(
 
     val entity = try {
       val bytes = documentApi.downloadFile(documentId)
-      val sha = sha256(bytes)
+      val sha = Sha256.hex(bytes)
       if (!bytes.looksLikePdf()) {
         result(documentId, model, sha, STATUS_SKIPPED, mapOf("reason" to "missing %PDF- signature"))
       } else {
@@ -84,8 +84,7 @@ class ExtractionService(
     )
 
     if (existing != null && existing.status != STATUS_ERROR) return existing
-
-    val sha = extractedTextSha256 ?: sha256(extractedText.toByteArray(Charsets.UTF_8))
+    val sha = resolveSha256(extractedTextSha256, extractedText)
 
     val entity = runCatching {
       val out = pipeline.extractFromText(
@@ -165,7 +164,7 @@ class ExtractionService(
     extractedAt = source.extractedAt
   }
 
-  private fun sha256(bytes: ByteArray): String = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
+  private fun resolveSha256(providedSha256: String?, text: String): String = providedSha256 ?: Sha256.hex(text.toByteArray(Charsets.UTF_8))
 
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)

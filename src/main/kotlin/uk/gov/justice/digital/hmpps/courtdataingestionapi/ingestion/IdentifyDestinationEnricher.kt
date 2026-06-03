@@ -12,19 +12,19 @@ class IdentifyDestinationEnricher(
 ) : IngestionEnricher {
 
   override fun enrich(context: IngestionContext): IngestionContext {
-    val normalised = PrisonEmailNormaliser.normalise(context.prisonEmailAddress) ?: return context
-    val prisonCode = prisonEmailMappingRepository.findPrisonCodeByEmail(normalised)
-
-    val destinationType = when {
-      normalised.endsWith("@geoamey.co.uk") -> DestinationType.PECS
-      normalised.startsWith("pecs") && normalised.endsWith("@serco.com") -> DestinationType.PECS
-      prisonCode != null -> DestinationType.PRISON
-      else -> null
-    }
+    val normalisedEmail = PrisonEmailNormaliser.normalise(context.prisonEmailAddress) ?: return context
+    val prisonCode = prisonEmailMappingRepository.findPrisonCodeByEmail(normalisedEmail)
 
     return context.copy(
       addressedPrison = prisonCode,
-      destinationType = destinationType,
+      destinationType = classifyDestination(normalisedEmail, prisonCode),
     )
+  }
+
+  private fun classifyDestination(normalisedEmail: String, prisonCode: String?): DestinationType? = when {
+    normalisedEmail.endsWith("@geoamey.co.uk") -> DestinationType.PECS
+    normalisedEmail.startsWith("pecs") && normalisedEmail.endsWith("@serco.com") -> DestinationType.PECS
+    prisonCode != null -> DestinationType.PRISON
+    else -> null
   }
 }
