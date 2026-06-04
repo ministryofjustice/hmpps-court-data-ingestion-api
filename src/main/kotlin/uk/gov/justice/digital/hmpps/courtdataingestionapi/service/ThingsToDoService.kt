@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocume
 @Transactional(readOnly = true)
 class ThingsToDoService(
   private val courtDocumentRepository: CourtDocumentRepository,
+  private val documentNotificationService: PrisonDocumentNotificationService,
 ) {
 
   fun getToDoList(prisonerId: String): ThingsToDo {
@@ -17,7 +18,7 @@ class ThingsToDoService(
     return ThingsToDo(
       prisonerId = prisonerId,
       thingsToDo = courtDocuments.filter {
-        it.courtDocumentViews.isEmpty()
+        documentNotificationService.isUnread(it)
       }.map {
         ToDoType.HMCTS_API_DOCUMENT_RECEIVED
       },
