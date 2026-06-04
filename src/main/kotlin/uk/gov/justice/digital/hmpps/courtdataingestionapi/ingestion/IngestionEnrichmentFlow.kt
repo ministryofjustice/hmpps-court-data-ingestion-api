@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion
 
 import org.springframework.stereotype.Component
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.step.ExtractStructuredData
 
 @Component
 class IngestionEnrichmentFlow(

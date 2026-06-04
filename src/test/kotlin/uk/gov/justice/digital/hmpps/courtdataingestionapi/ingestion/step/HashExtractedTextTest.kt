@@ -1,7 +1,8 @@
-package uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion
+package uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.step
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionContext
 
 class HashExtractedTextTest {
 

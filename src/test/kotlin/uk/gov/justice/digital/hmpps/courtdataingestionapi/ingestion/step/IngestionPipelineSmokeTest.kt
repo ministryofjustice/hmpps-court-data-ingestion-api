@@ -1,7 +1,13 @@
-package uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion
+package uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.step
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionContext
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionEnrichmentFlow
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.TestPdfFactory
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.step.ExtractPdfText
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.step.HashDownloadedFile
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.step.HashExtractedText
 
 class IngestionPipelineSmokeTest {
 

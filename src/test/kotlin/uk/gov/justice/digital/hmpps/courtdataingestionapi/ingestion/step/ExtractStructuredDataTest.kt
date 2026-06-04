@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion
+package uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.step
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -7,6 +7,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionContext
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.extraction.ExtractionService
 import java.util.UUID
 

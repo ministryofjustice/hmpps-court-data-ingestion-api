@@ -8,6 +8,7 @@ import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsDocumentManagementApi
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.step.DownloadFile
 import java.util.UUID
 
 class DownloadFileTest {

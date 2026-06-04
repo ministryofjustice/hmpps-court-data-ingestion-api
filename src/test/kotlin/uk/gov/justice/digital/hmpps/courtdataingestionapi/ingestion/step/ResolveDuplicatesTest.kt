@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion
+package uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.step
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -6,6 +6,9 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.ingestion.DuplicateResolutionOutcome
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.DestinationType
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionContext
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.step.ResolveDuplicates
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.ingestion.DuplicateResolutionService
 import java.util.UUID
 

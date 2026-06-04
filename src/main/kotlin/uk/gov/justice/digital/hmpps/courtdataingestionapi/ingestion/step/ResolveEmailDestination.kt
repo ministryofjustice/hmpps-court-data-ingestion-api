@@ -1,7 +1,10 @@
-package uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion
+package uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.step
 
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.DestinationType
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionContext
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionEnricher
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.prisonemail.PrisonEmailNormaliser
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.PrisonEmailMappingRepository
 

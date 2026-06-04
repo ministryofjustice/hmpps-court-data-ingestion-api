@@ -1,9 +1,11 @@
-package uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion
+package uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.step
 
 import org.apache.pdfbox.Loader
 import org.apache.pdfbox.text.PDFTextStripper
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionContext
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionEnricher
 
 @Component
 @Order(300)
