@@ -7,7 +7,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsDocumentMa
 
 @Component
 @Order(100)
-class DownloadFileEnricher(
+class DownloadFile(
   private val documentApi: HmppsDocumentManagementApi,
 ) : IngestionEnricher {
 

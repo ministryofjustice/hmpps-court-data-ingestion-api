@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component
 
 @Component
 @Order(300)
-class ExtractPdfTextEnricher : IngestionEnricher {
+class ExtractPdfText : IngestionEnricher {
 
   override fun enrich(context: IngestionContext): IngestionContext {
     val fileBytes = context.downloadedFileBytes ?: return context

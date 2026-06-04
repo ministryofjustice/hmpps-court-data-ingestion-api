@@ -10,10 +10,10 @@ import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsDocumentManagementApi
 import java.util.UUID
 
-class DownloadFileEnricherTest {
+class DownloadFileTest {
 
   private val documentApi = mock<HmppsDocumentManagementApi>()
-  private val enricher = DownloadFileEnricher(documentApi)
+  private val enricher = DownloadFile(documentApi)
 
   @Test
   fun `downloads file and stores bytes in context`() {

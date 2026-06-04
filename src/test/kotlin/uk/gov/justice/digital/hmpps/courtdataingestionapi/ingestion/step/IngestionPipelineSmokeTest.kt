@@ -9,9 +9,9 @@ class IngestionPipelineSmokeTest {
   fun `threads file hash text extraction and text hash across a simple pipeline`() {
     val flow = IngestionEnrichmentFlow(
       listOf(
-        HashDownloadedFileEnricher(),
-        ExtractPdfTextEnricher(),
-        HashExtractedTextEnricher(),
+        HashDownloadedFile(),
+        ExtractPdfText(),
+        HashExtractedText(),
       ),
     )
 

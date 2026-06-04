@@ -10,16 +10,16 @@ import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.extraction.ExtractionService
 import java.util.UUID
 
-class ExtractStructuredDataEnricherTest {
+class ExtractStructuredDataTest {
 
   private val extractionService = mock<ExtractionService>()
-  private val enricher = ExtractStructuredDataEnricher(extractionService)
+  private val enricher = ExtractStructuredData(extractionService)
 
   @Test
   fun `calls structured extraction when extracted text exists`() {
     val documentId = UUID.randomUUID()
     whenever(
-      extractionService.extractStructuredDataAndStore(documentId, "text", "file-hash", "text-hash"),
+      extractionService.extractStructuredDataAndStore(documentId, "text", "file-hash"),
     ).thenReturn(mock())
 
     val input = IngestionContext(
@@ -32,7 +32,7 @@ class ExtractStructuredDataEnricherTest {
 
     val result = enricher.enrich(input)
 
-    verify(extractionService).extractStructuredDataAndStore(documentId, "text", "file-hash", "text-hash")
+    verify(extractionService).extractStructuredDataAndStore(documentId, "text", "file-hash")
     assertThat(result).isEqualTo(input)
   }
 
@@ -40,7 +40,7 @@ class ExtractStructuredDataEnricherTest {
   fun `skips structured extraction when there is no document id`() {
     enricher.enrich(IngestionContext(prisonEmailAddress = "omu.example@example.com", prisonDocumentId = null, extractedText = "text"))
 
-    verify(extractionService, never()).extractStructuredDataAndStore(any(), any(), any(), any())
+    verify(extractionService, never()).extractStructuredDataAndStore(any(), any(), any())
   }
 
   @Test
@@ -49,14 +49,14 @@ class ExtractStructuredDataEnricherTest {
 
     val result = enricher.enrich(input)
 
-    verify(extractionService, never()).extractStructuredDataAndStore(any(), any(), any(), any())
+    verify(extractionService, never()).extractStructuredDataAndStore(any(), any(), any())
     assertThat(result.warnings).contains("Structured extraction skipped: extracted text is empty")
   }
 
   @Test
   fun `swallows extraction failure so ingestion is not broken`() {
     val documentId = UUID.randomUUID()
-    whenever(extractionService.extractStructuredDataAndStore(documentId, "text", null, null))
+    whenever(extractionService.extractStructuredDataAndStore(documentId, "text", null))
       .thenThrow(RuntimeException("extraction blew up"))
 
     val input = IngestionContext(

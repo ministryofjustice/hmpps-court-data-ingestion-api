@@ -72,7 +72,6 @@ class ExtractionService(
     documentId: UUID,
     extractedText: String,
     downloadedFileSha256: String?,
-    extractedTextSha256: String?,
   ): ExtractionResultEntity {
     val model = formatModels.active()
 
@@ -84,7 +83,9 @@ class ExtractionService(
     )
 
     if (existing != null && existing.status != STATUS_ERROR) return existing
-    val sha = resolveSha256(extractedTextSha256, extractedText)
+    // content_sha256 is the hash of the source file's bytes in both extraction paths, so the column
+    // carries one meaning. The extracted-text hash is recorded on court_document.extracted_text_sha256.
+    val sha = downloadedFileSha256 ?: EMPTY_SHA
 
     val entity = runCatching {
       val out = pipeline.extractFromText(
@@ -163,8 +164,6 @@ class ExtractionService(
     result = source.result
     extractedAt = source.extractedAt
   }
-
-  private fun resolveSha256(providedSha256: String?, text: String): String = providedSha256 ?: Sha256.hex(text.toByteArray(Charsets.UTF_8))
 
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)

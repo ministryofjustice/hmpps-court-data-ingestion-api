@@ -7,7 +7,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.PrisonEmail
 
 @Component
 @Order(500)
-class IdentifyDestinationEnricher(
+class ResolveEmailDestination(
   private val prisonEmailMappingRepository: PrisonEmailMappingRepository,
 ) : IngestionEnricher {
 

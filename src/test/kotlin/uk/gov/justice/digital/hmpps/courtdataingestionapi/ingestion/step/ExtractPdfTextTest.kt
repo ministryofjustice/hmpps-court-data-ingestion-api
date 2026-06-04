@@ -3,9 +3,9 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-class ExtractPdfTextEnricherTest {
+class ExtractPdfTextTest {
 
-  private val enricher = ExtractPdfTextEnricher()
+  private val enricher = ExtractPdfText()
 
   @Test
   fun `extracts text from a pdf`() {

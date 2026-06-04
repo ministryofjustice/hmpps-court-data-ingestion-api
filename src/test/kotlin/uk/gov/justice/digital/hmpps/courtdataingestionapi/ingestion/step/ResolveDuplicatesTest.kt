@@ -9,10 +9,10 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.ingestion.Dupli
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.ingestion.DuplicateResolutionService
 import java.util.UUID
 
-class DuplicateResolutionEnricherTest {
+class ResolveDuplicatesTest {
 
   private val service = mock<DuplicateResolutionService>()
-  private val enricher = DuplicateResolutionEnricher(service)
+  private val enricher = ResolveDuplicates(service)
 
   @Test
   fun `sets duplicateOf when service returns match`() {

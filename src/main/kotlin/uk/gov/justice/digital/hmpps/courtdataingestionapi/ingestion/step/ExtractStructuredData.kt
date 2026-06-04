@@ -7,7 +7,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.extraction.Ext
 
 @Component
 @Order(700)
-class ExtractStructuredDataEnricher(
+class ExtractStructuredData(
   private val extractionService: ExtractionService,
 ) : IngestionEnricher {
 
@@ -30,7 +30,6 @@ class ExtractStructuredDataEnricher(
         documentId = prisonDocumentId,
         extractedText = extractedText,
         downloadedFileSha256 = context.downloadedFileSha256,
-        extractedTextSha256 = context.extractedTextSha256,
       )
     }.onFailure {
       log.warn("Structured extraction skipped for document {}", prisonDocumentId, it)

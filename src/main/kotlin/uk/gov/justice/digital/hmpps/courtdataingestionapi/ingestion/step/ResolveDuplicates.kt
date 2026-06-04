@@ -6,7 +6,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.ingestion.Dupl
 
 @Component
 @Order(600)
-class DuplicateResolutionEnricher(
+class ResolveDuplicates(
   private val duplicateResolutionService: DuplicateResolutionService,
 ) : IngestionEnricher {
 

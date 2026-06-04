@@ -6,10 +6,10 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.PrisonEmailMappingRepository
 
-class IdentifyDestinationEnricherTest {
+class ResolveEmailDestinationTest {
 
   private val repository = mock<PrisonEmailMappingRepository>()
-  private val enricher = IdentifyDestinationEnricher(repository)
+  private val enricher = ResolveEmailDestination(repository)
 
   @Test
   fun `identifies prison destination from mapping`() {
