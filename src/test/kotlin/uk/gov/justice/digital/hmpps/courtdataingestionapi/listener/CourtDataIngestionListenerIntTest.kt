@@ -24,7 +24,7 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
   fun `Test receiving a message from the queue not found response for core person api and all data is ingested`() {
     val event = sendSubscriptionNotification(NOT_FOUND_CORE_PERSON)
 
-    val file = courtDocumentRepository.findFirstByDefendantId(NOT_FOUND_CORE_PERSON)!!
+    val file = courtDocumentRepository.findFirstByDefendantIdOrderByIngestionAtDesc(NOT_FOUND_CORE_PERSON)!!
     assertThat(file.defendantId).isEqualTo(NOT_FOUND_CORE_PERSON)
     assertThat(file.courtDocumentId).isEqualTo(COURT_DOCUMENT_ID)
     assertThat(file.prisonDocumentId).isEqualTo(PRISON_DOCUMENT_ID)
@@ -37,13 +37,14 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
     assertThat(file.prisonEmailAddress).isEqualTo(event.prisonEmailAddress)
     assertThat(file.eventType).isEqualTo(HmctsEventType.PRISON_COURT_REGISTER_GENERATED)
     assertThat(file.courtDocumentType).isEqualTo(CourtDocumentType.PRISON_COURT_REGISTER)
+    assertThat(file.courtHearingId).isNotNull
   }
 
   @Test
   fun `Test receiving a message from the queue no prisoner ids from core person api`() {
     sendSubscriptionNotification(NO_MATCHING_IDS_PERSON)
 
-    val file = courtDocumentRepository.findFirstByDefendantId(NO_MATCHING_IDS_PERSON)!!
+    val file = courtDocumentRepository.findFirstByDefendantIdOrderByIngestionAtDesc(NO_MATCHING_IDS_PERSON)!!
     assertThat(file.defendantId).isEqualTo(NO_MATCHING_IDS_PERSON)
     assertThat(file.courtDocumentId).isEqualTo(COURT_DOCUMENT_ID)
     assertThat(file.prisonerNumber).isNull()
@@ -54,7 +55,7 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
   fun `Test receiving a message from the queue with matching prisoner numbers from core person api`() {
     sendSubscriptionNotification(MATCHING_CORE_PERSON)
 
-    val file = courtDocumentRepository.findFirstByDefendantId(MATCHING_CORE_PERSON)!!
+    val file = courtDocumentRepository.findFirstByDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
     assertThat(file.defendantId).isEqualTo(MATCHING_CORE_PERSON)
     assertThat(file.courtDocumentId).isEqualTo(COURT_DOCUMENT_ID)
     assertThat(file.prisonerNumber).isEqualTo("ABC123")
@@ -84,7 +85,7 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
   fun `Test receiving a message for a person with aliases`() {
     sendSubscriptionNotification(MATCHING_CORE_ALIASES)
 
-    val file = courtDocumentRepository.findFirstByDefendantId(MATCHING_CORE_ALIASES)!!
+    val file = courtDocumentRepository.findFirstByDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_ALIASES)!!
     assertThat(file.defendantId).isEqualTo(MATCHING_CORE_ALIASES)
     assertThat(file.courtDocumentId).isEqualTo(COURT_DOCUMENT_ID)
     assertThat(file.prisonerNumber).isNull()

@@ -33,11 +33,12 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.H
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsCourtCasesReleaseDatesApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsDocumentManagementApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.PrisonerSearchApiExtension
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HMPPSPrisonerCreatedDomainEvent
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HMPPSPrisonerSearchEvent
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsCase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsSubscriptionNotificationRequestBody
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.PrisonerCreatedAdditionalInformation
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.PrisonerSearchEventAdditionalInformation
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.SQSMessage
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import uk.gov.justice.hmpps.sqs.HmppsQueue
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
@@ -130,6 +131,8 @@ abstract class IntegrationTestBase {
         ),
         prisonEmailAddress = "prison.email@example.com",
         documentGeneratedTimestamp = LocalDateTime.now().minusMinutes(1).withNano(0),
+        eventType = HmctsEventType.PRISON_COURT_REGISTER_GENERATED,
+        hearingId = UUID.randomUUID(),
       )
     courtDataIngestionQueue.sqsClient.sendMessage(
       SendMessageRequest.builder()
@@ -149,10 +152,32 @@ abstract class IntegrationTestBase {
       Type = "Notification",
       MessageId = UUID.randomUUID().toString(),
       Message = TestUtil.objectMapper().writeValueAsString(
-        HMPPSPrisonerCreatedDomainEvent(
+        HMPPSPrisonerSearchEvent(
           eventType = "prisoner-offender-search.prisoner.created",
-          additionalInformation = PrisonerCreatedAdditionalInformation(
+          additionalInformation = PrisonerSearchEventAdditionalInformation(
             prisonerNumber,
+          ),
+        ),
+      ),
+    )
+    prisonerCreatedQueue.sqsClient.sendMessage(
+      SendMessageRequest.builder()
+        .queueUrl(prisonerCreatedQueue.queueUrl)
+        .messageBody(TestUtil.objectMapper().writeValueAsString(event))
+        .build(),
+    )
+  }
+
+  protected fun sendPrisonerUpdatedMessage(prisonerNumber: String, categoriesChanged: List<String>) {
+    val event = SQSMessage(
+      Type = "Notification",
+      MessageId = UUID.randomUUID().toString(),
+      Message = TestUtil.objectMapper().writeValueAsString(
+        HMPPSPrisonerSearchEvent(
+          eventType = "prisoner-offender-search.prisoner.updated",
+          additionalInformation = PrisonerSearchEventAdditionalInformation(
+            prisonerNumber,
+            categoriesChanged,
           ),
         ),
       ),
