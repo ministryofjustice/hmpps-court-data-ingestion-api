@@ -11,7 +11,7 @@ import java.util.UUID
 @Repository
 interface CourtDocumentRepository : JpaRepository<CourtDocumentEntity, UUID> {
   fun countByDefendantId(defendantId: UUID): Long
-  fun findFirstByDefendantId(defendantId: UUID): CourtDocumentEntity?
+  fun findFirstByDefendantIdOrderByIngestionAtDesc(defendantId: UUID): CourtDocumentEntity?
   fun findByDefendantIdIn(defendantIds: List<UUID>): List<CourtDocumentEntity>
   fun countByPrisonerNumber(prisonerNumber: String): Long
   fun findByPrisonerNumber(prisonerNumber: String): List<CourtDocumentEntity>

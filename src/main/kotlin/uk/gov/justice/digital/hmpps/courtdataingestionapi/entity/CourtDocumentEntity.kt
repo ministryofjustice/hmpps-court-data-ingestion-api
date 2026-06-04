@@ -21,6 +21,7 @@ data class CourtDocumentEntity(
   var defendantId: UUID,
   var courtDocumentId: UUID,
   var prisonDocumentId: UUID,
+  var courtHearingId: UUID?,
   val prisonEmailAddress: String,
   @Enumerated(EnumType.STRING)
   val eventType: HmctsEventType,

@@ -78,5 +78,6 @@ class ExtractionThresholdIntTest : IntegrationTestBase() {
     courtDocumentType = CourtDocumentType.PRISON_COURT_REGISTER,
     documentGeneratedTimestamp = ingestionAt,
     ingestionAt = ingestionAt,
+    courtHearingId = UUID.randomUUID(),
   )
 }

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtDataIngestionService
 
 @Service
-class PrisonerCreatedListener(
+class PrisonerSearchEventListener(
   private val objectMapper: ObjectMapper,
   private val courtDataIngestionService: CourtDataIngestionService,
 ) {
@@ -24,18 +24,21 @@ class PrisonerCreatedListener(
   fun onDomainEvent(
     rawMessage: String,
   ) {
-    log.debug("Received message {}", rawMessage)
+    log.debug("Received prisoner search event message {}", rawMessage)
     val sqsMessage: SQSMessage = objectMapper.readValue(rawMessage)
-    return when (sqsMessage.Type) {
+    when (sqsMessage.Type) {
       "Notification" -> {
-        val event = objectMapper.readValue<HMPPSPrisonerCreatedDomainEvent>(sqsMessage.Message)
+        val event = objectMapper.readValue<HMPPSPrisonerSearchEvent>(sqsMessage.Message)
         if (event.eventType == "prisoner-offender-search.prisoner.created") {
           courtDataIngestionService.attemptToMatchForNewPrisoner(event.additionalInformation.nomsNumber)
+        } else if (event.eventType == "prisoner-offender-search.prisoner.updated") {
+          if (event.additionalInformation.categoriesChanged.contains("PERSONAL_DETAILS")) {
+            courtDataIngestionService.attemptToMatchForNewPrisoner(event.additionalInformation.nomsNumber)
+          }
         } else {
           throw IllegalArgumentException("Received a message I wasn't expecting: ${event.eventType}")
         }
       }
-
       else -> {}
     }
   }
@@ -45,10 +48,12 @@ class PrisonerCreatedListener(
 @JsonNaming(value = PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 data class SQSMessage(val Type: String, val Message: String, val MessageId: String? = null)
 
-data class HMPPSPrisonerCreatedDomainEvent(
+data class HMPPSPrisonerSearchEvent(
   val eventType: String,
-  val additionalInformation: PrisonerCreatedAdditionalInformation,
+  val additionalInformation: PrisonerSearchEventAdditionalInformation,
 )
-data class PrisonerCreatedAdditionalInformation(
+
+data class PrisonerSearchEventAdditionalInformation(
   val nomsNumber: String,
+  val categoriesChanged: List<String> = emptyList(),
 )

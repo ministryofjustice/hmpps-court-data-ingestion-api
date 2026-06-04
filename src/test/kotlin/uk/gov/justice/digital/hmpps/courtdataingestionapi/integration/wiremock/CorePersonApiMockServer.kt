@@ -12,7 +12,7 @@ import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.TestUtil
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.PrisonerCreatedListenerIntTest
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.PrisonerSearchEventListenerIntTest
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.coreperson.CorePersonCanonicalIdentifiers
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.coreperson.CorePersonCanonicalRecord
 import java.util.UUID
@@ -32,8 +32,8 @@ class CorePersonApiExtension :
     corePersonApi.stubCommonPlatformCorePerson(IntegrationTestBase.MATCHING_CORE_PERSON, listOf(IntegrationTestBase.MATCHING_PRISONER_NUMBER))
     corePersonApi.stubCommonPlatformCorePerson(IntegrationTestBase.MATCHING_CORE_ALIASES, listOf("QWE123", "RTY123"))
 
-    corePersonApi.stubCommonPlatformCorePerson(PrisonerCreatedListenerIntTest.DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION, emptyList())
-    corePersonApi.stubPrisonerCorePerson(PrisonerCreatedListenerIntTest.PRISONER_NUMBER_WITH_MATCH, listOf(PrisonerCreatedListenerIntTest.DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION))
+    corePersonApi.stubCommonPlatformCorePerson(PrisonerSearchEventListenerIntTest.DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION, emptyList())
+    corePersonApi.stubPrisonerCorePerson(PrisonerSearchEventListenerIntTest.PRISONER_NUMBER_WITH_MATCH, listOf(PrisonerSearchEventListenerIntTest.DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION))
     corePersonApi.start()
   }
 

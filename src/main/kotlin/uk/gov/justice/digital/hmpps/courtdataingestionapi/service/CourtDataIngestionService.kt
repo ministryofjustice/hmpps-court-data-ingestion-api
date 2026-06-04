@@ -54,6 +54,7 @@ class CourtDataIngestionService(
         prisonDocumentId = prisonDocument.documentUuid,
         eventType = message.eventType,
         courtDocumentType = message.eventType.documentType,
+        courtHearingId = message.hearingId,
       ).applyEnrichment(enriched),
     )
 
