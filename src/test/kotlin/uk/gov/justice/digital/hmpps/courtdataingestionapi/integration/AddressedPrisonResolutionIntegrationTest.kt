@@ -38,7 +38,7 @@ class AddressedPrisonResolutionIntegrationTest : IntegrationTestBase() {
   fun `ingesting a document resolves the delivery mailbox to a prison code`() {
     sendSubscriptionNotification(MATCHING_CORE_PERSON)
 
-    val document = courtDocumentRepository.findFirstByDefendantId(MATCHING_CORE_PERSON)!!
+    val document = courtDocumentRepository.findFirstByDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
 
     assertThat(document.prisonEmailAddress).isEqualTo("prison.email@example.com")
     assertThat(document.addressedPrison).isEqualTo("LII")
