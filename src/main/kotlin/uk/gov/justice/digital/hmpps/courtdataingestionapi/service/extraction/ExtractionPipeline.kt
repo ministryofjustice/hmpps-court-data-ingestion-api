@@ -5,6 +5,12 @@ import java.io.InputStream
 
 interface ExtractionPipeline {
   fun extract(input: InputStream, sourceName: String, model: FormatModel): ExtractionOutput
+
+  fun extractFromText(
+    text: String,
+    documentId: String,
+    model: FormatModel,
+  ): ExtractionOutput
 }
 
 data class ExtractionOutput(

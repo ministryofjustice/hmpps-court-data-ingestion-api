@@ -16,3 +16,15 @@ class ExtractionBackfillEndpoint(
     return mapOf("status" to if (started) "complete" else "already-running")
   }
 }
+
+@Component
+@Endpoint(id = "hashbackfill")
+class HashBackfillEndpoint(
+  private val backfillService: ExtractionBackfillService,
+) {
+  @WriteOperation
+  fun trigger(): Map<String, String> {
+    val started = backfillService.runHashBackfill()
+    return mapOf("status" to if (started) "complete" else "already-running")
+  }
+}

@@ -84,7 +84,6 @@ class CorpusSampleService(
             x = round1(cell.x),
             xEnd = round1(cell.xEnd),
             xBin = (cell.x / binSize).toInt(),
-
             font = cell.font,
             fontSize = round1(cell.fontSize),
           )
