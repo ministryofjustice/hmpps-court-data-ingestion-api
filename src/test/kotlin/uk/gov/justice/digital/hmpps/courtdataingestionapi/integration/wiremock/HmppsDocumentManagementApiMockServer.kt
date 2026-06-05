@@ -37,6 +37,7 @@ class HmppsDocumentManagementApiExtension :
     hmppsDocumentManagementApi.stubGetDocument()
     hmppsDocumentManagementApi.stubUpdateMetadata()
     hmppsDocumentManagementApi.stubSetFileContentHash()
+    hmppsDocumentManagementApi.stubSetDuplicateOf()
     hmppsDocumentManagementApi.stubDownloadFile()
   }
 
@@ -101,6 +102,20 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
   fun stubSetFileContentHash() {
     stubFor(
       put(urlPathMatching("/documents/[a-zA-Z0-9\\-]{36}/file-content-hash"))
+        .withHeader("Service-Name", equalTo(SERVICE_NAME))
+        .withHeader("Username", equalTo(USERNAME))
+        .willReturn(
+          aResponse()
+            .withHeader("Content-Type", "application/json")
+            .withBody(happyResponse)
+            .withStatus(200),
+        ),
+    )
+  }
+
+  fun stubSetDuplicateOf() {
+    stubFor(
+      put(urlPathMatching("/documents/[a-zA-Z0-9\\-]{36}/duplicate-of"))
         .withHeader("Service-Name", equalTo(SERVICE_NAME))
         .withHeader("Username", equalTo(USERNAME))
         .willReturn(

@@ -99,6 +99,20 @@ class HmppsDocumentManagementApi(
       .block()
   }
 
+  fun setDuplicateOf(documentId: UUID, duplicateOf: UUID) {
+    webClient.put()
+      .uri("/documents/$documentId/duplicate-of")
+      .header("Service-Name", appName)
+      .header("Username", SYSTEM_USERNAME)
+      .bodyValue(mapOf("duplicateOf" to duplicateOf))
+      .retrieve()
+      .rethrowAnyHttpErrorWithContext { response, body ->
+        "Error setting duplicateOf (UUID=$documentId, StatusCode=${response.statusCode().value()}, Response=$body)"
+      }
+      .toBodilessEntity()
+      .block()
+  }
+
   fun downloadFile(documentId: UUID): ByteArray = webClient
     .get()
     .uri("/documents/$documentId/file")

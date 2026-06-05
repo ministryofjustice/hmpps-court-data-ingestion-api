@@ -45,12 +45,15 @@ class FileService(
   fun mirrorEnrichmentToDocumentStore(document: CourtDocumentEntity) {
     val metadata = buildMap {
       document.deliverySource?.let { put("deliverySource", it.name) }
-      document.duplicateOf?.let { put("duplicateOf", it.toString()) }
     }
     hmppsDocumentManagementApi.mergeMetadata(document.prisonDocumentId, metadata)
 
     document.extractedTextSha256?.let {
       hmppsDocumentManagementApi.setFileContentHash(document.prisonDocumentId, it)
+    }
+
+    document.duplicateOf?.let {
+      hmppsDocumentManagementApi.setDuplicateOf(document.prisonDocumentId, it)
     }
   }
 }
