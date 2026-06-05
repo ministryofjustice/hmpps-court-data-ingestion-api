@@ -51,9 +51,5 @@ class FileService(
     document.extractedTextSha256?.let {
       hmppsDocumentManagementApi.setFileContentHash(document.prisonDocumentId, it)
     }
-
-    document.duplicateOf?.let {
-      hmppsDocumentManagementApi.setDuplicateOf(document.prisonDocumentId, it)
-    }
   }
 }

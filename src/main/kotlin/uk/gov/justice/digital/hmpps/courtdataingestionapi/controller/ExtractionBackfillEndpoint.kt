@@ -28,15 +28,3 @@ class HashBackfillEndpoint(
     return mapOf("status" to if (started) "complete" else "already-running")
   }
 }
-
-@Component
-@Endpoint(id = "duplicatereconcile")
-class DuplicateReconciliationEndpoint(
-  private val reconciliationService: uk.gov.justice.digital.hmpps.courtdataingestionapi.service.ingestion.DuplicateReconciliationService,
-) {
-  @WriteOperation
-  fun trigger(): Map<String, Any> {
-    val summary = reconciliationService.reconcile()
-    return mapOf("groups" to summary.groups, "linked" to summary.linked)
-  }
-}

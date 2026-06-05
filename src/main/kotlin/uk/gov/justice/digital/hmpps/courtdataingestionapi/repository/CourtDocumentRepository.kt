@@ -17,26 +17,6 @@ interface CourtDocumentRepository : JpaRepository<CourtDocumentEntity, UUID> {
   fun findByPrisonerNumber(prisonerNumber: String): List<CourtDocumentEntity>
   fun findByPrisonerNumberAndPrisonDocumentIdIn(personId: String, prisonDocumentIds: List<UUID>): List<CourtDocumentEntity>
   fun findFirstByPrisonDocumentId(prisonDocumentId: UUID): Optional<CourtDocumentEntity>
-  fun findByExtractedTextSha256(hash: String): List<CourtDocumentEntity>
-  fun findByDownloadedFileSha256(hash: String): List<CourtDocumentEntity>
-
-  @Query(
-    value = "SELECT 1 FROM (SELECT pg_advisory_xact_lock(hashtextextended(:hash, 0))) AS lock_acquired",
-    nativeQuery = true,
-  )
-  fun lockOnContentHash(@Param("hash") hash: String): Int
-
-  @Query(
-    value = """
-      SELECT extracted_text_sha256
-      FROM court_document
-      WHERE extracted_text_sha256 IS NOT NULL
-      GROUP BY extracted_text_sha256
-      HAVING count(*) > 1
-    """,
-    nativeQuery = true,
-  )
-  fun findDuplicatedExtractedTextHashes(): List<String>
 
   @Query(
     value = """
