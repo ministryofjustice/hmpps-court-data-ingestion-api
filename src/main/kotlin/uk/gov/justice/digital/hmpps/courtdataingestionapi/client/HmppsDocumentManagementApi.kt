@@ -85,6 +85,20 @@ class HmppsDocumentManagementApi(
     return updateMetadata(documentId, current + updates)
   }
 
+  fun setFileContentHash(documentId: UUID, fileContentHash: String) {
+    webClient.put()
+      .uri("/documents/$documentId/file-content-hash")
+      .header("Service-Name", appName)
+      .header("Username", SYSTEM_USERNAME)
+      .bodyValue(mapOf("fileContentHash" to fileContentHash))
+      .retrieve()
+      .rethrowAnyHttpErrorWithContext { response, body ->
+        "Error setting file content hash (UUID=$documentId, StatusCode=${response.statusCode().value()}, Response=$body)"
+      }
+      .toBodilessEntity()
+      .block()
+  }
+
   fun downloadFile(documentId: UUID): ByteArray = webClient
     .get()
     .uri("/documents/$documentId/file")

@@ -38,14 +38,8 @@ class DuplicateReconciliationService(
           duplicate.duplicateOf = canonical.prisonDocumentId
           courtDocumentRepository.save(duplicate)
           runCatching {
-            fileService.stampIngestionMetadata(
-              prisonDocumentId = duplicate.prisonDocumentId,
-              deliverySource = duplicate.deliverySource,
-              downloadedFileSha256 = duplicate.downloadedFileSha256,
-              extractedTextSha256 = duplicate.extractedTextSha256,
-              duplicateOf = canonical.prisonDocumentId,
-            )
-          }.onFailure { log.warn("Reconcile metadata stamp failed for {}", duplicate.id, it) }
+            fileService.mirrorEnrichmentToDocumentStore(duplicate)
+          }.onFailure { log.warn("Reconcile mirror to document store failed for {}", duplicate.id, it) }
           linked++
         }
     }

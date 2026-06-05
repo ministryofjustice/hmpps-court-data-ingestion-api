@@ -27,7 +27,7 @@ class ResolveEmailDestination(
     )
   }
 
- private fun suffixBackstop(normalisedEmail: String, prisonCode: String?): DestinationType? = when {
+  private fun suffixBackstop(normalisedEmail: String, prisonCode: String?): DestinationType? = when {
     normalisedEmail.endsWith("@geoamey.co.uk") -> DestinationType.PECS
     normalisedEmail.startsWith("pecs") && normalisedEmail.endsWith("@serco.com") -> DestinationType.PECS
     prisonCode != null -> DestinationType.PRISON

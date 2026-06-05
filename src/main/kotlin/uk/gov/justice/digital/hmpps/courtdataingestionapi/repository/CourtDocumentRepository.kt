@@ -20,13 +20,6 @@ interface CourtDocumentRepository : JpaRepository<CourtDocumentEntity, UUID> {
   fun findByExtractedTextSha256(hash: String): List<CourtDocumentEntity>
   fun findByDownloadedFileSha256(hash: String): List<CourtDocumentEntity>
 
-  /**
-   * Transaction-scoped advisory lock keyed on a content hash. Two ingestions that share the same
-   * hash serialise here; everything else runs in parallel. The lock is released automatically when
-   * the surrounding transaction commits or rolls back, so it must be called inside the same
-   * transaction as the subsequent insert (which it is, via CourtDataIngestionService.receiveMessage).
-   * The subselect forces pg_advisory_xact_lock (which returns void) to execute and yields a row to map.
-   */
   @Query(
     value = "SELECT 1 FROM (SELECT pg_advisory_xact_lock(hashtextextended(:hash, 0))) AS lock_acquired",
     nativeQuery = true,

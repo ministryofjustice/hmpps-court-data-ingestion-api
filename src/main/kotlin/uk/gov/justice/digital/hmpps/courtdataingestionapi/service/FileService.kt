@@ -5,7 +5,7 @@ import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmctsSubscriptionApiClient
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsDocumentManagementApi
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.DestinationType
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Document
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentApiType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.SubscriptionRepository
@@ -42,25 +42,15 @@ class FileService(
   )
 
   @Transactional(propagation = Propagation.NOT_SUPPORTED)
-  fun stampIngestionMetadata(
-    prisonDocumentId: UUID,
-    deliverySource: DestinationType?,
-    downloadedFileSha256: String?,
-    extractedTextSha256: String?,
-    duplicateOf: UUID?,
-  ) {
-    val isCanonical = duplicateOf == null
-    val updates = buildMap {
-      deliverySource?.let { put("deliverySource", it.name) }
-      downloadedFileSha256?.let { put("downloadedFileSha256", it) }
-      extractedTextSha256?.let { put("extractedTextSha256", it) }
-      put("canonical", isCanonical.toString())
-      duplicateOf?.let { put("duplicateOf", it.toString()) }
+  fun mirrorEnrichmentToDocumentStore(document: CourtDocumentEntity) {
+    val metadata = buildMap {
+      document.deliverySource?.let { put("deliverySource", it.name) }
+      document.duplicateOf?.let { put("duplicateOf", it.toString()) }
     }
-    hmppsDocumentManagementApi.mergeMetadata(prisonDocumentId, updates)
+    hmppsDocumentManagementApi.mergeMetadata(document.prisonDocumentId, metadata)
 
-    duplicateOf?.let { canonicalId ->
-      hmppsDocumentManagementApi.mergeMetadata(canonicalId, mapOf("canonical" to "true"))
+    document.extractedTextSha256?.let {
+      hmppsDocumentManagementApi.setFileContentHash(document.prisonDocumentId, it)
     }
   }
 }

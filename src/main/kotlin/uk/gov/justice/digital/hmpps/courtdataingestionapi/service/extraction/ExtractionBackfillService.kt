@@ -104,14 +104,8 @@ class ExtractionBackfillService(
             )
             courtDocumentRepository.save(document.applyEnrichment(enriched))
             runCatching {
-              fileService.stampIngestionMetadata(
-                prisonDocumentId = document.prisonDocumentId,
-                deliverySource = enriched.destinationType,
-                downloadedFileSha256 = enriched.downloadedFileSha256,
-                extractedTextSha256 = enriched.extractedTextSha256,
-                duplicateOf = enriched.duplicateOf,
-              )
-            }.onFailure { log.warn("Hash backfill metadata stamp failed for {}", document.id, it) }
+              fileService.mirrorEnrichmentToDocumentStore(document)
+            }.onFailure { log.warn("Hash backfill mirror to document store failed for {}", document.id, it) }
           }.onFailure { log.error("Hash backfill failed for {}", document.id, it) }
         }
 
