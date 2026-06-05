@@ -23,18 +23,22 @@ class DuplicateResolutionService(
       return null
     }
 
+    (extractedTextSha256 ?: downloadedFileSha256)?.let { lockHash ->
+      courtDocumentRepository.lockOnContentHash(lockHash)
+    }
+
     extractedTextSha256?.let { hash ->
-      matchAgainst(
-        duplicateCandidates = courtDocumentRepository.findByExtractedTextSha256(hash),
-        documentId = currentDocumentId,
+      resolveAgainst(
+        candidates = courtDocumentRepository.findByExtractedTextSha256(hash),
+        currentDocumentId = currentDocumentId,
         reason = "matched_on_extracted_text_sha256",
       )?.let { return it }
     }
 
     downloadedFileSha256?.let { hash ->
-      matchAgainst(
-        duplicateCandidates = courtDocumentRepository.findByDownloadedFileSha256(hash),
-        documentId = currentDocumentId,
+      resolveAgainst(
+        candidates = courtDocumentRepository.findByDownloadedFileSha256(hash),
+        currentDocumentId = currentDocumentId,
         reason = "matched_on_downloaded_file_sha256",
       )?.let { return it }
     }
@@ -42,19 +46,28 @@ class DuplicateResolutionService(
     return null
   }
 
-  private fun matchAgainst(
-    duplicateCandidates: List<CourtDocumentEntity>,
-    documentId: UUID,
+  private fun resolveAgainst(
+    candidates: List<CourtDocumentEntity>,
+    currentDocumentId: UUID,
     reason: String,
-  ): DuplicateResolutionOutcome? = findFirstDuplicateDocumentId(duplicateCandidates, documentId)?.let { duplicateId ->
-    log.debug("Duplicate of {} found via {}", duplicateId, reason)
-    DuplicateResolutionOutcome(duplicateOf = duplicateId, reason = reason)
+  ): DuplicateResolutionOutcome? = chooseCanonical(candidates, currentDocumentId)?.let { canonical ->
+    log.debug("Duplicate of {} found via {}", canonical, reason)
+    DuplicateResolutionOutcome(duplicateOf = canonical, reason = reason)
   }
 
-  private fun findFirstDuplicateDocumentId(
-    duplicateCandidates: List<CourtDocumentEntity>,
-    documentId: UUID,
-  ): UUID? = duplicateCandidates
-    .mapNotNull { it.prisonDocumentId }
-    .firstOrNull { it != documentId }
+  private fun chooseCanonical(
+    candidates: List<CourtDocumentEntity>,
+    currentDocumentId: UUID,
+  ): UUID? {
+    val others = candidates
+      .filter { it.prisonDocumentId != currentDocumentId }
+      .sortedWith(compareBy(nullsLast(naturalOrder())) { it.ingestionAt })
+
+    if (others.isEmpty()) return null
+
+    val head = others.firstOrNull { it.duplicateOf == null }
+    return head?.prisonDocumentId
+      ?: others.first().duplicateOf
+      ?: others.first().prisonDocumentId
+  }
 }

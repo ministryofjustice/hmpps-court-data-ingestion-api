@@ -58,6 +58,16 @@ class CourtDataIngestionService(
       ).applyEnrichment(enriched),
     )
 
+    runCatching {
+      fileService.stampIngestionMetadata(
+        prisonDocumentId = courtDocumentEntity.prisonDocumentId,
+        deliverySource = enriched.destinationType,
+        downloadedFileSha256 = enriched.downloadedFileSha256,
+        extractedTextSha256 = enriched.extractedTextSha256,
+        duplicateOf = enriched.duplicateOf,
+      )
+    }.onFailure { log.warn("Failed to stamp document metadata for {}", courtDocumentEntity.prisonDocumentId, it) }
+
     val person = try {
       corePersonApiClient.getPersonByCommonPlatformId(message.masterDefendantId)
     } catch (e: WebClientResponseException) {

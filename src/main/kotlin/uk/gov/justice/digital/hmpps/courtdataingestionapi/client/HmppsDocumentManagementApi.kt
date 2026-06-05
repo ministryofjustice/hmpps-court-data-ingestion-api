@@ -65,6 +65,26 @@ class HmppsDocumentManagementApi(
     .bodyToMono(Document::class.java)
     .block()!!
 
+  fun getDocument(documentId: UUID): Document = webClient
+    .get()
+    .uri("/documents/$documentId")
+    .header("Service-Name", appName)
+    .header("Username", SYSTEM_USERNAME)
+    .accept(MediaType.APPLICATION_JSON)
+    .retrieve()
+    .rethrowAnyHttpErrorWithContext { response, body ->
+      "Error fetching document (UUID=$documentId, StatusCode=${response.statusCode().value()}, Response=$body)"
+    }
+    .bodyToMono(Document::class.java)
+    .block()
+    ?: error("No document returned for $documentId")
+
+  fun mergeMetadata(documentId: UUID, updates: Map<String, String>): Document {
+    if (updates.isEmpty()) return getDocument(documentId)
+    val current = getDocument(documentId).metadata
+    return updateMetadata(documentId, current + updates)
+  }
+
   fun downloadFile(documentId: UUID): ByteArray = webClient
     .get()
     .uri("/documents/$documentId/file")

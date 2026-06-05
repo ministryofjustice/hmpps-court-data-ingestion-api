@@ -11,6 +11,7 @@ import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
+import java.time.LocalDateTime
 import java.util.UUID
 
 class DuplicateResolutionServiceTest {
@@ -96,5 +97,71 @@ class DuplicateResolutionServiceTest {
     )
 
     Assertions.assertThat(result).isNull()
+  }
+
+  @Test
+  fun `acquires the advisory lock on the extracted text hash before matching`() {
+    val current = UUID.randomUUID()
+    whenever(repository.findByExtractedTextSha256("text-hash")).thenReturn(emptyList())
+    whenever(repository.findByDownloadedFileSha256("file-hash")).thenReturn(emptyList())
+
+    service.resolve(
+      currentDocumentId = current,
+      downloadedFileSha256 = "file-hash",
+      extractedTextSha256 = "text-hash",
+    )
+
+    verify(repository).lockOnContentHash("text-hash")
+  }
+
+  @Test
+  fun `links to the earliest ingested document when several share the hash`() {
+    val current = UUID.randomUUID()
+    val earliestId = UUID.randomUUID()
+    val laterId = UUID.randomUUID()
+    val earliest = mock<CourtDocumentEntity> {
+      on { prisonDocumentId } doReturn earliestId
+      on { ingestionAt } doReturn LocalDateTime.parse("2026-06-05T10:00:00")
+      on { duplicateOf } doReturn null
+    }
+    val later = mock<CourtDocumentEntity> {
+      on { prisonDocumentId } doReturn laterId
+      on { ingestionAt } doReturn LocalDateTime.parse("2026-06-05T11:00:00")
+      on { duplicateOf } doReturn null
+    }
+    whenever(repository.findByExtractedTextSha256("text-hash")).thenReturn(listOf(later, earliest))
+
+    val result = service.resolve(
+      currentDocumentId = current,
+      downloadedFileSha256 = null,
+      extractedTextSha256 = "text-hash",
+    )
+
+    Assertions.assertThat(result?.duplicateOf).isEqualTo(earliestId)
+  }
+
+  @Test
+  fun `points at the canonical head rather than another duplicate`() {
+    val current = UUID.randomUUID()
+    val headId = UUID.randomUUID()
+    val earlierDuplicate = mock<CourtDocumentEntity> {
+      on { prisonDocumentId } doReturn UUID.randomUUID()
+      on { ingestionAt } doReturn LocalDateTime.parse("2026-06-05T10:30:00")
+      on { duplicateOf } doReturn headId
+    }
+    val head = mock<CourtDocumentEntity> {
+      on { prisonDocumentId } doReturn headId
+      on { ingestionAt } doReturn LocalDateTime.parse("2026-06-05T10:00:00")
+      on { duplicateOf } doReturn null
+    }
+    whenever(repository.findByExtractedTextSha256("text-hash")).thenReturn(listOf(earlierDuplicate, head))
+
+    val result = service.resolve(
+      currentDocumentId = current,
+      downloadedFileSha256 = null,
+      extractedTextSha256 = "text-hash",
+    )
+
+    Assertions.assertThat(result?.duplicateOf).isEqualTo(headId)
   }
 }

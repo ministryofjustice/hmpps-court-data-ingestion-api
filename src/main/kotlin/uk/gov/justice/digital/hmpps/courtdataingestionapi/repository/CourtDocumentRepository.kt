@@ -21,10 +21,30 @@ interface CourtDocumentRepository : JpaRepository<CourtDocumentEntity, UUID> {
   fun findByDownloadedFileSha256(hash: String): List<CourtDocumentEntity>
 
   /**
-   * Keyset page of documents that have not yet had their file hash populated, ordered by id so the
-   * backfill visits every row exactly once and terminates even when a download fails (the row keeps
-   * a null hash but the cursor still moves past its id). Pass the zero UUID to start.
+   * Transaction-scoped advisory lock keyed on a content hash. Two ingestions that share the same
+   * hash serialise here; everything else runs in parallel. The lock is released automatically when
+   * the surrounding transaction commits or rolls back, so it must be called inside the same
+   * transaction as the subsequent insert (which it is, via CourtDataIngestionService.receiveMessage).
+   * The subselect forces pg_advisory_xact_lock (which returns void) to execute and yields a row to map.
    */
+  @Query(
+    value = "SELECT 1 FROM (SELECT pg_advisory_xact_lock(hashtextextended(:hash, 0))) AS lock_acquired",
+    nativeQuery = true,
+  )
+  fun lockOnContentHash(@Param("hash") hash: String): Int
+
+  @Query(
+    value = """
+      SELECT extracted_text_sha256
+      FROM court_document
+      WHERE extracted_text_sha256 IS NOT NULL
+      GROUP BY extracted_text_sha256
+      HAVING count(*) > 1
+    """,
+    nativeQuery = true,
+  )
+  fun findDuplicatedExtractedTextHashes(): List<String>
+
   @Query(
     value = """
       SELECT *
