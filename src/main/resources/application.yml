@@ -102,6 +102,7 @@ management:
           - info
           - health
           - extractionbackfill
+          - hashbackfill
           - corpussample
   endpoint:
     health:

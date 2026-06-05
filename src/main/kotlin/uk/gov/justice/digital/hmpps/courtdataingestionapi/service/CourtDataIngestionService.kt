@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentCa
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionContext
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionEnrichmentFlow
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.applyEnrichment
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsSubscriptionNotificationRequestBody
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
@@ -48,13 +49,13 @@ class CourtDataIngestionService(
         defendantId = message.masterDefendantId,
         courtDocumentId = message.documentId,
         prisonEmailAddress = message.prisonEmailAddress,
-        addressedPrison = enriched.addressedPrison,
         documentGeneratedTimestamp = message.documentGeneratedTimestamp,
         courtDocumentCases = message.cases.map { CourtDocumentCaseEntity(caseReference = it.urn) }.toMutableList(),
         prisonDocumentId = prisonDocument.documentUuid,
         eventType = message.eventType,
         courtDocumentType = message.eventType.documentType,
-      ),
+        courtHearingId = message.hearingId,
+      ).applyEnrichment(enriched),
     )
 
     val person = try {

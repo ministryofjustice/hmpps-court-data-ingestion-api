@@ -12,8 +12,8 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.ExtractionResul
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.extraction.format.FormatModel
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.extraction.format.FormatModelRegistry
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.ExtractionResultRepository
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.util.Sha256
 import java.io.ByteArrayInputStream
-import java.security.MessageDigest
 import java.util.UUID
 
 @Service
@@ -39,7 +39,7 @@ class ExtractionService(
 
     val entity = try {
       val bytes = documentApi.downloadFile(documentId)
-      val sha = sha256(bytes)
+      val sha = Sha256.hex(bytes)
       if (!bytes.looksLikePdf()) {
         result(documentId, model, sha, STATUS_SKIPPED, mapOf("reason" to "missing %PDF- signature"))
       } else {
@@ -62,6 +62,60 @@ class ExtractionService(
     } catch (ex: Exception) {
       log.warn("Transient error fetching document {}, will retry after cooldown", documentId, ex)
       result(documentId, model, EMPTY_SHA, STATUS_ERROR, mapOf("error" to (ex.message ?: ex.javaClass.simpleName)))
+    }
+
+    return persist(existing, entity)
+  }
+
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  fun extractStructuredDataAndStore(
+    documentId: UUID,
+    extractedText: String,
+    downloadedFileSha256: String?,
+  ): ExtractionResultEntity {
+    val model = formatModels.active()
+
+    val existing = repository.findByDocumentIdAndFormatIdAndFormatVersionAndExtractorVersion(
+      documentId,
+      model.id,
+      model.version,
+      extractorVersion,
+    )
+
+    if (existing != null && existing.status != STATUS_ERROR) return existing
+    // content_sha256 is the hash of the source file's bytes in both extraction paths, so the column
+    // carries one meaning. The extracted-text hash is recorded on court_document.extracted_text_sha256.
+    val sha = downloadedFileSha256 ?: EMPTY_SHA
+
+    val entity = runCatching {
+      val out = pipeline.extractFromText(
+        text = extractedText,
+        documentId = documentId.toString(),
+        model = model,
+      )
+
+      result(
+        documentId = documentId,
+        model = model,
+        sha = sha,
+        status = STATUS_OK,
+        payload = mapOf(
+          "header" to out.headerFields,
+          "offences" to out.offenceBlocks,
+          "labelSignature" to out.labelSignature,
+        ),
+        pageCount = out.pageCount,
+        fieldCount = out.fieldCount,
+      )
+    }.getOrElse { ex ->
+      log.warn("Structured extraction failed for document {}", documentId, ex)
+      result(
+        documentId = documentId,
+        model = model,
+        sha = sha,
+        status = STATUS_FAILED,
+        payload = mapOf("error" to (ex.message ?: ex.javaClass.simpleName)),
+      )
     }
 
     return persist(existing, entity)
@@ -110,8 +164,6 @@ class ExtractionService(
     result = source.result
     extractedAt = source.extractedAt
   }
-
-  private fun sha256(bytes: ByteArray): String = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
 
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)

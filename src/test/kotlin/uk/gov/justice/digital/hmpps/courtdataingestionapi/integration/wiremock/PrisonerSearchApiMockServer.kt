@@ -11,7 +11,7 @@ import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.TestUtil
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.PrisonerCreatedListenerIntTest
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.PrisonerSearchEventListenerIntTest
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.prisonersearch.Prisoner
 
 class PrisonerSearchApiExtension :
@@ -24,7 +24,7 @@ class PrisonerSearchApiExtension :
   }
 
   override fun beforeAll(context: ExtensionContext) {
-    prisonerSearchApi.stubPrisonerSearch(PrisonerCreatedListenerIntTest.PRISONER_NUMBER_WITH_MATCH)
+    prisonerSearchApi.stubPrisonerSearch(PrisonerSearchEventListenerIntTest.PRISONER_NUMBER_WITH_MATCH)
     prisonerSearchApi.stubPrisonerSearch("ABC123")
     prisonerSearchApi.stubPrisonerSearchWithNoPrison("XYZ789")
     prisonerSearchApi.stubPrisonerSearchNotFound("XXX404")

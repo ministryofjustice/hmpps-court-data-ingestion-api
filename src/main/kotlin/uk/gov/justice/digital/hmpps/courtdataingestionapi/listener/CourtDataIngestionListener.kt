@@ -40,8 +40,8 @@ data class HmctsSubscriptionNotificationRequestBody(
   val documentId: UUID,
   val documentGeneratedTimestamp: LocalDateTime,
   val prisonEmailAddress: String,
-  // TODO Default to PCR until this is released to production on hmcts side.
   val eventType: HmctsEventType = HmctsEventType.PRISON_COURT_REGISTER_GENERATED,
+  val hearingId: UUID,
 )
 
 data class HmctsCase(
