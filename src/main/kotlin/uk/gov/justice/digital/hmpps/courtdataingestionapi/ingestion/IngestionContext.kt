@@ -18,7 +18,6 @@ data class IngestionContext(
   val addressedPrison: String? = null,
   val destinationType: DestinationType? = null,
 
-
   val warnings: List<String> = emptyList(),
 ) {
   override fun equals(other: Any?): Boolean {
