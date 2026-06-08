@@ -25,12 +25,15 @@ class ResolveEmailDestination(
     )
   }
 
-  private fun resolveDestinationType(normalisedEmail: String, mapping: EmailMapping?): DestinationType? =
-    mapping?.sourceType?.let { runCatching { DestinationType.valueOf(it) }.getOrNull() }
-      ?: when {
-        normalisedEmail.endsWith("@geoamey.co.uk") -> DestinationType.PECS
-        normalisedEmail.startsWith("pecs") && normalisedEmail.endsWith("@serco.com") -> DestinationType.PECS
-        mapping?.prisonCode != null -> DestinationType.PRISON
-        else -> null
-      }
+  private fun resolveDestinationType(normalisedEmail: String, mapping: EmailMapping?): DestinationType? {
+    val mapped = mapping?.sourceType?.let { runCatching { DestinationType.valueOf(it) }.getOrNull() }
+    if (mapped != null) return mapped
+
+    return when {
+      normalisedEmail.endsWith("@geoamey.co.uk") -> DestinationType.PECS
+      normalisedEmail.startsWith("pecs") && normalisedEmail.endsWith("@serco.com") -> DestinationType.PECS
+      mapping?.prisonCode != null -> DestinationType.PRISON
+      else -> null
+    }
+  }
 }
