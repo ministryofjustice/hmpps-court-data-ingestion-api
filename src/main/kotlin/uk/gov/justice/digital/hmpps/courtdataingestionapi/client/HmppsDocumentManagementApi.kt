@@ -81,8 +81,7 @@ class HmppsDocumentManagementApi(
 
   fun mergeMetadata(documentId: UUID, updates: Map<String, String>): Document {
     if (updates.isEmpty()) return getDocument(documentId)
-    val current = getDocument(documentId).metadata
-    return updateMetadata(documentId, current + updates)
+    return updateMetadata(documentId, getDocument(documentId).metadata + updates)
   }
 
   fun setFileContentHash(documentId: UUID, fileContentHash: String) {
