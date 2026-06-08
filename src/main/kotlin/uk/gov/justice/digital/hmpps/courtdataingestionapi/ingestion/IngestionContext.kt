@@ -18,9 +18,6 @@ data class IngestionContext(
   val addressedPrison: String? = null,
   val destinationType: DestinationType? = null,
 
-  // Step 6: duplicate resolution
-  val duplicateOf: UUID? = null,
-
   val warnings: List<String> = emptyList(),
 ) {
   override fun equals(other: Any?): Boolean {
@@ -37,7 +34,6 @@ data class IngestionContext(
     if (extractedTextSha256 != other.extractedTextSha256) return false
     if (addressedPrison != other.addressedPrison) return false
     if (destinationType != other.destinationType) return false
-    if (duplicateOf != other.duplicateOf) return false
     if (warnings != other.warnings) return false
 
     return true
@@ -52,7 +48,6 @@ data class IngestionContext(
     result = 31 * result + (extractedTextSha256?.hashCode() ?: 0)
     result = 31 * result + (addressedPrison?.hashCode() ?: 0)
     result = 31 * result + (destinationType?.hashCode() ?: 0)
-    result = 31 * result + (duplicateOf?.hashCode() ?: 0)
     result = 31 * result + warnings.hashCode()
     return result
   }

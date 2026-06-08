@@ -65,6 +65,53 @@ class HmppsDocumentManagementApi(
     .bodyToMono(Document::class.java)
     .block()!!
 
+  fun getDocument(documentId: UUID): Document = webClient
+    .get()
+    .uri("/documents/$documentId")
+    .header("Service-Name", appName)
+    .header("Username", SYSTEM_USERNAME)
+    .accept(MediaType.APPLICATION_JSON)
+    .retrieve()
+    .rethrowAnyHttpErrorWithContext { response, body ->
+      "Error fetching document (UUID=$documentId, StatusCode=${response.statusCode().value()}, Response=$body)"
+    }
+    .bodyToMono(Document::class.java)
+    .block()
+    ?: error("No document returned for $documentId")
+
+  fun mergeMetadata(documentId: UUID, updates: Map<String, String>): Document {
+    if (updates.isEmpty()) return getDocument(documentId)
+    return updateMetadata(documentId, getDocument(documentId).metadata + updates)
+  }
+
+  fun setFileContentHash(documentId: UUID, fileContentHash: String) {
+    webClient.put()
+      .uri("/documents/$documentId/file-content-hash")
+      .header("Service-Name", appName)
+      .header("Username", SYSTEM_USERNAME)
+      .bodyValue(mapOf("fileContentHash" to fileContentHash))
+      .retrieve()
+      .rethrowAnyHttpErrorWithContext { response, body ->
+        "Error setting file content hash (UUID=$documentId, StatusCode=${response.statusCode().value()}, Response=$body)"
+      }
+      .toBodilessEntity()
+      .block()
+  }
+
+  fun setDuplicateOf(documentId: UUID, duplicateOf: UUID) {
+    webClient.put()
+      .uri("/documents/$documentId/duplicate-of")
+      .header("Service-Name", appName)
+      .header("Username", SYSTEM_USERNAME)
+      .bodyValue(mapOf("duplicateOf" to duplicateOf))
+      .retrieve()
+      .rethrowAnyHttpErrorWithContext { response, body ->
+        "Error setting duplicateOf (UUID=$documentId, StatusCode=${response.statusCode().value()}, Response=$body)"
+      }
+      .toBodilessEntity()
+      .block()
+  }
+
   fun downloadFile(documentId: UUID): ByteArray = webClient
     .get()
     .uri("/documents/$documentId/file")

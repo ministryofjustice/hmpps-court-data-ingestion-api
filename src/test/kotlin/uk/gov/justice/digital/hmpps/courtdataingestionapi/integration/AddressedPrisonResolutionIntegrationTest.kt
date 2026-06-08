@@ -19,19 +19,20 @@ class AddressedPrisonResolutionIntegrationTest : IntegrationTestBase() {
   fun seedMapping() {
     jdbcTemplate.update(
       """
-      INSERT INTO prison_email_mapping (email, prison_code)
-      VALUES (?, ?)
-      ON CONFLICT (email) DO UPDATE SET prison_code = EXCLUDED.prison_code
+      INSERT INTO prison_email_mapping (email, prison_code, source_type)
+      VALUES (?, ?, ?)
+      ON CONFLICT (email) DO UPDATE SET prison_code = EXCLUDED.prison_code, source_type = EXCLUDED.source_type
       """.trimIndent(),
       "prison.email@example.com",
       "LII",
+      "PRISON",
     )
   }
 
   @Test
   fun `diagnostic - the seeded mapping is readable through the repository`() {
     // If this fails, the problem is the seed, the table, or the lookup query, not the enricher.
-    assertThat(prisonEmailMappingRepository.findPrisonCodeByEmail("prison.email@example.com")).isEqualTo("LII")
+    assertThat(prisonEmailMappingRepository.findMappingByEmail("prison.email@example.com")?.prisonCode).isEqualTo("LII")
   }
 
   @Test

@@ -17,14 +17,7 @@ interface CourtDocumentRepository : JpaRepository<CourtDocumentEntity, UUID> {
   fun findByPrisonerNumber(prisonerNumber: String): List<CourtDocumentEntity>
   fun findByPrisonerNumberAndPrisonDocumentIdIn(personId: String, prisonDocumentIds: List<UUID>): List<CourtDocumentEntity>
   fun findFirstByPrisonDocumentId(prisonDocumentId: UUID): Optional<CourtDocumentEntity>
-  fun findByExtractedTextSha256(hash: String): List<CourtDocumentEntity>
-  fun findByDownloadedFileSha256(hash: String): List<CourtDocumentEntity>
 
-  /**
-   * Keyset page of documents that have not yet had their file hash populated, ordered by id so the
-   * backfill visits every row exactly once and terminates even when a download fails (the row keeps
-   * a null hash but the cursor still moves past its id). Pass the zero UUID to start.
-   */
   @Query(
     value = """
       SELECT *
