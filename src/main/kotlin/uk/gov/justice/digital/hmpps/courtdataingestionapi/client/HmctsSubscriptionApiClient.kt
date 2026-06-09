@@ -8,21 +8,18 @@ import org.springframework.web.reactive.function.client.bodyToMono
 import org.springframework.web.reactive.function.client.toEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.config.WebClientConfiguration
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.config.WebClientConfiguration.Companion.X_CORRELATION_ID_HEADER
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.CourtScheduleResponse
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.CourthouseResponse
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsFile
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.SubscriptionCreatedResponse
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.SubscriptionRequest
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.SubscriptionUpdatedResponse
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.subscription.HmctsApiConfiguration
 import java.util.UUID
 
 @Component
-class HmctsApiClient(@Qualifier("hmctsApiWebClient") private val webClient: WebClient, private val hmctsApiConfiguration: HmctsApiConfiguration) {
+class HmctsSubscriptionApiClient(@Qualifier("hmctsSubscriptionApiWebClient") private val webClient: WebClient) {
 
-  fun createSubscription(request: SubscriptionRequest): SubscriptionCreatedResponse = webClient.post()
-    .uri("/hrds/client-subscriptions")
-    .header(SUBSCRIPTION_KEY_HEADER, hmctsApiConfiguration.subscriptionKey)
+  fun createSubscription(request: SubscriptionRequest, subscriptionKey: String): SubscriptionCreatedResponse = webClient.post()
+    .uri("/client-subscriptions")
+    .header(SUBSCRIPTION_KEY_HEADER, subscriptionKey)
     .header(X_CORRELATION_ID_HEADER, WebClientConfiguration.getCorrelationId().toString())
     .bodyValue(request)
     .retrieve()
@@ -31,19 +28,20 @@ class HmctsApiClient(@Qualifier("hmctsApiWebClient") private val webClient: WebC
 
   fun updateSubscription(
     request: SubscriptionRequest,
+    subscriptionKey: String,
     subscriptionId: String,
   ): SubscriptionUpdatedResponse = webClient.put()
-    .uri("/hrds/client-subscriptions/$subscriptionId")
-    .header(SUBSCRIPTION_KEY_HEADER, hmctsApiConfiguration.subscriptionKey)
+    .uri("/client-subscriptions/$subscriptionId")
+    .header(SUBSCRIPTION_KEY_HEADER, subscriptionKey)
     .header(X_CORRELATION_ID_HEADER, WebClientConfiguration.getCorrelationId().toString())
     .bodyValue(request)
     .retrieve()
     .bodyToMono<SubscriptionUpdatedResponse>()
     .block()!!
 
-  fun getFile(clientSubscriptionId: String, externalFileId: UUID): HmctsFile = webClient.get()
-    .uri("/hrds/client-subscriptions/$clientSubscriptionId/documents/$externalFileId")
-    .header(SUBSCRIPTION_KEY_HEADER, hmctsApiConfiguration.subscriptionKey)
+  fun getFile(clientSubscriptionId: String, externalFileId: UUID, subscriptionKey: String): HmctsFile = webClient.get()
+    .uri("/client-subscriptions/$clientSubscriptionId/documents/$externalFileId")
+    .header(SUBSCRIPTION_KEY_HEADER, subscriptionKey)
     .header(X_CORRELATION_ID_HEADER, WebClientConfiguration.getCorrelationId().toString())
     .retrieve()
     .toEntity<ByteArray>()
@@ -58,26 +56,6 @@ class HmctsApiClient(@Qualifier("hmctsApiWebClient") private val webClient: WebC
         contentType = contentType,
       )
     }.block()!!
-
-  fun getCourtSchedule(
-    courtCaseRef: String,
-  ): CourtScheduleResponse = webClient.get()
-    .uri("/slc/case/$courtCaseRef/courtschedule")
-    .header(SUBSCRIPTION_KEY_HEADER, hmctsApiConfiguration.courtScheduleKey)
-    .header(X_CORRELATION_ID_HEADER, WebClientConfiguration.getCorrelationId().toString())
-    .retrieve()
-    .bodyToMono<CourtScheduleResponse>()
-    .block()!!
-
-  fun getCourthouse(
-    courthouseId: UUID,
-  ): CourthouseResponse = webClient.get()
-    .uri("/rcc/courthouses/$courthouseId")
-    .header(SUBSCRIPTION_KEY_HEADER, hmctsApiConfiguration.courthouseKey)
-    .header(X_CORRELATION_ID_HEADER, WebClientConfiguration.getCorrelationId().toString())
-    .retrieve()
-    .bodyToMono<CourthouseResponse>()
-    .block()!!
 
   private fun extractFilename(headers: HttpHeaders): String? {
     val disposition = headers.contentDisposition

@@ -3,28 +3,28 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.service
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmctsApiClient
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmctsSubscriptionApiClient
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsDocumentManagementApi
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Document
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentApiType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.SubscriptionRepository
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.subscription.HmctsApiConfiguration
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.subscription.SubscriptionCallbackConfig
 import java.util.UUID
 
 @Service
 @Transactional
 class FileService(
-  private val hmctsApiClient: HmctsApiClient,
+  private val hmctsSubscriptionApiClient: HmctsSubscriptionApiClient,
   private val subscriptionRepository: SubscriptionRepository,
   private val hmppsDocumentManagementApi: HmppsDocumentManagementApi,
-  private val subscriptionCallbackConfig: HmctsApiConfiguration,
+  private val subscriptionCallbackConfig: SubscriptionCallbackConfig,
 ) {
 
   fun ingestFile(courtDocumentId: UUID, documentType: DocumentApiType): Document {
     val subscription = subscriptionRepository.findAll()[0]
 
-    val file = hmctsApiClient.getFile(subscription.id, courtDocumentId)
+    val file = hmctsSubscriptionApiClient.getFile(subscription.id, courtDocumentId, subscriptionCallbackConfig.subscriptionKey)
 
     return hmppsDocumentManagementApi.uploadDocument(
       documentType,

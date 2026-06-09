@@ -14,8 +14,6 @@ class HashExtractedTextTest {
       prisonEmailAddress = null,
       prisonDocumentId = null,
       extractedText = "hello text",
-      hearingId = null,
-      caseReferences = null,
     )
 
     val result = enricher.enrich(input)
@@ -25,7 +23,7 @@ class HashExtractedTextTest {
 
   @Test
   fun `skips when no extracted text present`() {
-    val input = IngestionContext(null, null, hearingId = null, caseReferences = null)
+    val input = IngestionContext(null, null)
 
     val result = enricher.enrich(input)
 

@@ -6,8 +6,6 @@ import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
-import jakarta.persistence.JoinColumn
-import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
@@ -23,7 +21,6 @@ data class CourtDocumentEntity(
   var defendantId: UUID,
   var courtDocumentId: UUID,
   var prisonDocumentId: UUID,
-  @Column("court_hearing_id", insertable = false, updatable = false)
   var courtHearingId: UUID?,
   val prisonEmailAddress: String,
   @Enumerated(EnumType.STRING)
@@ -32,10 +29,6 @@ data class CourtDocumentEntity(
   val courtDocumentType: CourtDocumentType,
   val documentGeneratedTimestamp: LocalDateTime,
   var ingestionAt: LocalDateTime = LocalDateTime.now(),
-
-  @ManyToOne(optional = true)
-  @JoinColumn(name = "court_hearing_id")
-  var courtHearing: CourtHearingEntity? = null,
 
   @OneToMany(mappedBy = "courtDocument", cascade = [CascadeType.ALL])
   val courtDocumentCases: MutableList<CourtDocumentCaseEntity> = mutableListOf(),
