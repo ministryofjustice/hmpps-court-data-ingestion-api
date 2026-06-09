@@ -32,5 +32,4 @@ generic-prometheus-alerts:
   sqsAlertsTotalMessagesThreshold: 1
 
 generic-data-analytics-extractor:
-  enabled: false
   serviceAccountName: hmpps-court-data-ingestion-prod-to-ap-s3
