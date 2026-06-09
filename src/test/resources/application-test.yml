@@ -28,6 +28,13 @@ hmcts:
   subscription:
     api:
       url: http://localhost:8333
+  courthouse:
+    api:
+      url: http://localhost:8338
+  court:
+    schedule:
+      api:
+        url: http://localhost:8337
 
 hmpps.document:
   management:
@@ -71,7 +78,7 @@ hmpps.secret:
   provider: localstack
   localstackUrl: http://localhost:4566
 
-subscription-callback-config:
+hmcts-api-config:
   enabled: true
   callback-url: "https://localhost:1234/test"
   subscription-key: "KEY_1234"

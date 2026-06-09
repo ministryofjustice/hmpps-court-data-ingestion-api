@@ -22,6 +22,8 @@ class ResolveEmailDestinationTest {
     val input = IngestionContext(
       prisonEmailAddress = "omu.test@justice.gov.uk",
       prisonDocumentId = null,
+      hearingId = null,
+      caseReferences = null,
     )
 
     val result = enricher.enrich(input)
@@ -38,6 +40,8 @@ class ResolveEmailDestinationTest {
     val input = IngestionContext(
       prisonEmailAddress = "pecs.south@example.gov.uk",
       prisonDocumentId = null,
+      hearingId = null,
+      caseReferences = null,
     )
 
     val result = enricher.enrich(input)
@@ -53,6 +57,8 @@ class ResolveEmailDestinationTest {
     val input = IngestionContext(
       prisonEmailAddress = "sheffieldcc@geoamey.co.uk",
       prisonDocumentId = null,
+      hearingId = null,
+      caseReferences = null,
     )
 
     val result = enricher.enrich(input)
@@ -67,6 +73,8 @@ class ResolveEmailDestinationTest {
     val input = IngestionContext(
       prisonEmailAddress = "PECSWoolwichCrown@serco.com",
       prisonDocumentId = null,
+      hearingId = null,
+      caseReferences = null,
     )
 
     val result = enricher.enrich(input)
