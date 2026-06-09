@@ -25,6 +25,7 @@ core:
 
 # Wiremock hmcts-api
 hmcts:
+  subscription:
     api:
       url: http://localhost:8333
 
@@ -70,7 +71,7 @@ hmpps.secret:
   provider: localstack
   localstackUrl: http://localhost:4566
 
-hmcts-api-config:
+subscription-callback-config:
   enabled: true
   callback-url: "https://localhost:1234/test"
   subscription-key: "KEY_1234"

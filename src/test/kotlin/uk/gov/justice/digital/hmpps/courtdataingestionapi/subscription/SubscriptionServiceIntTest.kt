@@ -6,8 +6,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsApiExtension
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsApiMockServer
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsSubscriptionApiExtension
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsSubscriptionApiMockServer
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.SubscriptionRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.SecretsManagerService
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.SubscriptionService
@@ -28,7 +28,7 @@ class SubscriptionServiceIntTest : IntegrationTestBase() {
     val subscriptions = subscriptionRepository.findAll()
 
     assertThat(subscriptions).hasSize(1)
-    assertThat(subscriptions.first().id).isEqualTo(HmctsApiMockServer.TEST_SUBSCRIPTION_ID)
+    assertThat(subscriptions.first().id).isEqualTo(HmctsSubscriptionApiMockServer.TEST_SUBSCRIPTION_ID)
   }
 
   @Test
@@ -41,11 +41,11 @@ class SubscriptionServiceIntTest : IntegrationTestBase() {
     val subscriptions = subscriptionRepository.findAll()
 
     assertThat(subscriptions).hasSize(1)
-    assertThat(subscriptions.first().id).isEqualTo(HmctsApiMockServer.TEST_SUBSCRIPTION_ID)
+    assertThat(subscriptions.first().id).isEqualTo(HmctsSubscriptionApiMockServer.TEST_SUBSCRIPTION_ID)
     assertThat(subscriptions.first().updatedAt).isAfter(created)
-    HmctsApiExtension.hmctsApi.verify(putRequestedFor(urlPathEqualTo("/hrds/client-subscriptions/${subscription.id}")))
+    HmctsSubscriptionApiExtension.hmctsSubscriptionApi.verify(putRequestedFor(urlPathEqualTo("/client-subscriptions/${subscription.id}")))
 
     val secret = secretsManagerService.getSecretValue()
-    assertThat(secret).isEqualTo(HmctsApiMockServer.TEST_HMAC_KEY)
+    assertThat(secret).isEqualTo(HmctsSubscriptionApiMockServer.TEST_HMAC_KEY)
   }
 }

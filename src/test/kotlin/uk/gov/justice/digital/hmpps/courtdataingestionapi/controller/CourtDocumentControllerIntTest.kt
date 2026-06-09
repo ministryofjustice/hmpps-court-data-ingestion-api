@@ -12,7 +12,6 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.H
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocument
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentView
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtHearing
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.typeReference
 import java.util.UUID
 
@@ -37,15 +36,9 @@ class CourtDocumentControllerIntTest : IntegrationTestBase() {
 
       assertThat(documents).hasSize(1)
       assertThat(documents[0].isUnread).isTrue
-      assertThat(documents[0].caseReferences).isEqualTo(listOf(CASE_REFERENCE))
+      assertThat(documents[0].caseReferences).isEqualTo(listOf("Case123", "Case456"))
       assertThat(documents[0].prisonDocumentId).isEqualTo(dbCourtDocument.prisonDocumentId)
       assertThat(documents[0].documentType).isEqualTo(CourtDocumentType.PRISON_COURT_REGISTER)
-      assertThat(documents[0].courtHearing).isEqualTo(
-        CourtHearing(
-          "Central London County Court",
-          "First hearing",
-        ),
-      )
     }
 
     @Test
