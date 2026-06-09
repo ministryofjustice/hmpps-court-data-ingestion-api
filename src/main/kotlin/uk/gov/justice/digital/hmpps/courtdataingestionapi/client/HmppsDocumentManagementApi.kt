@@ -25,7 +25,7 @@ class HmppsDocumentManagementApi(
     file: HmctsFile,
     metadata: Map<String, String> = mapOf(),
   ): Document {
-    log.info("Uploading document: $file")
+    log.info("Uploading document: ${file.originalFilename}")
     val documentUuid = UUID.randomUUID().toString()
 
     val contentType = file.contentType?.takeIf { it.isNotBlank() }
@@ -51,7 +51,7 @@ class HmppsDocumentManagementApi(
       .bodyToMono(Document::class.java)
       .block() ?: error("Error during uploading document (UUID=$documentUuid)")
 
-    log.info("Uploaded document: $prisonDocument")
+    log.info("Uploaded document: ${prisonDocument.filename}")
     return prisonDocument
   }
 
