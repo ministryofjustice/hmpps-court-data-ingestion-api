@@ -3,7 +3,8 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.step
 import org.slf4j.LoggerFactory
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmctsApiClient
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmctsCourtScheduleApiClient
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmctsCourthouseApiClient
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.HmtcsApiDataEnrichment
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionContext
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionEnricher
@@ -11,7 +12,8 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionEnr
 @Component
 @Order(800)
 class HmctsStructuredDataApiEnricher(
-  private val hmctsApiClient: HmctsApiClient,
+  private val hmctsCourtScheduleApiClient: HmctsCourtScheduleApiClient,
+  private val hmctsCourthouseApiClient: HmctsCourthouseApiClient,
 ) : IngestionEnricher {
 
   companion object {
@@ -23,7 +25,7 @@ class HmctsStructuredDataApiEnricher(
     val caseReferences = context.caseReferences ?: return context
 
     runCatching {
-      val hearings = caseReferences.flatMap { hmctsApiClient.getCourtSchedule(it).courtSchedule.flatMap { schedule -> schedule.hearings } }
+      val hearings = caseReferences.flatMap { hmctsCourtScheduleApiClient.getCourtSchedule(it).courtSchedule.flatMap { schedule -> schedule.hearings } }
       val hearing = hearings.find { it.hearingId == hearingId }
 
       if (hearing == null || hearing.courtSittings.isEmpty()) {
@@ -32,7 +34,7 @@ class HmctsStructuredDataApiEnricher(
       }
 
       val courtId = hearing.courtSittings[0].courtHouse
-      val courthouse = hmctsApiClient.getCourthouse(courtId)
+      val courthouse = hmctsCourthouseApiClient.getCourthouse(courtId)
 
       return context.copy(
         hmtcsApiDataEnrichment = HmtcsApiDataEnrichment(

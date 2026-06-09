@@ -3,7 +3,7 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.service
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmctsApiClient
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmctsSubscriptionApiClient
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.Subscription
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.NotificationEndpoint
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.SubscriptionRequest
@@ -14,7 +14,7 @@ import java.time.LocalDateTime
 @Service
 class SubscriptionService(
   private val subscriptionRepository: SubscriptionRepository,
-  private val hmctsApiClient: HmctsApiClient,
+  private val hmctsSubscriptionApiClient: HmctsSubscriptionApiClient,
   private val hmctsApiConfiguration: HmctsApiConfiguration,
   private val secretsManagerService: SecretsManagerService,
 ) {
@@ -24,7 +24,7 @@ class SubscriptionService(
     if (hmctsApiConfiguration.enabled) {
       val subscription = subscriptionRepository.findAll().firstOrNull()
       if (subscription == null) {
-        val subscriptionResponse = hmctsApiClient.createSubscription(
+        val subscriptionResponse = hmctsSubscriptionApiClient.createSubscription(
           subscriptionRequest(),
         )
         subscriptionRepository.save(
@@ -36,7 +36,7 @@ class SubscriptionService(
 
         log.info("Subscription created")
       } else if (hmctsApiConfiguration.updateSubscriptionOnStartup) {
-        val subscriptionResponse = hmctsApiClient.updateSubscription(
+        val subscriptionResponse = hmctsSubscriptionApiClient.updateSubscription(
           subscriptionRequest(),
           subscription.id,
         )

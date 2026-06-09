@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsApiMockServer
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsSubcriptionApiMockServer
 
 @Transactional(readOnly = true)
 class HmctsStructuredDataApiEnricherIntTest : IntegrationTestBase() {
@@ -21,7 +21,7 @@ class HmctsStructuredDataApiEnricherIntTest : IntegrationTestBase() {
     val file = courtDocumentRepository.findFirstByDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
 
     assertThat(file.courtHearing).isNotNull
-    assertThat(file.courtHearing!!.courtId.toString()).isEqualTo(HmctsApiMockServer.TEST_HMCTS_COURTHOUSE_ID)
+    assertThat(file.courtHearing!!.courtId.toString()).isEqualTo(HmctsSubcriptionApiMockServer.TEST_HMCTS_COURTHOUSE_ID)
     assertThat(file.courtHearing!!.hearingType).isEqualTo("First hearing")
     assertThat(file.courtHearing!!.courtName).isEqualTo("Central London County Court")
   }

@@ -63,14 +63,26 @@ spring:
             client-id: ${client.creds.client.id}
             client-secret: ${client.creds.client.secret}
             authorization-grant-type: client_credentials
-          hmcts-api:
+          hmcts-subscription-api:
             provider: hmcts-auth
             client-id: ${hmcts.client.creds.client.id}
             client-secret: ${hmcts.client.creds.client.secret}
             authorization-grant-type: client_credentials
             scope:
               - ${hmcts.client.creds.client.subscription.scope}
+          hmcts-courthouse-api:
+            provider: hmcts-auth
+            client-id: ${hmcts.client.creds.client.id}
+            client-secret: ${hmcts.client.creds.client.secret}
+            authorization-grant-type: client_credentials
+            scope:
               - ${hmcts.client.creds.client.courthouse.scope}
+          hmcts-court-schedule-api:
+            provider: hmcts-auth
+            client-id: ${hmcts.client.creds.client.id}
+            client-secret: ${hmcts.client.creds.client.secret}
+            authorization-grant-type: client_credentials
+            scope:
               - ${hmcts.client.creds.client.court.schedule.scope}
           prisoner-search-api:
             provider: hmpps-auth

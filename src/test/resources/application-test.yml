@@ -25,8 +25,16 @@ core:
 
 # Wiremock hmcts-api
 hmcts:
+  subscription:
     api:
       url: http://localhost:8333
+  courthouse:
+    api:
+      url: http://localhost:8338
+  court:
+    schedule:
+      api:
+        url: http://localhost:8337
 
 hmpps.document:
   management:
