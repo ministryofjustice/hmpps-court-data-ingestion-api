@@ -24,18 +24,20 @@ class PrisonerSearchEventListener(
   fun onDomainEvent(
     rawMessage: String,
   ) {
-    log.debug("Received prisoner search event message {}", rawMessage)
     val sqsMessage: SQSMessage = objectMapper.readValue(rawMessage)
     when (sqsMessage.Type) {
       "Notification" -> {
         val event = objectMapper.readValue<HMPPSPrisonerSearchEvent>(sqsMessage.Message)
         if (event.eventType == "prisoner-offender-search.prisoner.created") {
+          log.debug("Received prisoner created event message {}", rawMessage)
           courtDataIngestionService.attemptToMatchForNewPrisoner(event.additionalInformation.nomsNumber)
         } else if (event.eventType == "prisoner-offender-search.prisoner.updated") {
           if (event.additionalInformation.categoriesChanged.contains("PERSONAL_DETAILS")) {
+            log.debug("Received prisoner updated event message {}", rawMessage)
             courtDataIngestionService.attemptToMatchForNewPrisoner(event.additionalInformation.nomsNumber)
           }
         } else {
+          log.debug("Received unknown message {}", rawMessage)
           throw IllegalArgumentException("Received a message I wasn't expecting: ${event.eventType}")
         }
       }
