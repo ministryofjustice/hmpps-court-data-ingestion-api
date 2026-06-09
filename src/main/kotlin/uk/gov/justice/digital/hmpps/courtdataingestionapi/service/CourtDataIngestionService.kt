@@ -58,10 +58,16 @@ class CourtDataIngestionService(
       ).applyEnrichment(enriched),
     )
 
-    runCatching {
+    val mirrorOutcome = runCatching {
       fileService.mirrorEnrichmentToDocumentStore(courtDocumentEntity)
-    }.onFailure { log.warn("Failed to mirror enrichment to document store for {}", courtDocumentEntity.prisonDocumentId, it) }
-
+    }.getOrElse {
+      log.warn("Failed to mirror enrichment to document store for {}", courtDocumentEntity.prisonDocumentId, it)
+      null
+    }
+    if (mirrorOutcome?.fullySuccessful == true) {
+      courtDocumentEntity.mirroredToDocStoreAt = LocalDateTime.now()
+      courtDocumentRepository.save(courtDocumentEntity)
+    }
     val person = try {
       corePersonApiClient.getPersonByCommonPlatformId(message.masterDefendantId)
     } catch (e: WebClientResponseException) {

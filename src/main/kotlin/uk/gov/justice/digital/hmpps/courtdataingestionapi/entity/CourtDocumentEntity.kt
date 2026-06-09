@@ -49,6 +49,9 @@ data class CourtDocumentEntity(
   @Column(name = "delivery_source")
   var deliverySource: uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.DestinationType? = null,
 
+  @Column(name = "mirrored_to_doc_store_at")
+  var mirroredToDocStoreAt: LocalDateTime? = null,
+
   // Updated once identified
   var prisonerNumber: String? = null,
   var identifiedAt: LocalDateTime? = null,
