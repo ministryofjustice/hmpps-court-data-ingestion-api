@@ -12,14 +12,15 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsFi
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.SubscriptionCreatedResponse
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.SubscriptionRequest
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.SubscriptionUpdatedResponse
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.subscription.HmctsApiConfiguration
 import java.util.UUID
 
 @Component
-class HmctsSubscriptionApiClient(@Qualifier("hmctsSubscriptionApiWebClient") private val webClient: WebClient) {
+class HmctsSubscriptionApiClient(@Qualifier("hmctsSubscriptionApiWebClient") private val webClient: WebClient, private val hmctsApiConfiguration: HmctsApiConfiguration) {
 
-  fun createSubscription(request: SubscriptionRequest, subscriptionKey: String): SubscriptionCreatedResponse = webClient.post()
+  fun createSubscription(request: SubscriptionRequest): SubscriptionCreatedResponse = webClient.post()
     .uri("/client-subscriptions")
-    .header(SUBSCRIPTION_KEY_HEADER, subscriptionKey)
+    .header(SUBSCRIPTION_KEY_HEADER, hmctsApiConfiguration.subscriptionKey)
     .header(X_CORRELATION_ID_HEADER, WebClientConfiguration.getCorrelationId().toString())
     .bodyValue(request)
     .retrieve()
@@ -28,20 +29,19 @@ class HmctsSubscriptionApiClient(@Qualifier("hmctsSubscriptionApiWebClient") pri
 
   fun updateSubscription(
     request: SubscriptionRequest,
-    subscriptionKey: String,
     subscriptionId: String,
   ): SubscriptionUpdatedResponse = webClient.put()
     .uri("/client-subscriptions/$subscriptionId")
-    .header(SUBSCRIPTION_KEY_HEADER, subscriptionKey)
+    .header(SUBSCRIPTION_KEY_HEADER, hmctsApiConfiguration.subscriptionKey)
     .header(X_CORRELATION_ID_HEADER, WebClientConfiguration.getCorrelationId().toString())
     .bodyValue(request)
     .retrieve()
     .bodyToMono<SubscriptionUpdatedResponse>()
     .block()!!
 
-  fun getFile(clientSubscriptionId: String, externalFileId: UUID, subscriptionKey: String): HmctsFile = webClient.get()
+  fun getFile(clientSubscriptionId: String, externalFileId: UUID): HmctsFile = webClient.get()
     .uri("/client-subscriptions/$clientSubscriptionId/documents/$externalFileId")
-    .header(SUBSCRIPTION_KEY_HEADER, subscriptionKey)
+    .header(SUBSCRIPTION_KEY_HEADER, hmctsApiConfiguration.subscriptionKey)
     .header(X_CORRELATION_ID_HEADER, WebClientConfiguration.getCorrelationId().toString())
     .retrieve()
     .toEntity<ByteArray>()

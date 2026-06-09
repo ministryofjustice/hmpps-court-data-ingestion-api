@@ -69,7 +69,21 @@ spring:
             client-secret: ${hmcts.client.creds.client.secret}
             authorization-grant-type: client_credentials
             scope:
-              - ${hmcts.client.creds.client.scope}
+              - ${hmcts.client.creds.client.subscription.scope}
+          hmcts-courthouse-api:
+            provider: hmcts-auth
+            client-id: ${hmcts.client.creds.client.id}
+            client-secret: ${hmcts.client.creds.client.secret}
+            authorization-grant-type: client_credentials
+            scope:
+              - ${hmcts.client.creds.client.courthouse.scope}
+          hmcts-court-schedule-api:
+            provider: hmcts-auth
+            client-id: ${hmcts.client.creds.client.id}
+            client-secret: ${hmcts.client.creds.client.secret}
+            authorization-grant-type: client_credentials
+            scope:
+              - ${hmcts.client.creds.client.court.schedule.scope}
           prisoner-search-api:
             provider: hmpps-auth
             client-id: ${client.creds.client.id}
@@ -116,12 +130,14 @@ management:
       cache:
         time-to-live: 2000ms
 
-subscription-callback-config:
+hmcts-api-config:
   enabled: ${HMCTS_SUBSCRIPTION_ENABLED}
   callback-url: ${HMCTS_SUBSCRIPTION_CALLBACK_URL}
   subscription-key: ${HMCTS_SUBSCRIPTION_KEY}
   event-types: ${HMCTS_EVENT_TYPES}
   update-subscription-on-startup: ${HMCTS_UPDATE_SUBSCRIPTION_ON_STARTUP}
+  courthouse-key: ${HMCTS_COURTHOUSE_KEY}
+  court-schedule-key: ${HMCTS_COURT_SCHEDULE_KEY}
 
 extraction:
   backfill:

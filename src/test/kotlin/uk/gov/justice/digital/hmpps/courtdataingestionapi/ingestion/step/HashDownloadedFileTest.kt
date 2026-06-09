@@ -14,6 +14,8 @@ class HashDownloadedFileTest {
       prisonEmailAddress = null,
       prisonDocumentId = null,
       downloadedFileBytes = "abc".toByteArray(),
+      hearingId = null,
+      caseReferences = null,
     )
 
     val result = enricher.enrich(input)
@@ -23,7 +25,7 @@ class HashDownloadedFileTest {
 
   @Test
   fun `skips when no downloaded bytes present`() {
-    val input = IngestionContext(null, null)
+    val input = IngestionContext(null, null, hearingId = null, caseReferences = null)
 
     val result = enricher.enrich(input)
 

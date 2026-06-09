@@ -29,6 +29,8 @@ class ExtractStructuredDataTest {
       extractedText = "text",
       downloadedFileSha256 = "file-hash",
       extractedTextSha256 = "text-hash",
+      hearingId = null,
+      caseReferences = null,
     )
 
     val result = enricher.enrich(input)
@@ -39,14 +41,14 @@ class ExtractStructuredDataTest {
 
   @Test
   fun `skips structured extraction when there is no document id`() {
-    enricher.enrich(IngestionContext(prisonEmailAddress = "omu.example@example.com", prisonDocumentId = null, extractedText = "text"))
+    enricher.enrich(IngestionContext(prisonEmailAddress = "omu.example@example.com", prisonDocumentId = null, extractedText = "text", hearingId = null, caseReferences = null))
 
     verify(extractionService, never()).extractStructuredDataAndStore(any(), any(), any())
   }
 
   @Test
   fun `skips structured extraction when extracted text is blank`() {
-    val input = IngestionContext(prisonEmailAddress = "omu.example@example.com", prisonDocumentId = UUID.randomUUID(), extractedText = "   ")
+    val input = IngestionContext(prisonEmailAddress = "omu.example@example.com", prisonDocumentId = UUID.randomUUID(), extractedText = "   ", hearingId = null, caseReferences = null)
 
     val result = enricher.enrich(input)
 
@@ -64,6 +66,8 @@ class ExtractStructuredDataTest {
       prisonEmailAddress = "omu.example@example.com",
       prisonDocumentId = documentId,
       extractedText = "text",
+      hearingId = null,
+      caseReferences = null,
     )
 
     val result = enricher.enrich(input)

@@ -13,36 +13,38 @@ import org.junit.jupiter.api.extension.ExtensionContext
 import org.springframework.core.io.ClassPathResource
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 
-class HmctsSubscriptionApiExtension :
+class HmctsSubcriptionApiExtension :
   BeforeAllCallback,
   AfterAllCallback,
   BeforeEachCallback {
   companion object {
     @JvmField
-    val hmctsSubscriptionApi = HmctsSubscriptionApiMockServer()
+    val hmctsSubcriptionApi = HmctsSubcriptionApiMockServer()
   }
 
   override fun beforeAll(context: ExtensionContext) {
-    hmctsSubscriptionApi.stubCreateSubscription()
-    hmctsSubscriptionApi.stubUpdateSubscription()
-    hmctsSubscriptionApi.stubFile()
-    hmctsSubscriptionApi.start()
+    hmctsSubcriptionApi.stubCreateSubscription()
+    hmctsSubcriptionApi.stubUpdateSubscription()
+    hmctsSubcriptionApi.stubFile()
+    hmctsSubcriptionApi.start()
   }
 
   override fun beforeEach(context: ExtensionContext) {
-    hmctsSubscriptionApi.resetRequests()
+    hmctsSubcriptionApi.resetRequests()
   }
 
   override fun afterAll(context: ExtensionContext) {
-    hmctsSubscriptionApi.stop()
+    hmctsSubcriptionApi.stop()
   }
 }
 
-class HmctsSubscriptionApiMockServer : WireMockServer(WIREMOCK_PORT) {
+class HmctsSubcriptionApiMockServer : WireMockServer(WIREMOCK_PORT) {
   companion object {
     private const val WIREMOCK_PORT = 8333
     const val TEST_SUBSCRIPTION_ID = "a5c06879-ee4e-4ebd-90ec-8a85efc1aed2"
     const val TEST_HMAC_KEY = "ef026f37-7552-4fb7-8e22-72243188b4a3"
+    const val TEST_HMCTS_HEARING_ID = "e4ee99d2-8cfd-4444-8ef1-d79b93e0cdec"
+    const val TEST_HMCTS_COURTHOUSE_ID = "e2d1bad5-0222-485a-a6ca-6d01a8804db6"
   }
 
   fun stubCreateSubscription() {

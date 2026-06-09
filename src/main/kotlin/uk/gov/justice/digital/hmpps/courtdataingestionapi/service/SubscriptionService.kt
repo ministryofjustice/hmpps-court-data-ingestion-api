@@ -8,25 +8,24 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.Subscription
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.NotificationEndpoint
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.SubscriptionRequest
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.SubscriptionRepository
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.subscription.SubscriptionCallbackConfig
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.subscription.HmctsApiConfiguration
 import java.time.LocalDateTime
 
 @Service
 class SubscriptionService(
   private val subscriptionRepository: SubscriptionRepository,
   private val hmctsSubscriptionApiClient: HmctsSubscriptionApiClient,
-  private val subscriptionCallbackConfig: SubscriptionCallbackConfig,
+  private val hmctsApiConfiguration: HmctsApiConfiguration,
   private val secretsManagerService: SecretsManagerService,
 ) {
 
   @Transactional
   fun subscribe() {
-    if (subscriptionCallbackConfig.enabled) {
+    if (hmctsApiConfiguration.enabled) {
       val subscription = subscriptionRepository.findAll().firstOrNull()
       if (subscription == null) {
         val subscriptionResponse = hmctsSubscriptionApiClient.createSubscription(
           subscriptionRequest(),
-          subscriptionCallbackConfig.subscriptionKey,
         )
         subscriptionRepository.save(
           Subscription(
@@ -36,10 +35,9 @@ class SubscriptionService(
         secretsManagerService.setSecretValue(subscriptionResponse.hmac.secret)
 
         log.info("Subscription created")
-      } else if (subscriptionCallbackConfig.updateSubscriptionOnStartup) {
+      } else if (hmctsApiConfiguration.updateSubscriptionOnStartup) {
         val subscriptionResponse = hmctsSubscriptionApiClient.updateSubscription(
           subscriptionRequest(),
-          subscriptionCallbackConfig.subscriptionKey,
           subscription.id,
         )
         subscription.updatedAt = LocalDateTime.now()
@@ -53,9 +51,9 @@ class SubscriptionService(
 
   private fun subscriptionRequest() = SubscriptionRequest(
     notificationEndpoint = NotificationEndpoint(
-      callbackUrl = subscriptionCallbackConfig.callbackUrl,
+      callbackUrl = hmctsApiConfiguration.callbackUrl,
     ),
-    eventTypes = subscriptionCallbackConfig.getEventTypesToSubscribe(),
+    eventTypes = hmctsApiConfiguration.getEventTypesToSubscribe(),
   )
 
   companion object {
