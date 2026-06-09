@@ -15,7 +15,7 @@ generic-service:
     HMPPS_DOCUMENT_MANAGEMENT_API_URL: "https://document-api-preprod.hmpps.service.justice.gov.uk"
     HMPPS_COURT-CASES-RELEASE-DATES_API_URL: "https://court-cases-release-dates-api-preprod.hmpps.service.justice.gov.uk"
     HMCTS_SUBSCRIPTION_CALLBACK_URL: "https://hxpwmnx4ef.execute-api.eu-west-2.amazonaws.com/preproduction/ingest"
-    HMCTS_SUBSCRIPTION_API_URL: "https://tmc.cjscp.org.uk/hrds"
+    HMCTS_API_URL: "https://tmc.cjscp.org.uk"
     HMCTS_AUTH_URL: "https://login.microsoftonline.com/77f54315-6dde-4fe7-9e17-74762c3eb096"
     HMCTS_UPDATE_SUBSCRIPTION_ON_STARTUP: true
     HMCTS_EVENT_TYPES: "ALL_EVENT_TYPES"
