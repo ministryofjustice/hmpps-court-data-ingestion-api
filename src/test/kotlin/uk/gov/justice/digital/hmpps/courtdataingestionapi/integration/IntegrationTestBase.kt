@@ -27,8 +27,9 @@ import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.TestUtil
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.CorePersonApiExtension
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsApiExtension
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsApiMockServer
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsAuthApiExtension
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsSubscriptionApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsAuthApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsAuthApiExtension.Companion.hmppsAuth
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsCourtCasesReleaseDatesApiExtension
@@ -55,7 +56,7 @@ import javax.sql.DataSource
   HmppsAuthApiExtension::class,
   HmctsAuthApiExtension::class,
   CorePersonApiExtension::class,
-  HmctsSubscriptionApiExtension::class,
+  HmctsApiExtension::class,
   HmppsDocumentManagementApiExtension::class,
   HmppsCourtCasesReleaseDatesApiExtension::class,
   PrisonerSearchApiExtension::class,
@@ -128,13 +129,12 @@ abstract class IntegrationTestBase {
         masterDefendantId = defendantId,
         documentId = COURT_DOCUMENT_ID,
         cases = listOf(
-          HmctsCase("Case123"),
-          HmctsCase("Case456"),
+          HmctsCase(CASE_REFERENCE),
         ),
         prisonEmailAddress = "prison.email@example.com",
         documentGeneratedTimestamp = LocalDateTime.now().minusMinutes(1).withNano(0),
         eventType = HmctsEventType.PRISON_COURT_REGISTER_GENERATED,
-        hearingId = UUID.randomUUID(),
+        hearingId = UUID.fromString(HmctsApiMockServer.TEST_HMCTS_HEARING_ID),
       )
     courtDataIngestionQueue.sqsClient.sendMessage(
       SendMessageRequest.builder()
@@ -199,6 +199,7 @@ abstract class IntegrationTestBase {
     val NO_MATCHING_IDS_PERSON = UUID.randomUUID()
     val MATCHING_CORE_PERSON = UUID.randomUUID()
     val MATCHING_CORE_ALIASES = UUID.randomUUID()
+    val CASE_REFERENCE = "CASE123456"
     const val MATCHING_PRISONER_NUMBER = "ABC123"
     const val TEST_USERNAME = "testuser"
 
