@@ -34,7 +34,9 @@ class HmppsDocumentManagementApiExtension :
   override fun beforeAll(context: ExtensionContext) {
     hmppsDocumentManagementApi.start()
     hmppsDocumentManagementApi.stubUploadDocument()
+    hmppsDocumentManagementApi.stubGetDocument()
     hmppsDocumentManagementApi.stubUpdateMetadata()
+    hmppsDocumentManagementApi.stubSetFileContentHash()
     hmppsDocumentManagementApi.stubDownloadFile()
   }
 
@@ -68,9 +70,37 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
     )
   }
 
+  fun stubGetDocument() {
+    stubFor(
+      get(urlPathMatching("/documents/[a-zA-Z0-9\\-]{36}"))
+        .withHeader("Service-Name", equalTo(SERVICE_NAME))
+        .withHeader("Username", equalTo(USERNAME))
+        .willReturn(
+          aResponse()
+            .withHeader("Content-Type", "application/json")
+            .withBody(happyResponse)
+            .withStatus(200),
+        ),
+    )
+  }
+
   fun stubUpdateMetadata() {
     stubFor(
       put(urlEqualTo("/documents/${IntegrationTestBase.PRISON_DOCUMENT_ID}/metadata"))
+        .withHeader("Service-Name", equalTo(SERVICE_NAME))
+        .withHeader("Username", equalTo(USERNAME))
+        .willReturn(
+          aResponse()
+            .withHeader("Content-Type", "application/json")
+            .withBody(happyResponse)
+            .withStatus(200),
+        ),
+    )
+  }
+
+  fun stubSetFileContentHash() {
+    stubFor(
+      put(urlPathMatching("/documents/[a-zA-Z0-9\\-]{36}/file-content-hash"))
         .withHeader("Service-Name", equalTo(SERVICE_NAME))
         .withHeader("Username", equalTo(USERNAME))
         .willReturn(

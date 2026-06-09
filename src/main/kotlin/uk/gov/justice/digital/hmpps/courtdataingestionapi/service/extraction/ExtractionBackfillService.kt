@@ -24,6 +24,7 @@ class ExtractionBackfillService(
   private val ingestionEnrichmentFlow: IngestionEnrichmentFlow,
   private val extractionService: ExtractionService,
   private val formatModels: FormatModelRegistry,
+  private val fileService: uk.gov.justice.digital.hmpps.courtdataingestionapi.service.FileService,
   @Value("\${extraction.extractor-version:dev}") private val extractorVersion: String,
   @Value("\${extraction.backfill.batch-size:500}") private val batchSize: Int,
   @Value("\${extraction.backfill.concurrency:4}") private val concurrency: Int,
@@ -102,6 +103,9 @@ class ExtractionBackfillService(
               ),
             )
             courtDocumentRepository.save(document.applyEnrichment(enriched))
+            runCatching {
+              fileService.mirrorEnrichmentToDocumentStore(document)
+            }.onFailure { log.warn("Hash backfill mirror to document store failed for {}", document.id, it) }
           }.onFailure { log.error("Hash backfill failed for {}", document.id, it) }
         }
 

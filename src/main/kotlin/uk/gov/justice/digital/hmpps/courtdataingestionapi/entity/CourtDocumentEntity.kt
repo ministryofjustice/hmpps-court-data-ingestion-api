@@ -45,8 +45,9 @@ data class CourtDocumentEntity(
   @Column(name = "extracted_text_sha256")
   var extractedTextSha256: String? = null,
 
-  @Column(name = "duplicate_of")
-  var duplicateOf: UUID? = null,
+  @Enumerated(EnumType.STRING)
+  @Column(name = "delivery_source")
+  var deliverySource: uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.DestinationType? = null,
 
   // Updated once identified
   var prisonerNumber: String? = null,
