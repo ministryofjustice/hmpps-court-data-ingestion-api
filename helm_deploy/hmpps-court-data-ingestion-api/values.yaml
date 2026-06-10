@@ -78,6 +78,6 @@ generic-prometheus-alerts:
 
 generic-data-analytics-extractor:
   enabled: false
-  serviceAccountName: not-enabled
+  serviceAccountName: hmpps-court-data-ingestion-to-ap-s3
   databaseSecretName: rds-instance-output
   destinationS3SecretName: analytical-platform-reporting-s3-bucket

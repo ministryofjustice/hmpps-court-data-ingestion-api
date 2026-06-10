@@ -38,5 +38,4 @@ generic-prometheus-alerts:
 
 generic-data-analytics-extractor:
   enabled: true
-  serviceAccountName: hmpps-court-data-ingestion-dev-to-ap-s3
-  cronJobSchedule: "15 11 * * 1-5"
+  cronJobSchedule: "10 15 * * 1-5"
