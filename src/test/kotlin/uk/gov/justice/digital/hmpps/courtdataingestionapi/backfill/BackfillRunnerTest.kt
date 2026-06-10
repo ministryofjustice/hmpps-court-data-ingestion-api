@@ -17,7 +17,7 @@ import java.util.UUID
 class BackfillRunnerTest {
 
   private val repository: BackfillRunRepository = mock()
-  private val runner = BackfillRunner(repository, defaultBatchSize = 50, staleThresholdIso = "PT5M")
+  private val runner = BackfillRunner(repository, staleThresholdIso = "PT5M")
 
   @Test
   fun `acquireLock returns the saved run when no concurrent run exists`() {
@@ -60,7 +60,7 @@ class BackfillRunnerTest {
     whenever(repository.findById(runId)).thenReturn(Optional.of(runRow))
     whenever(repository.save(any<BackfillRun>())).thenAnswer { it.arguments[0] as BackfillRun }
 
-    runner.runAsync(runId, backfill, batchSize = 10)
+    runner.runAsync(runId, backfill)
 
     assertThat(backfill.processedItems).containsExactlyInAnyOrder("a", "b", "c", "d")
     assertThat(runRow.status).isEqualTo(BackfillRunStatus.COMPLETED)
@@ -84,7 +84,7 @@ class BackfillRunnerTest {
     whenever(repository.findById(runId)).thenReturn(Optional.of(runRow))
     whenever(repository.save(any<BackfillRun>())).thenAnswer { it.arguments[0] as BackfillRun }
 
-    runner.runAsync(runId, backfill, batchSize = 10)
+    runner.runAsync(runId, backfill)
 
     assertThat(runRow.status).isEqualTo(BackfillRunStatus.COMPLETED)
     assertThat(runRow.processed).isEqualTo(2)
@@ -99,7 +99,7 @@ class BackfillRunnerTest {
     whenever(repository.findById(runId)).thenReturn(Optional.of(runRow))
     whenever(repository.save(any<BackfillRun>())).thenAnswer { it.arguments[0] as BackfillRun }
 
-    runner.runAsync(runId, backfill, batchSize = 10)
+    runner.runAsync(runId, backfill)
 
     assertThat(runRow.status).isEqualTo(BackfillRunStatus.FAILED)
     assertThat(runRow.failureReason).contains("DB down")
@@ -121,11 +121,6 @@ class BackfillRunnerTest {
     assertThat(runner.sweepStaleRuns()).isEqualTo(0)
   }
 
-  /**
-   * Stub backfill returning a scripted sequence of batches and optionally failing on selected
-   * items or the select call itself. Kept inside the test file because no production code needs
-   * a test double of Backfill.
-   */
   private class StubBackfill(
     private val batches: List<BackfillBatch<String>>,
     private val failOn: Set<String> = emptySet(),

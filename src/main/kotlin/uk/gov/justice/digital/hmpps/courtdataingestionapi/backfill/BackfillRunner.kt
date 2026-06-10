@@ -21,8 +21,7 @@ import java.util.concurrent.atomic.AtomicReference
 @Service
 class BackfillRunner(
   private val repository: BackfillRunRepository,
-  @Value("\${backfill.batch-size:200}") private val defaultBatchSize: Int,
-  @Value("\${backfill.stale-heartbeat-threshold:PT5M}") staleThresholdIso: String,
+  @Value("\${extraction.backfill.stale-heartbeat-threshold:PT5M}") staleThresholdIso: String,
 ) {
 
   private val staleThreshold: Duration = Duration.parse(staleThresholdIso)
@@ -42,13 +41,17 @@ class BackfillRunner(
   }
 
   @Async("backfillExecutor")
-  fun runAsync(runId: UUID, backfill: Backfill<*>, batchSize: Int = defaultBatchSize) {
-    // Capture the star-projected element type in a generic method so selectBatch() and process()
-    // line up on the same T without an unchecked cast.
-    runTyped(runId, backfill, batchSize)
+  fun runAsync(runId: UUID, backfill: Backfill<*>) {
+    runTyped(runId, backfill, BATCH_SIZE)
   }
 
   private fun <T> runTyped(runId: UUID, backfill: Backfill<T>, batchSize: Int) {
+    if (batchSize <= 0) {
+      val msg = "batch size must be positive but was $batchSize (check extraction.backfill.batch-size / BACKFILL env)"
+      log.error("Backfill {} run {} not started: {}", backfill.id, runId, msg)
+      complete(runId, BackfillRunStatus.FAILED, 0, 0, msg)
+      return
+    }
     val pool = Executors.newFixedThreadPool(backfill.concurrency.coerceAtLeast(1))
     val processed = AtomicLong()
     val failed = AtomicLong()
@@ -130,6 +133,7 @@ class BackfillRunner(
   }
 
   companion object {
+    private const val BATCH_SIZE = 200
     private val log = LoggerFactory.getLogger(BackfillRunner::class.java)
   }
 }
