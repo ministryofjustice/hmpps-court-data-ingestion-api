@@ -115,6 +115,7 @@ management:
         include:
           - info
           - health
+          - backfill
           - extractionbackfill
           - hashbackfill
           - corpussample
@@ -141,6 +142,7 @@ hmcts-api-config:
 
 extraction:
   backfill:
+    batch-size: 200
     ingested-from: "2026-05-18T16:38:15Z"
     error-cooldown: PT3H
   corpus-sampler:

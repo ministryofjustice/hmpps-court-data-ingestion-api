@@ -33,4 +33,20 @@ interface CourtDocumentRepository : JpaRepository<CourtDocumentEntity, UUID> {
     @Param("afterId") afterId: UUID,
     @Param("limit") limit: Int,
   ): List<CourtDocumentEntity>
+
+  @Query(
+    value = """
+      SELECT *
+      FROM court_document
+      WHERE id > :afterId
+        AND mirrored_to_doc_store_at IS NULL
+      ORDER BY id
+      LIMIT :limit
+    """,
+    nativeQuery = true,
+  )
+  fun findUnmirroredAfter(
+    @Param("afterId") afterId: UUID,
+    @Param("limit") limit: Int,
+  ): List<CourtDocumentEntity>
 }
