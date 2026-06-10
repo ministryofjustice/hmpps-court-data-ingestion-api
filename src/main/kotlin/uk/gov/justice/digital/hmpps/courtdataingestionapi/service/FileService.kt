@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.service
 
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
@@ -42,14 +43,56 @@ class FileService(
   )
 
   @Transactional(propagation = Propagation.NOT_SUPPORTED)
-  fun mirrorEnrichmentToDocumentStore(document: CourtDocumentEntity) {
+  fun mirrorEnrichmentToDocumentStore(document: CourtDocumentEntity): MirrorOutcome {
+    val contentHashOutcome = document.extractedTextSha256
+      ?.takeIf { it.isNotBlank() }
+      ?.let { hash ->
+        runCatching { hmppsDocumentManagementApi.setFileContentHash(document.prisonDocumentId, hash) }
+          .onFailure {
+            log.warn(
+              "Mirror: setFileContentHash failed for {} (court_document {})",
+              document.prisonDocumentId,
+              document.id,
+              it,
+            )
+          }
+      }
+
     val metadata = buildMap {
       document.deliverySource?.let { put("deliverySource", it.name) }
     }
-    hmppsDocumentManagementApi.mergeMetadata(document.prisonDocumentId, metadata)
-
-    document.extractedTextSha256?.let {
-      hmppsDocumentManagementApi.setFileContentHash(document.prisonDocumentId, it)
+    val metadataOutcome = if (metadata.isNotEmpty()) {
+      runCatching { hmppsDocumentManagementApi.mergeMetadata(document.prisonDocumentId, metadata) }
+        .onFailure {
+          log.warn(
+            "Mirror: mergeMetadata failed for {} (court_document {})",
+            document.prisonDocumentId,
+            document.id,
+            it,
+          )
+        }
+    } else {
+      null
     }
+
+    return MirrorOutcome(
+      contentHashPushed = contentHashOutcome?.isSuccess ?: (document.extractedTextSha256.isNullOrBlank()),
+      metadataPushed = metadataOutcome?.isSuccess ?: true,
+      contentHashError = contentHashOutcome?.exceptionOrNull(),
+      metadataError = metadataOutcome?.exceptionOrNull(),
+    )
+  }
+
+  data class MirrorOutcome(
+    val contentHashPushed: Boolean,
+    val metadataPushed: Boolean,
+    val contentHashError: Throwable? = null,
+    val metadataError: Throwable? = null,
+  ) {
+    val fullySuccessful: Boolean get() = contentHashPushed && metadataPushed
+  }
+
+  companion object {
+    private val log = LoggerFactory.getLogger(FileService::class.java)
   }
 }
