@@ -21,7 +21,6 @@ import java.util.concurrent.atomic.AtomicReference
 @Service
 class BackfillRunner(
   private val repository: BackfillRunRepository,
-  @Value("\${extraction.backfill.batch-size:200}") private val defaultBatchSize: Int,
   @Value("\${extraction.backfill.stale-heartbeat-threshold:PT5M}") staleThresholdIso: String,
 ) {
 
@@ -42,8 +41,8 @@ class BackfillRunner(
   }
 
   @Async("backfillExecutor")
-  fun runAsync(runId: UUID, backfill: Backfill<*>, batchSize: Int = defaultBatchSize) {
-    runTyped(runId, backfill, batchSize)
+  fun runAsync(runId: UUID, backfill: Backfill<*>) {
+    runTyped(runId, backfill, BATCH_SIZE)
   }
 
   private fun <T> runTyped(runId: UUID, backfill: Backfill<T>, batchSize: Int) {
@@ -134,6 +133,7 @@ class BackfillRunner(
   }
 
   companion object {
+    private const val BATCH_SIZE = 200
     private val log = LoggerFactory.getLogger(BackfillRunner::class.java)
   }
 }
