@@ -26,6 +26,8 @@ class IngestionPipelineSmokeTest {
         prisonEmailAddress = null,
         prisonDocumentId = null,
         downloadedFileBytes = TestPdfFactory.singlePagePdf("HELLO WARRANT"),
+        hearingId = null,
+        caseReferences = null,
       ),
     )
 

@@ -7,6 +7,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsCourtCases
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentViewEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocument
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentView
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtHearing
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import java.time.LocalDateTime
 import java.util.UUID
@@ -45,6 +46,12 @@ class CourtDocumentService(
       caseReferences = document.courtDocumentCases.map { it.caseReference },
       isUnread = documentNotificationService.isUnread(document),
       documentType = document.courtDocumentType,
+      courtHearing = document.courtHearing?.let {
+        CourtHearing(
+          it.courtName,
+          it.hearingType,
+        )
+      },
     )
   }
 }

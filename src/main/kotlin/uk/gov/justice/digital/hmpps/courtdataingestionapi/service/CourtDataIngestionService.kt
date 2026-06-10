@@ -10,23 +10,27 @@ import software.amazon.awssdk.services.sns.model.MessageAttributeValue
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.CorePersonApiClient
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentCaseEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtHearingEntity
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.HmtcsApiDataEnrichment
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionContext
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionEnrichmentFlow
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.applyEnrichment
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsSubscriptionNotificationRequestBody
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtHearingRepository
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.HmppsTopic
 import uk.gov.justice.hmpps.sqs.publish
 import java.time.LocalDateTime
 import java.util.UUID
+import kotlin.String
 
 @Service
 @Transactional
 class CourtDataIngestionService(
-
   private val ingestionEnrichmentFlow: IngestionEnrichmentFlow,
   private val courtDocumentRepository: CourtDocumentRepository,
+  private val courtHearingRepository: CourtHearingRepository,
   private val corePersonApiClient: CorePersonApiClient,
   private val hmppsQueueService: HmppsQueueService,
   private val objectMapper: ObjectMapper,
@@ -41,6 +45,8 @@ class CourtDataIngestionService(
       IngestionContext(
         prisonEmailAddress = message.prisonEmailAddress,
         prisonDocumentId = prisonDocument.documentUuid,
+        hearingId = message.hearingId,
+        caseReferences = message.cases.map { it.urn },
       ),
     )
 
@@ -68,6 +74,8 @@ class CourtDataIngestionService(
       courtDocumentEntity.mirroredToDocStoreAt = LocalDateTime.now()
       courtDocumentRepository.save(courtDocumentEntity)
     }
+
+    createOrUpdateCourtHearingData(courtDocumentEntity, enriched.hmtcsApiDataEnrichment)
     val person = try {
       corePersonApiClient.getPersonByCommonPlatformId(message.masterDefendantId)
     } catch (e: WebClientResponseException) {
@@ -82,6 +90,34 @@ class CourtDataIngestionService(
       createMatch(courtDocumentEntity, person.identifiers.prisonNumbers[0])
     } else if (person.identifiers.prisonNumbers.size > 1) {
       log.info("Found more than one prisonNumber from core person: ${person.identifiers.prisonNumbers}")
+    }
+  }
+
+  private fun createOrUpdateCourtHearingData(
+    courtDocumentEntity: CourtDocumentEntity,
+    hmtcsApiDataEnrichment: HmtcsApiDataEnrichment?,
+  ) {
+    if (hmtcsApiDataEnrichment != null) {
+      var hearing = courtHearingRepository.findById(courtDocumentEntity.courtHearingId!!)
+      if (hearing.isPresent) {
+        hearing.get().apply {
+          courtId = hmtcsApiDataEnrichment.courtId
+          courtName = hmtcsApiDataEnrichment.courtName
+          hearingType = hmtcsApiDataEnrichment.hearingType
+          updatedAt = LocalDateTime.now()
+        }
+        courtDocumentEntity.courtHearing = hearing.get()
+      } else {
+        courtDocumentEntity.courtHearing = courtHearingRepository.save(
+          CourtHearingEntity(
+            id = courtDocumentEntity.courtHearingId!!,
+            courtId = hmtcsApiDataEnrichment.courtId,
+            courtName = hmtcsApiDataEnrichment.courtName,
+            hearingType = hmtcsApiDataEnrichment.hearingType,
+            courtDocuments = listOf(courtDocumentEntity),
+          ),
+        )
+      }
     }
   }
 
