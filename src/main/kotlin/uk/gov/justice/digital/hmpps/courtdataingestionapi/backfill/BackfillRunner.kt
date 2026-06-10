@@ -42,6 +42,10 @@ class BackfillRunner(
 
   @Async("backfillExecutor")
   fun runAsync(runId: UUID, backfill: Backfill<*>, batchSize: Int = defaultBatchSize) {
+    runTyped(runId, backfill, batchSize)
+  }
+
+  private fun <T> runTyped(runId: UUID, backfill: Backfill<T>, batchSize: Int) {
     val pool = Executors.newFixedThreadPool(backfill.concurrency.coerceAtLeast(1))
     val processed = AtomicLong()
     val failed = AtomicLong()
@@ -51,15 +55,13 @@ class BackfillRunner(
     try {
       log.info("Backfill {} run {} starting", backfill.id, runId)
       while (true) {
-        @Suppress("UNCHECKED_CAST")
-        val typedBackfill = backfill as Backfill<Any>
-        val batch = typedBackfill.selectBatch(cursor, batchSize)
+        val batch = backfill.selectBatch(cursor, batchSize)
         if (batch.items.isEmpty()) break
 
         val futures = batch.items.map { item ->
           CompletableFuture.runAsync(
             {
-              runCatching { typedBackfill.process(item) }
+              runCatching { backfill.process(item) }
                 .onSuccess { processed.incrementAndGet() }
                 .onFailure { ex ->
                   failed.incrementAndGet()
