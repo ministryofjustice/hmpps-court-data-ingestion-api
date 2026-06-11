@@ -50,6 +50,7 @@ class CourtDocumentService(
         CourtHearing(
           it.courtName,
           it.hearingType,
+          it.hearingDate,
         )
       },
     )

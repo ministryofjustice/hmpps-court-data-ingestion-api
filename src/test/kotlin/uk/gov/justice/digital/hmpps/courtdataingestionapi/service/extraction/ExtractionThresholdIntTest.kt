@@ -71,13 +71,13 @@ class ExtractionThresholdIntTest : IntegrationTestBase() {
 
   private fun courtDocument(ingestionAt: LocalDateTime) = CourtDocumentEntity(
     defendantId = UUID.randomUUID(),
-    courtDocumentId = UUID.randomUUID(),
+    hmctsCourtDocumentId = UUID.randomUUID(),
     prisonDocumentId = UUID.randomUUID(),
     prisonEmailAddress = "court@example.gov.uk",
     eventType = HmctsEventType.PRISON_COURT_REGISTER_GENERATED,
     courtDocumentType = CourtDocumentType.PRISON_COURT_REGISTER,
     documentGeneratedTimestamp = ingestionAt,
     ingestionAt = ingestionAt,
-    courtHearingId = UUID.randomUUID(),
+    hmctsCourtHearingId = UUID.randomUUID(),
   )
 }

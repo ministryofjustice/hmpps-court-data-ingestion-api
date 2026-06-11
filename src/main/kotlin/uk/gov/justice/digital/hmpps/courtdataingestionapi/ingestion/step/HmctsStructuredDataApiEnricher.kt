@@ -34,6 +34,7 @@ class HmctsStructuredDataApiEnricher(
       }
 
       val courtId = hearing.courtSittings[0].courtHouse
+      val hearingDate = hearing.courtSittings[0].sittingStart
       val courthouse = hmctsCourthouseApiClient.getCourthouse(courtId)
 
       return context.copy(
@@ -41,6 +42,8 @@ class HmctsStructuredDataApiEnricher(
           courtId = courtId,
           courtName = courthouse.courtHouseName,
           hearingType = hearing.hearingType,
+          hearingDate = hearingDate,
+
         ),
       )
     }.onFailure {
