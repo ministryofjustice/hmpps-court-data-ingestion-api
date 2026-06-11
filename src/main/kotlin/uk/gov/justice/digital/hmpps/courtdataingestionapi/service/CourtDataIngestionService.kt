@@ -50,19 +50,23 @@ class CourtDataIngestionService(
       ),
     )
 
-    val courtDocumentEntity = courtDocumentRepository.save(
+    log.debug("Hearing ID from SQS message ${message.hearingId}")
+
+    var courtDocumentEntity = courtDocumentRepository.save(
       CourtDocumentEntity(
         defendantId = message.masterDefendantId,
-        courtDocumentId = message.documentId,
+        hmctsCourtDocumentId = message.documentId,
         prisonEmailAddress = message.prisonEmailAddress,
         documentGeneratedTimestamp = message.documentGeneratedTimestamp,
         courtDocumentCases = message.cases.map { CourtDocumentCaseEntity(caseReference = it.urn) }.toMutableList(),
         prisonDocumentId = prisonDocument.documentUuid,
         eventType = message.eventType,
         courtDocumentType = message.eventType.documentType,
-        courtHearingId = message.hearingId,
+        hmctsCourtHearingId = message.hearingId,
       ).applyEnrichment(enriched),
     )
+
+    log.debug("Hearing ID after repository.save ${courtDocumentEntity.hmctsCourtHearingId}")
 
     val mirrorOutcome = runCatching {
       fileService.mirrorEnrichmentToDocumentStore(courtDocumentEntity)
@@ -72,10 +76,12 @@ class CourtDataIngestionService(
     }
     if (mirrorOutcome?.fullySuccessful == true) {
       courtDocumentEntity.mirroredToDocStoreAt = LocalDateTime.now()
-      courtDocumentRepository.save(courtDocumentEntity)
+      courtDocumentEntity = courtDocumentRepository.save(courtDocumentEntity)
     }
+    log.debug("Hearing ID after mirror ${courtDocumentEntity.hmctsCourtHearingId}")
 
     createOrUpdateCourtHearingData(courtDocumentEntity, enriched.hmtcsApiDataEnrichment)
+
     val person = try {
       corePersonApiClient.getPersonByCommonPlatformId(message.masterDefendantId)
     } catch (e: WebClientResponseException) {
@@ -98,23 +104,26 @@ class CourtDataIngestionService(
     hmtcsApiDataEnrichment: HmtcsApiDataEnrichment?,
   ) {
     if (hmtcsApiDataEnrichment != null) {
-      var hearing = courtHearingRepository.findById(courtDocumentEntity.courtHearingId!!)
-      if (hearing.isPresent) {
-        hearing.get().apply {
+      var hearing = courtHearingRepository.findByHmctsCourtHearingId(courtDocumentEntity.hmctsCourtHearingId!!)
+      if (hearing != null) {
+        hearing.apply {
           courtId = hmtcsApiDataEnrichment.courtId
           courtName = hmtcsApiDataEnrichment.courtName
           hearingType = hmtcsApiDataEnrichment.hearingType
+          hearingDate = hmtcsApiDataEnrichment.hearingDate
           updatedAt = LocalDateTime.now()
         }
-        courtDocumentEntity.courtHearing = hearing.get()
+        hearing.courtDocuments.add(courtDocumentEntity)
+        courtDocumentEntity.courtHearing = hearing
       } else {
         courtDocumentEntity.courtHearing = courtHearingRepository.save(
           CourtHearingEntity(
-            id = courtDocumentEntity.courtHearingId!!,
             courtId = hmtcsApiDataEnrichment.courtId,
             courtName = hmtcsApiDataEnrichment.courtName,
             hearingType = hmtcsApiDataEnrichment.hearingType,
-            courtDocuments = listOf(courtDocumentEntity),
+            hearingDate = hmtcsApiDataEnrichment.hearingDate,
+            hmctsCourtHearingId = courtDocumentEntity.hmctsCourtHearingId!!,
+            courtDocuments = mutableListOf(courtDocumentEntity),
           ),
         )
       }
@@ -138,12 +147,13 @@ class CourtDataIngestionService(
   private fun createMatch(courtDocumentEntity: CourtDocumentEntity, prisonerNumber: String) {
     courtDocumentEntity.prisonerNumber = prisonerNumber
     courtDocumentEntity.identifiedAt = LocalDateTime.now()
-    courtDocumentRepository.save(courtDocumentEntity)
+    val result = courtDocumentRepository.save(courtDocumentEntity)
+    log.debug("Hearing ID match ${result.hmctsCourtHearingId}")
 
     fileService.setPrisonerId(courtDocumentEntity.prisonDocumentId, prisonerNumber)
     val payload = IdentifiedCourtWarrantEventPayload(
       additionalInformation = IdentifiedCourtWarrantAdditionalInformation(
-        courtDocumentId = courtDocumentEntity.courtDocumentId,
+        courtDocumentId = courtDocumentEntity.hmctsCourtDocumentId,
         prisonDocumentId = courtDocumentEntity.prisonDocumentId,
         prisonerNumber = prisonerNumber,
       ),

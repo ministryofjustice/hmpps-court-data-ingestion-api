@@ -6,7 +6,6 @@ import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
-import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
@@ -21,10 +20,9 @@ data class CourtDocumentEntity(
   @Id
   val id: UUID = UUID.randomUUID(),
   var defendantId: UUID,
-  var courtDocumentId: UUID,
+  var hmctsCourtDocumentId: UUID,
   var prisonDocumentId: UUID,
-  @Column("court_hearing_id", insertable = false, updatable = false)
-  var courtHearingId: UUID?,
+  var hmctsCourtHearingId: UUID?,
   val prisonEmailAddress: String,
   @Enumerated(EnumType.STRING)
   val eventType: HmctsEventType,
@@ -34,7 +32,6 @@ data class CourtDocumentEntity(
   var ingestionAt: LocalDateTime = LocalDateTime.now(),
 
   @ManyToOne(optional = true)
-  @JoinColumn(name = "court_hearing_id")
   var courtHearing: CourtHearingEntity? = null,
 
   @OneToMany(mappedBy = "courtDocument", cascade = [CascadeType.ALL])

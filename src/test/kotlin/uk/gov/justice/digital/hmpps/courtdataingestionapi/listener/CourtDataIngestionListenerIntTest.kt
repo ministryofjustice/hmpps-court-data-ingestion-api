@@ -26,7 +26,7 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
 
     val file = courtDocumentRepository.findFirstByDefendantIdOrderByIngestionAtDesc(NOT_FOUND_CORE_PERSON)!!
     assertThat(file.defendantId).isEqualTo(NOT_FOUND_CORE_PERSON)
-    assertThat(file.courtDocumentId).isEqualTo(COURT_DOCUMENT_ID)
+    assertThat(file.hmctsCourtDocumentId).isEqualTo(COURT_DOCUMENT_ID)
     assertThat(file.prisonDocumentId).isEqualTo(PRISON_DOCUMENT_ID)
     assertThat(file.prisonerNumber).isNull()
     assertThat(file.identifiedAt).isNull()
@@ -36,7 +36,7 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
     assertThat(file.prisonEmailAddress).isEqualTo(event.prisonEmailAddress)
     assertThat(file.eventType).isEqualTo(HmctsEventType.PRISON_COURT_REGISTER_GENERATED)
     assertThat(file.courtDocumentType).isEqualTo(CourtDocumentType.PRISON_COURT_REGISTER)
-    assertThat(file.courtHearingId).isNotNull
+    assertThat(file.hmctsCourtHearingId).isNotNull
   }
 
   @Test
@@ -45,7 +45,7 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
 
     val file = courtDocumentRepository.findFirstByDefendantIdOrderByIngestionAtDesc(NO_MATCHING_IDS_PERSON)!!
     assertThat(file.defendantId).isEqualTo(NO_MATCHING_IDS_PERSON)
-    assertThat(file.courtDocumentId).isEqualTo(COURT_DOCUMENT_ID)
+    assertThat(file.hmctsCourtDocumentId).isEqualTo(COURT_DOCUMENT_ID)
     assertThat(file.prisonerNumber).isNull()
     assertThat(file.identifiedAt).isNull()
   }
@@ -56,7 +56,7 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
 
     val file = courtDocumentRepository.findFirstByDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
     assertThat(file.defendantId).isEqualTo(MATCHING_CORE_PERSON)
-    assertThat(file.courtDocumentId).isEqualTo(COURT_DOCUMENT_ID)
+    assertThat(file.hmctsCourtDocumentId).isEqualTo(COURT_DOCUMENT_ID)
     assertThat(file.prisonerNumber).isEqualTo("ABC123")
     assertThat(file.identifiedAt).isNotNull
 
@@ -86,7 +86,7 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
 
     val file = courtDocumentRepository.findFirstByDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_ALIASES)!!
     assertThat(file.defendantId).isEqualTo(MATCHING_CORE_ALIASES)
-    assertThat(file.courtDocumentId).isEqualTo(COURT_DOCUMENT_ID)
+    assertThat(file.hmctsCourtDocumentId).isEqualTo(COURT_DOCUMENT_ID)
     assertThat(file.prisonerNumber).isNull()
     assertThat(file.identifiedAt).isNull()
   }

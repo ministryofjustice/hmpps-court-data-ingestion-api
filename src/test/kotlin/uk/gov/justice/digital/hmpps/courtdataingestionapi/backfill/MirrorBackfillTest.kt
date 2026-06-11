@@ -106,9 +106,9 @@ class MirrorBackfillTest {
 
   private fun sampleWarrant(extractedTextSha: String?): CourtDocumentEntity = CourtDocumentEntity(
     defendantId = UUID.randomUUID(),
-    courtDocumentId = UUID.randomUUID(),
+    hmctsCourtDocumentId = UUID.randomUUID(),
     prisonDocumentId = UUID.randomUUID(),
-    courtHearingId = UUID.fromString("509b295e-22d1-4cc0-9925-d5690503ce3c"),
+    hmctsCourtHearingId = UUID.fromString("509b295e-22d1-4cc0-9925-d5690503ce3c"),
     prisonEmailAddress = "OMU.HolmeHouse@justice.gov.uk",
     eventType = HmctsEventType.WEE_SendingToCrownCourtForTrial,
     courtDocumentType = CourtDocumentType.REMAND_WARRANT,

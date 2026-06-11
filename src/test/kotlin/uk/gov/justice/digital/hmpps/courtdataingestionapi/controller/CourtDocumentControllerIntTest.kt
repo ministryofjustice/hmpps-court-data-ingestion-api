@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumen
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentView
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtHearing
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.typeReference
+import java.time.LocalDateTime
 import java.util.UUID
 
 @Transactional
@@ -44,6 +45,7 @@ class CourtDocumentControllerIntTest : IntegrationTestBase() {
         CourtHearing(
           "Central London County Court",
           "First hearing",
+          LocalDateTime.of(2026, 6, 4, 11, 0),
         ),
       )
     }
