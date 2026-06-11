@@ -100,7 +100,7 @@ class ExtractionBackfillService(
               IngestionContext(
                 prisonEmailAddress = document.prisonEmailAddress,
                 prisonDocumentId = document.prisonDocumentId,
-                hearingId = document.courtHearingId,
+                hearingId = document.hmctsCourtHearingId,
                 caseReferences = document.courtDocumentCases.map { it.caseReference },
               ),
             )

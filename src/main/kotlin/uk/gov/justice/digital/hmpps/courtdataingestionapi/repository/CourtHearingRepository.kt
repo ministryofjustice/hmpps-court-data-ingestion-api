@@ -6,4 +6,6 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtHearingEnt
 import java.util.UUID
 
 @Repository
-interface CourtHearingRepository : JpaRepository<CourtHearingEntity, UUID>
+interface CourtHearingRepository : JpaRepository<CourtHearingEntity, UUID> {
+  fun findByHmctsCourtHearingId(hmctsCourtHearingId: UUID): CourtHearingEntity?
+}
