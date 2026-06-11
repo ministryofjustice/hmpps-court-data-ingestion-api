@@ -38,4 +38,4 @@ generic-prometheus-alerts:
 
 generic-data-analytics-extractor:
   enabled: true
-  cronJobSchedule: "10 15 * * 1-5"
+  cronJobSchedule: "30 05 * * 1-5"

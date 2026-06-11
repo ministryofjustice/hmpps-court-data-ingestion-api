@@ -32,3 +32,6 @@ generic-prometheus-alerts:
     - "calculate-release-dates-team-prod-hmpps_court_data_prisoner_created_dlq"
   sqsAlertsOldestThreshold: 2
   sqsAlertsTotalMessagesThreshold: 1
+
+generic-data-analytics-extractor:
+  enabled: true
