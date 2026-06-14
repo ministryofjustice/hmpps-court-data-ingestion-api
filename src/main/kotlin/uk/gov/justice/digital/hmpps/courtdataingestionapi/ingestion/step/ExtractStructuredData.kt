@@ -19,18 +19,18 @@ class ExtractStructuredData(
 
   override fun enrich(context: IngestionContext): IngestionContext {
     val prisonDocumentId = context.prisonDocumentId ?: return context
-    val extractedText = context.extractedText
+    val pdfBytes = context.downloadedFileBytes
 
-    if (extractedText.isNullOrBlank()) {
+    if (pdfBytes == null || pdfBytes.isEmpty()) {
       return context.copy(
-        warnings = context.warnings + "Structured extraction skipped: extracted text is empty",
+        warnings = context.warnings + "Structured extraction skipped: no downloaded file",
       )
     }
 
     runCatching {
       extractionService.extractStructuredDataAndStore(
         documentId = prisonDocumentId,
-        extractedText = extractedText,
+        pdfBytes = pdfBytes,
         downloadedFileSha256 = context.downloadedFileSha256,
       )
     }.onFailure {

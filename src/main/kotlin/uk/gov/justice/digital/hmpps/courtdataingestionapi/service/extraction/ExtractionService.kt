@@ -29,36 +29,12 @@ class ExtractionService(
   fun extractAndStore(documentId: UUID): ExtractionResultEntity {
     val model = formatModels.active()
 
-    val existing = repository.findByDocumentIdAndFormatIdAndFormatVersionAndExtractorVersion(
-      documentId,
-      model.id,
-      model.version,
-      extractorVersion,
-    )
+    val existing = findExisting(documentId, model)
     if (existing != null && existing.status != STATUS_ERROR) return existing
 
     val entity = try {
       val bytes = documentApi.downloadFile(documentId)
-      val sha = Sha256.hex(bytes)
-      if (!bytes.looksLikePdf()) {
-        result(documentId, model, sha, STATUS_SKIPPED, mapOf("reason" to "missing %PDF- signature"))
-      } else {
-        runCatching {
-          val out = pipeline.extract(ByteArrayInputStream(bytes), documentId.toString(), model)
-          result(
-            documentId,
-            model,
-            sha,
-            STATUS_OK,
-            mapOf("header" to out.headerFields, "offences" to out.offenceBlocks, "labelSignature" to out.labelSignature),
-            out.pageCount,
-            out.fieldCount,
-          )
-        }.getOrElse { ex ->
-          log.warn("Extraction failed for document {}", documentId, ex)
-          result(documentId, model, sha, STATUS_FAILED, mapOf("error" to (ex.message ?: ex.javaClass.simpleName)))
-        }
-      }
+      runExtraction(documentId, bytes, Sha256.hex(bytes), model)
     } catch (ex: Exception) {
       log.warn("Transient error fetching document {}, will retry after cooldown", documentId, ex)
       result(documentId, model, EMPTY_SHA, STATUS_ERROR, mapOf("error" to (ex.message ?: ex.javaClass.simpleName)))
@@ -70,55 +46,44 @@ class ExtractionService(
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   fun extractStructuredDataAndStore(
     documentId: UUID,
-    extractedText: String,
+    pdfBytes: ByteArray,
     downloadedFileSha256: String?,
   ): ExtractionResultEntity {
     val model = formatModels.active()
 
-    val existing = repository.findByDocumentIdAndFormatIdAndFormatVersionAndExtractorVersion(
-      documentId,
-      model.id,
-      model.version,
-      extractorVersion,
-    )
-
+    val existing = findExisting(documentId, model)
     if (existing != null && existing.status != STATUS_ERROR) return existing
-    // content_sha256 is the hash of the source file's bytes in both extraction paths, so the column
-    // carries one meaning. The extracted-text hash is recorded on court_document.extracted_text_sha256.
-    val sha = downloadedFileSha256 ?: EMPTY_SHA
+    val sha = downloadedFileSha256 ?: Sha256.hex(pdfBytes)
 
-    val entity = runCatching {
-      val out = pipeline.extractFromText(
-        text = extractedText,
-        documentId = documentId.toString(),
-        model = model,
-      )
+    return persist(existing, runExtraction(documentId, pdfBytes, sha, model))
+  }
 
+  private fun findExisting(documentId: UUID, model: FormatModel) = repository.findByDocumentIdAndFormatIdAndFormatVersionAndExtractorVersion(
+    documentId,
+    model.id,
+    model.version,
+    extractorVersion,
+  )
+
+  private fun runExtraction(documentId: UUID, bytes: ByteArray, sha: String, model: FormatModel): ExtractionResultEntity {
+    if (!bytes.looksLikePdf()) {
+      return result(documentId, model, sha, STATUS_SKIPPED, mapOf("reason" to "missing %PDF- signature"))
+    }
+    return runCatching {
+      val out = pipeline.extract(ByteArrayInputStream(bytes), documentId.toString(), model)
       result(
-        documentId = documentId,
-        model = model,
-        sha = sha,
-        status = STATUS_OK,
-        payload = mapOf(
-          "header" to out.headerFields,
-          "offences" to out.offenceBlocks,
-          "labelSignature" to out.labelSignature,
-        ),
-        pageCount = out.pageCount,
-        fieldCount = out.fieldCount,
+        documentId,
+        model,
+        sha,
+        STATUS_OK,
+        mapOf("header" to out.headerFields, "offences" to out.offenceBlocks, "labelSignature" to out.labelSignature),
+        out.pageCount,
+        out.fieldCount,
       )
     }.getOrElse { ex ->
-      log.warn("Structured extraction failed for document {}", documentId, ex)
-      result(
-        documentId = documentId,
-        model = model,
-        sha = sha,
-        status = STATUS_FAILED,
-        payload = mapOf("error" to (ex.message ?: ex.javaClass.simpleName)),
-      )
+      log.warn("Extraction failed for document {}", documentId, ex)
+      result(documentId, model, sha, STATUS_FAILED, mapOf("error" to (ex.message ?: ex.javaClass.simpleName)))
     }
-
-    return persist(existing, entity)
   }
 
   private fun result(

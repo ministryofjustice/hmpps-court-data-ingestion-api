@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.step
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
@@ -17,55 +18,68 @@ class ExtractStructuredDataTest {
   private val enricher = ExtractStructuredData(extractionService)
 
   @Test
-  fun `calls structured extraction when extracted text exists`() {
+  fun `runs structured extraction on the downloaded pdf bytes`() {
     val documentId = UUID.randomUUID()
     whenever(
-      extractionService.extractStructuredDataAndStore(documentId, "text", "file-hash"),
+      extractionService.extractStructuredDataAndStore(eq(documentId), any(), eq("file-hash")),
     ).thenReturn(mock())
 
     val input = IngestionContext(
       prisonEmailAddress = "omu.example@example.com",
       prisonDocumentId = documentId,
-      extractedText = "text",
+      downloadedFileBytes = byteArrayOf('%'.code.toByte(), 'P'.code.toByte(), 'D'.code.toByte(), 'F'.code.toByte()),
       downloadedFileSha256 = "file-hash",
-      extractedTextSha256 = "text-hash",
       hearingId = null,
       caseReferences = null,
     )
 
     val result = enricher.enrich(input)
 
-    verify(extractionService).extractStructuredDataAndStore(documentId, "text", "file-hash")
+    verify(extractionService).extractStructuredDataAndStore(eq(documentId), any(), eq("file-hash"))
     assertThat(result).isEqualTo(input)
   }
 
   @Test
   fun `skips structured extraction when there is no document id`() {
-    enricher.enrich(IngestionContext(prisonEmailAddress = "omu.example@example.com", prisonDocumentId = null, extractedText = "text", hearingId = null, caseReferences = null))
+    enricher.enrich(
+      IngestionContext(
+        prisonEmailAddress = "omu.example@example.com",
+        prisonDocumentId = null,
+        downloadedFileBytes = byteArrayOf(1, 2, 3),
+        hearingId = null,
+        caseReferences = null,
+      ),
+    )
 
     verify(extractionService, never()).extractStructuredDataAndStore(any(), any(), any())
   }
 
   @Test
-  fun `skips structured extraction when extracted text is blank`() {
-    val input = IngestionContext(prisonEmailAddress = "omu.example@example.com", prisonDocumentId = UUID.randomUUID(), extractedText = "   ", hearingId = null, caseReferences = null)
+  fun `skips structured extraction when there is no downloaded file`() {
+    val input = IngestionContext(
+      prisonEmailAddress = "omu.example@example.com",
+      prisonDocumentId = UUID.randomUUID(),
+      downloadedFileBytes = null,
+      hearingId = null,
+      caseReferences = null,
+    )
 
     val result = enricher.enrich(input)
 
     verify(extractionService, never()).extractStructuredDataAndStore(any(), any(), any())
-    assertThat(result.warnings).contains("Structured extraction skipped: extracted text is empty")
+    assertThat(result.warnings).contains("Structured extraction skipped: no downloaded file")
   }
 
   @Test
   fun `swallows extraction failure so ingestion is not broken`() {
     val documentId = UUID.randomUUID()
-    whenever(extractionService.extractStructuredDataAndStore(documentId, "text", null))
+    whenever(extractionService.extractStructuredDataAndStore(eq(documentId), any(), any()))
       .thenThrow(RuntimeException("extraction blew up"))
 
     val input = IngestionContext(
       prisonEmailAddress = "omu.example@example.com",
       prisonDocumentId = documentId,
-      extractedText = "text",
+      downloadedFileBytes = byteArrayOf(1, 2, 3),
       hearingId = null,
       caseReferences = null,
     )
