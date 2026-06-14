@@ -5,7 +5,7 @@ import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmctsCourtScheduleApiClient
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmctsCourthouseApiClient
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.HmtcsApiDataEnrichment
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.HmctsApiDataEnrichment
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionContext
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionEnricher
 
@@ -38,7 +38,7 @@ class HmctsStructuredDataApiEnricher(
       val courthouse = hmctsCourthouseApiClient.getCourthouse(courtId)
 
       return context.copy(
-        hmtcsApiDataEnrichment = HmtcsApiDataEnrichment(
+        hmctsApiDataEnrichment = HmctsApiDataEnrichment(
           courtId = courtId,
           courtName = courthouse.courtHouseName,
           hearingType = hearing.hearingType,

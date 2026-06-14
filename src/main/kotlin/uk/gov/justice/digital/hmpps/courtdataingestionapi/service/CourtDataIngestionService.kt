@@ -11,7 +11,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.CorePersonApiCl
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentCaseEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtHearingEntity
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.HmtcsApiDataEnrichment
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.HmctsApiDataEnrichment
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionContext
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionEnrichmentFlow
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.applyEnrichment
@@ -51,7 +51,7 @@ class CourtDataIngestionService(
       ),
     )
 
-    log.debug("Hearing ID from SQS message ${message.hearingId}")
+    log.debug("Hearing ID from SQS message {}", message.hearingId)
 
     val generatedAt = message.documentGeneratedTimestamp.toUtcInstant()
 
@@ -69,7 +69,7 @@ class CourtDataIngestionService(
       ).applyEnrichment(enriched),
     )
 
-    log.debug("Hearing ID after repository.save ${courtDocumentEntity.hmctsCourtHearingId}")
+    log.debug("Hearing ID after repository.save {}", courtDocumentEntity.hmctsCourtHearingId)
 
     val mirrorOutcome = runCatching {
       fileService.mirrorEnrichmentToDocumentStore(courtDocumentEntity)
@@ -81,9 +81,9 @@ class CourtDataIngestionService(
       courtDocumentEntity.mirroredToDocStoreAt = LocalDateTime.now()
       courtDocumentEntity = courtDocumentRepository.save(courtDocumentEntity)
     }
-    log.debug("Hearing ID after mirror ${courtDocumentEntity.hmctsCourtHearingId}")
+    log.debug("Hearing ID after mirror {}", courtDocumentEntity.hmctsCourtHearingId)
 
-    createOrUpdateCourtHearingData(courtDocumentEntity, enriched.hmtcsApiDataEnrichment)
+    createOrUpdateCourtHearingData(courtDocumentEntity, enriched.hmctsApiDataEnrichment)
 
     val person = try {
       corePersonApiClient.getPersonByCommonPlatformId(message.masterDefendantId)
@@ -104,16 +104,16 @@ class CourtDataIngestionService(
 
   private fun createOrUpdateCourtHearingData(
     courtDocumentEntity: CourtDocumentEntity,
-    hmtcsApiDataEnrichment: HmtcsApiDataEnrichment?,
+    hmctsApiDataEnrichment: HmctsApiDataEnrichment?,
   ) {
-    if (hmtcsApiDataEnrichment != null) {
+    if (hmctsApiDataEnrichment != null) {
       val hearing = courtHearingRepository.findByHmctsCourtHearingId(courtDocumentEntity.hmctsCourtHearingId!!)
       if (hearing != null) {
         hearing.apply {
-          courtId = hmtcsApiDataEnrichment.courtId
-          courtName = hmtcsApiDataEnrichment.courtName
-          hearingType = hmtcsApiDataEnrichment.hearingType
-          hearingDate = hmtcsApiDataEnrichment.hearingDate
+          courtId = hmctsApiDataEnrichment.courtId
+          courtName = hmctsApiDataEnrichment.courtName
+          hearingType = hmctsApiDataEnrichment.hearingType
+          hearingDate = hmctsApiDataEnrichment.hearingDate
           updatedAt = LocalDateTime.now()
         }
         hearing.courtDocuments.add(courtDocumentEntity)
@@ -121,10 +121,10 @@ class CourtDataIngestionService(
       } else {
         courtDocumentEntity.courtHearing = courtHearingRepository.save(
           CourtHearingEntity(
-            courtId = hmtcsApiDataEnrichment.courtId,
-            courtName = hmtcsApiDataEnrichment.courtName,
-            hearingType = hmtcsApiDataEnrichment.hearingType,
-            hearingDate = hmtcsApiDataEnrichment.hearingDate,
+            courtId = hmctsApiDataEnrichment.courtId,
+            courtName = hmctsApiDataEnrichment.courtName,
+            hearingType = hmctsApiDataEnrichment.hearingType,
+            hearingDate = hmctsApiDataEnrichment.hearingDate,
             hmctsCourtHearingId = courtDocumentEntity.hmctsCourtHearingId!!,
             courtDocuments = mutableListOf(courtDocumentEntity),
           ),

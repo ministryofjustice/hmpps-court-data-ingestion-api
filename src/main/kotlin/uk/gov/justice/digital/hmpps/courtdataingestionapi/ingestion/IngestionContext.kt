@@ -23,7 +23,7 @@ data class IngestionContext(
   // Step 6: duplicate resolution
   val duplicateOf: UUID? = null,
 
-  val hmtcsApiDataEnrichment: HmtcsApiDataEnrichment? = null,
+  val hmctsApiDataEnrichment: HmctsApiDataEnrichment? = null,
 
   val warnings: List<String> = emptyList(),
 )
