@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtDataIngestionService
-import java.time.LocalDateTime
 import java.util.UUID
 
 @Service
@@ -38,7 +37,7 @@ data class HmctsSubscriptionNotificationRequestBody(
   val cases: List<HmctsCase>,
   val masterDefendantId: UUID,
   val documentId: UUID,
-  val documentGeneratedTimestamp: LocalDateTime,
+  val documentGeneratedTimestamp: String,
   val prisonEmailAddress: String,
   val eventType: HmctsEventType = HmctsEventType.PRISON_COURT_REGISTER_GENERATED,
   val hearingId: UUID,

@@ -13,8 +13,8 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumen
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.FileService
-import java.time.LocalDateTime
-import java.util.UUID
+import java.time.Instant
+import java.util.*
 
 class MirrorBackfillTest {
 
@@ -112,7 +112,7 @@ class MirrorBackfillTest {
     prisonEmailAddress = "OMU.HolmeHouse@justice.gov.uk",
     eventType = HmctsEventType.WEE_SendingToCrownCourtForTrial,
     courtDocumentType = CourtDocumentType.REMAND_WARRANT,
-    documentGeneratedTimestamp = LocalDateTime.now(),
+    documentGeneratedTimestamp = Instant.now(),
     addressedPrison = "HHI",
     downloadedFileSha256 = "1e8c08ae751bcfb0fd81b3f3abb32659a98a2171c30bc5c8e153791bc7060040",
     extractedTextSha256 = extractedTextSha,

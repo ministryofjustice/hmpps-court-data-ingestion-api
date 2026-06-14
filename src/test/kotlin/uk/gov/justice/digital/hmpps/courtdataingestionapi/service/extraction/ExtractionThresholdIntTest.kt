@@ -13,7 +13,8 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.ExtractionR
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
-import java.util.UUID
+import java.time.ZoneId
+import java.util.*
 
 class ExtractionThresholdIntTest : IntegrationTestBase() {
 
@@ -76,7 +77,7 @@ class ExtractionThresholdIntTest : IntegrationTestBase() {
     prisonEmailAddress = "court@example.gov.uk",
     eventType = HmctsEventType.PRISON_COURT_REGISTER_GENERATED,
     courtDocumentType = CourtDocumentType.PRISON_COURT_REGISTER,
-    documentGeneratedTimestamp = ingestionAt,
+    documentGeneratedTimestamp = ingestionAt.atZone(ZoneId.of("Europe/London")).toInstant(),
     ingestionAt = ingestionAt,
     hmctsCourtHearingId = UUID.randomUUID(),
   )

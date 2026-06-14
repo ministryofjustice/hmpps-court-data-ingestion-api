@@ -11,6 +11,7 @@ import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
+import java.time.Instant
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -28,7 +29,7 @@ data class CourtDocumentEntity(
   val eventType: HmctsEventType,
   @Enumerated(EnumType.STRING)
   val courtDocumentType: CourtDocumentType,
-  val documentGeneratedTimestamp: LocalDateTime,
+  val documentGeneratedTimestamp: Instant,
   var ingestionAt: LocalDateTime = LocalDateTime.now(),
 
   @ManyToOne(optional = true)

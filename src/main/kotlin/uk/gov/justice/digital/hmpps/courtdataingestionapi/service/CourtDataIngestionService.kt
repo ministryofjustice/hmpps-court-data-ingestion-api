@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.applyEnrichm
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsSubscriptionNotificationRequestBody
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtHearingRepository
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.util.toUtcInstant
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.HmppsTopic
 import uk.gov.justice.hmpps.sqs.publish
@@ -52,12 +53,14 @@ class CourtDataIngestionService(
 
     log.debug("Hearing ID from SQS message ${message.hearingId}")
 
+    val generatedAt = message.documentGeneratedTimestamp.toUtcInstant()
+
     var courtDocumentEntity = courtDocumentRepository.save(
       CourtDocumentEntity(
         defendantId = message.masterDefendantId,
         hmctsCourtDocumentId = message.documentId,
         prisonEmailAddress = message.prisonEmailAddress,
-        documentGeneratedTimestamp = message.documentGeneratedTimestamp,
+        documentGeneratedTimestamp = generatedAt,
         courtDocumentCases = message.cases.map { CourtDocumentCaseEntity(caseReference = it.urn) }.toMutableList(),
         prisonDocumentId = prisonDocument.documentUuid,
         eventType = message.eventType,
@@ -104,7 +107,7 @@ class CourtDataIngestionService(
     hmtcsApiDataEnrichment: HmtcsApiDataEnrichment?,
   ) {
     if (hmtcsApiDataEnrichment != null) {
-      var hearing = courtHearingRepository.findByHmctsCourtHearingId(courtDocumentEntity.hmctsCourtHearingId!!)
+      val hearing = courtHearingRepository.findByHmctsCourtHearingId(courtDocumentEntity.hmctsCourtHearingId!!)
       if (hearing != null) {
         hearing.apply {
           courtId = hmtcsApiDataEnrichment.courtId
@@ -148,7 +151,7 @@ class CourtDataIngestionService(
     courtDocumentEntity.prisonerNumber = prisonerNumber
     courtDocumentEntity.identifiedAt = LocalDateTime.now()
     val result = courtDocumentRepository.save(courtDocumentEntity)
-    log.debug("Hearing ID match ${result.hmctsCourtHearingId}")
+    log.debug("Hearing ID match {}", result.hmctsCourtHearingId)
 
     fileService.setPrisonerId(courtDocumentEntity.prisonDocumentId, prisonerNumber)
     val payload = IdentifiedCourtWarrantEventPayload(

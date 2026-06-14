@@ -136,7 +136,7 @@ abstract class IntegrationTestBase {
           HmctsCase(CASE_REFERENCE),
         ),
         prisonEmailAddress = "prison.email@example.com",
-        documentGeneratedTimestamp = LocalDateTime.now().minusMinutes(1).withNano(0),
+        documentGeneratedTimestamp = LocalDateTime.now().minusMinutes(1).withNano(0).toString(),
         eventType = HmctsEventType.PRISON_COURT_REGISTER_GENERATED,
         hearingId = UUID.fromString(HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID),
       )
