@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion
 
 import org.springframework.stereotype.Component
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.step.ExtractStructuredData
 
 @Component
 class IngestionEnrichmentFlow(
@@ -10,6 +9,5 @@ class IngestionEnrichmentFlow(
   fun run(context: IngestionContext): IngestionContext = enrichers.fold(context) { acc, enricher -> enricher.enrich(acc) }
 
   fun runForBackfill(context: IngestionContext): IngestionContext = enrichers
-    .filterNot { it is ExtractStructuredData }
     .fold(context) { acc, enricher -> enricher.enrich(acc) }
 }
