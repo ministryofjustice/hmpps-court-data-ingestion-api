@@ -9,7 +9,6 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocume
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.FileService
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.util.Sha256
 import java.time.LocalDateTime
-import java.util.UUID
 
 @Component
 class HashBackfill(
@@ -69,10 +68,4 @@ class HashBackfill(
     bytes[1] == 'P'.code.toByte() &&
     bytes[2] == 'D'.code.toByte() &&
     bytes[3] == 'F'.code.toByte()
-
-  private fun parseCursor(cursor: String): UUID = if (cursor.isEmpty()) ZERO_UUID else UUID.fromString(cursor)
-
-  companion object {
-    private val ZERO_UUID = UUID(0L, 0L)
-  }
 }
