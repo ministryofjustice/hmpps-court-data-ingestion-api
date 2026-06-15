@@ -5,7 +5,6 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEn
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.FileService
 import java.time.LocalDateTime
-import java.util.UUID
 
 @Component
 class MirrorBackfill(
@@ -33,11 +32,5 @@ class MirrorBackfill(
         ?: IllegalStateException("Mirror failed with no captured cause")
       throw cause
     }
-  }
-
-  private fun parseCursor(cursor: String): UUID = if (cursor.isEmpty()) ZERO_UUID else UUID.fromString(cursor)
-
-  companion object {
-    private val ZERO_UUID = UUID(0L, 0L)
   }
 }

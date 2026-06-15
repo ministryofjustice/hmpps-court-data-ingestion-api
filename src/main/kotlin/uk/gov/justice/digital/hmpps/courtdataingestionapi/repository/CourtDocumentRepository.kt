@@ -22,6 +22,23 @@ interface CourtDocumentRepository : JpaRepository<CourtDocumentEntity, UUID> {
     value = """
       SELECT *
       FROM court_document
+      WHERE court_hearing_id IS NULL
+      AND hmcts_court_hearing_id IS NOT NULL
+      AND id > :afterId
+      ORDER BY id
+      LIMIT :limit
+    """,
+    nativeQuery = true,
+  )
+  fun findUnpopulatedCourtHearingData(
+    @Param("afterId") afterId: UUID,
+    @Param("limit") limit: Int,
+  ): List<CourtDocumentEntity>
+
+  @Query(
+    value = """
+      SELECT *
+      FROM court_document
       WHERE id > :afterId
         AND downloaded_file_sha256 IS NULL
       ORDER BY id
