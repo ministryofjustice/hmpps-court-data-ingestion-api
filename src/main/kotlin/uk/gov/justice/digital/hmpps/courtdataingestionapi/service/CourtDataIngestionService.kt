@@ -18,7 +18,6 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.applyEnrichm
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsSubscriptionNotificationRequestBody
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtHearingRepository
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.util.toUtcInstant
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.HmppsTopic
 import uk.gov.justice.hmpps.sqs.publish
@@ -53,14 +52,12 @@ class CourtDataIngestionService(
 
     log.debug("Hearing ID from SQS message {}", message.hearingId)
 
-    val generatedAt = message.documentGeneratedTimestamp.toUtcInstant()
-
     var courtDocumentEntity = courtDocumentRepository.save(
       CourtDocumentEntity(
         defendantId = message.masterDefendantId,
         hmctsCourtDocumentId = message.documentId,
         prisonEmailAddress = message.prisonEmailAddress,
-        documentGeneratedTimestamp = generatedAt,
+        documentGeneratedTimestamp = message.documentGeneratedTimestamp,
         courtDocumentCases = message.cases.map { CourtDocumentCaseEntity(caseReference = it.urn) }.toMutableList(),
         prisonDocumentId = prisonDocument.documentUuid,
         eventType = message.eventType,
