@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmctsCourthouse
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.HmtcsApiDataEnrichment
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionContext
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionEnricher
+import java.util.UUID
 
 @Component
 @Order(800)
@@ -24,32 +25,42 @@ class HmctsStructuredDataApiEnricher(
     val hearingId = context.hearingId ?: return context
     val caseReferences = context.caseReferences ?: return context
 
+    val data = lookupStructureData(caseReferences, hearingId)
+
+    return if (data != null) {
+      context.copy(
+        hmtcsApiDataEnrichment = data,
+      )
+    } else {
+      context
+    }
+  }
+
+  fun lookupStructureData(caseReferences: List<String>, hearingId: UUID): HmtcsApiDataEnrichment? {
     runCatching {
       val hearings = caseReferences.flatMap { hmctsCourtScheduleApiClient.getCourtSchedule(it).courtSchedule.flatMap { schedule -> schedule.hearings } }
       val hearing = hearings.find { it.hearingId == hearingId }
 
       if (hearing == null || hearing.courtSittings.isEmpty()) {
         log.error("Could not find hearing with sittings from id: $hearingId")
-        return context
+        return null
       }
 
       val courtId = hearing.courtSittings[0].courtHouse
       val hearingDate = hearing.courtSittings[0].sittingStart
       val courthouse = hmctsCourthouseApiClient.getCourthouse(courtId)
 
-      return context.copy(
-        hmtcsApiDataEnrichment = HmtcsApiDataEnrichment(
-          courtId = courtId,
-          courtName = courthouse.courtHouseName,
-          hearingType = hearing.hearingType,
-          hearingDate = hearingDate,
+      return HmtcsApiDataEnrichment(
+        courtId = courtId,
+        courtName = courthouse.courtHouseName,
+        hearingType = hearing.hearingType,
+        hearingDate = hearingDate,
 
-        ),
       )
     }.onFailure {
       log.warn("Unable to get structured API data from HMCTS", it)
     }
 
-    return context
+    return null
   }
 }
