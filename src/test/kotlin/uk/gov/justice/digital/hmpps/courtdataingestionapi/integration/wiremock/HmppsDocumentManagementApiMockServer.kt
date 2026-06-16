@@ -13,6 +13,8 @@ import com.github.tomakehurst.wiremock.client.WireMock.put
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import com.github.tomakehurst.wiremock.client.WireMock.urlMatching
 import com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching
+import com.github.tomakehurst.wiremock.common.ContentTypes.APPLICATION_JSON
+import com.github.tomakehurst.wiremock.common.ContentTypes.CONTENT_TYPE
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
@@ -38,6 +40,7 @@ class HmppsDocumentManagementApiExtension :
     hmppsDocumentManagementApi.stubUpdateMetadata()
     hmppsDocumentManagementApi.stubSetFileContentHash()
     hmppsDocumentManagementApi.stubDownloadFile()
+    hmppsDocumentManagementApi.stubDocumentSearch()
   }
 
   override fun beforeEach(context: ExtensionContext) {
@@ -130,6 +133,20 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
     )
   }
 
+  fun stubDocumentSearch() {
+    stubFor(
+      post(urlPathMatching("/documents/search"))
+        .withHeader("Service-Name", equalTo(SERVICE_NAME))
+        .withHeader("Username", equalTo(USERNAME))
+        .willReturn(
+          aResponse()
+            .withHeader(CONTENT_TYPE, APPLICATION_JSON)
+            .withBody(happyDocumentSearch)
+            .withStatus(200),
+        ),
+    )
+  }
+
   fun verifyUploadedDocument(
     didHappenXTimes: Int = 1,
     withUuid: String = "[a-z0-9A-Z|-]{36}",
@@ -171,6 +188,17 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
       "createdTime": "2025-06-03T13:04:03.393Z",
       "createdByServiceName": "court-data-ingestion-api",
       "createdByUsername": "AAA01U"
+    }
+  """.trimMargin()
+
+  var happyDocumentSearch = """
+    {
+      "request": {
+        "page": 0,
+        "pageSize": 100
+      },
+      "results": [ $happyResponse ],
+      "totalResultsCount": 1
     }
   """.trimMargin()
 }
