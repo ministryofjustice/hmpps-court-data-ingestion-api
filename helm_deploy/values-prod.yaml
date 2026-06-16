@@ -20,6 +20,21 @@ generic-service:
     HMCTS_EVENT_TYPES: "PRISON_COURT_REGISTER_GENERATED, WEE_CustodialSentence, OXE_DetentionAndTraining, WEE_Remand, WEE_RemandAfterBailAppealByProsecutor, WEE_CommittalToCrownCourtForSentence, WEE_CommittalToCrownCourtForConsiderationOfTheQuestionOfBailOnAChargeOfMurder, WEE_CommittalToCrownCourtAuthorityToHoldInYouthDetentionAccommodation, WEE_SendingToCrownCourtForTrial"
     HMCTS_SUBSCRIPTION_ENABLED: true
 
+  postgresDatabaseRestore:
+    enabled: true
+    timeout: 3600
+    namespace_secrets:
+      rds-instance-output:
+        DB_NAME: "database_name"
+        DB_USER: "database_username"
+        DB_PASS: "database_password"
+        DB_HOST: "rds_instance_address"
+      rds-postgresql-instance-output-preprod:
+        DB_NAME_PREPROD: "database_name"
+        DB_USER_PREPROD: "database_username"
+        DB_PASS_PREPROD: "database_password"
+        DB_HOST_PREPROD: "rds_instance_address"
+
 # CloudPlatform AlertManager receiver to route prometheus alerts to slack
 # See https://user-guide.cloud-platform.service.justice.gov.uk/documentation/monitoring-an-app/how-to-create-alarms.html#creating-your-own-custom-alerts
 generic-prometheus-alerts:
