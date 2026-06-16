@@ -24,7 +24,7 @@ generic-service:
     enabled: true
     timeout: 3600
     namespace_secrets:
-      rds-postgresql-instance-output:
+      rds-instance-output:
         DB_NAME: "database_name"
         DB_USER: "database_username"
         DB_PASS: "database_password"
