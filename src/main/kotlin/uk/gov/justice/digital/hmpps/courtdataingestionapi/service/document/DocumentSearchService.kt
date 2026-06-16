@@ -51,7 +51,7 @@ class DocumentSearchService(
     DocumentSearchRequest.PAGE_SIZE,
     DocumentSearchOrderBy.CREATED_TIME,
     Sort.Direction.DESC,
-    true,
+    DocumentSearchRequest.CANONICAL_EXCLUDE_DUPLICATES,
   )
 
   private companion object {

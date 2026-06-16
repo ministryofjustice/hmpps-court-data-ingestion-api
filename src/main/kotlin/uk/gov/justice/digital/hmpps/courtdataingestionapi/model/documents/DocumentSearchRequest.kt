@@ -81,5 +81,6 @@ data class DocumentSearchRequest(
   companion object {
     const val METADATA_PRISONER_ID: String = "{ \"prisonerId\": \"%s\" }"
     const val PAGE_SIZE: Int = 100
+    const val CANONICAL_EXCLUDE_DUPLICATES: Boolean = true
   }
 }
