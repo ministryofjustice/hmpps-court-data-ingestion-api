@@ -10,7 +10,7 @@
 -- change. The ALTER rewrites court_document under an ACCESS EXCLUSIVE lock; schedule if large.
 
 update court_document
-set document_generated_timestamp = document_generated_timestamp - interval '1 hour';
+set document_generated_timestamp = document_generated_timestamp + interval '1 hour';
 
 alter table court_document
     alter column document_generated_timestamp type timestamp without time zone
