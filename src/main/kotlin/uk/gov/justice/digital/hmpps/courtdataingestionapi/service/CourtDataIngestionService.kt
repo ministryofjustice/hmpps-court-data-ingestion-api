@@ -19,6 +19,7 @@ import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.HmppsTopic
 import uk.gov.justice.hmpps.sqs.publish
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.util.UUID
 import kotlin.String
 
@@ -54,7 +55,7 @@ class CourtDataIngestionService(
         defendantId = message.masterDefendantId,
         hmctsCourtDocumentId = message.documentId,
         prisonEmailAddress = message.prisonEmailAddress,
-        documentGeneratedTimestamp = message.documentGeneratedTimestamp,
+        documentGeneratedTimestamp = message.documentGeneratedTimestamp.withZoneSameInstant(ZoneId.of("Europe/London")).toLocalDateTime(),
         courtDocumentCases = message.cases.map { CourtDocumentCaseEntity(caseReference = it.urn) }.toMutableList(),
         prisonDocumentId = prisonDocument.documentUuid,
         eventType = message.eventType,

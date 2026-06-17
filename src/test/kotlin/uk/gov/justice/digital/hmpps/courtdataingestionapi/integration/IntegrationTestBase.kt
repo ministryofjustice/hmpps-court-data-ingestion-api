@@ -50,7 +50,8 @@ import uk.gov.justice.hmpps.sqs.HmppsSqsProperties
 import uk.gov.justice.hmpps.sqs.countMessagesOnQueue
 import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
 import java.time.Duration
-import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 import java.util.UUID
 import javax.sql.DataSource
 
@@ -136,7 +137,7 @@ abstract class IntegrationTestBase {
           HmctsCase(CASE_REFERENCE),
         ),
         prisonEmailAddress = "prison.email@example.com",
-        documentGeneratedTimestamp = LocalDateTime.now().minusMinutes(1).withNano(0),
+        documentGeneratedTimestamp = ZonedDateTime.of(2026, 6, 12, 16, 0, 0, 0, ZoneOffset.UTC),
         eventType = HmctsEventType.PRISON_COURT_REGISTER_GENERATED,
         hearingId = UUID.fromString(HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID),
       )

@@ -17,7 +17,7 @@ class CourtHearingService(
     hmtcsApiDataEnrichment: HmtcsApiDataEnrichment?,
   ) {
     if (hmtcsApiDataEnrichment != null) {
-      var hearing = courtHearingRepository.findByHmctsCourtHearingId(courtDocumentEntity.hmctsCourtHearingId!!)
+      var hearing = courtHearingRepository.findFirstByHmctsCourtHearingId(courtDocumentEntity.hmctsCourtHearingId!!)
       if (hearing != null) {
         hearing.apply {
           courtId = hmtcsApiDataEnrichment.courtId
