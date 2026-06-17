@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.H
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
 import uk.gov.justice.hmpps.sqs.countMessagesOnQueue
+import java.time.LocalDateTime
 
 @Transactional(readOnly = true)
 class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
@@ -32,7 +33,8 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
     assertThat(file.identifiedAt).isNull()
     assertThat(file.courtDocumentCases.size).isEqualTo(1)
     assertThat(file.courtDocumentCases[0].caseReference).isEqualTo(event.cases[0].urn)
-    assertThat(file.documentGeneratedTimestamp).isEqualTo(event.documentGeneratedTimestamp)
+    // 16:00 UTC in June is 17:00 BST: pin the converted value
+    assertThat(file.documentGeneratedTimestamp).isEqualTo(LocalDateTime.of(2026, 6, 12, 17, 0))
     assertThat(file.prisonEmailAddress).isEqualTo(event.prisonEmailAddress)
     assertThat(file.eventType).isEqualTo(HmctsEventType.PRISON_COURT_REGISTER_GENERATED)
     assertThat(file.courtDocumentType).isEqualTo(CourtDocumentType.PRISON_COURT_REGISTER)
