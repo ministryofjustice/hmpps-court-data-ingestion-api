@@ -135,7 +135,7 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
 
   fun stubDocumentSearch() {
     stubFor(
-      post(urlPathMatching("/documents/search"))
+      post(urlPathMatching("/documents/"))
         .withHeader("Service-Name", equalTo(SERVICE_NAME))
         .withHeader("Username", equalTo(USERNAME))
         .willReturn(
@@ -192,13 +192,6 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
   """.trimMargin()
 
   var happyDocumentSearch = """
-    {
-      "request": {
-        "page": 0,
-        "pageSize": 100
-      },
-      "results": [ $happyResponse ],
-      "totalResultsCount": 1
-    }
+    [ $happyResponse ]
   """.trimMargin()
 }

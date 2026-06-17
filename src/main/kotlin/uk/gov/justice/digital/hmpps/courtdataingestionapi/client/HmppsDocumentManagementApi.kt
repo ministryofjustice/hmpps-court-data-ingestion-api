@@ -8,10 +8,10 @@ import org.springframework.http.MediaType
 import org.springframework.http.client.MultipartBodyBuilder
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.bodyToMono
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Document
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentApiType
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentSearchRequest
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentSearchResult
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentSearchByUuidsRequest
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsFile
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.ResponseUtils.rethrowAnyHttpErrorWithContext
 import java.util.UUID
@@ -128,23 +128,20 @@ class HmppsDocumentManagementApi(
     .block()
     ?: error("No file bytes returned for document $documentId")
 
-  fun search(documentSearchRequest: DocumentSearchRequest): DocumentSearchResult {
-    val prisonerId = documentSearchRequest.metadata?.get("prisonerId")
+  fun search(documentSearchRequest: DocumentSearchByUuidsRequest): Collection<Document> {
     return webClient.post()
-      .uri("/documents/search")
+      .uri("/documents/")
       .header("Service-Name", appName)
       .header("Username", SYSTEM_USERNAME)
       .accept(MediaType.APPLICATION_JSON)
       .bodyValue(documentSearchRequest)
       .retrieve()
       .rethrowAnyHttpErrorWithContext { response, body ->
-        "Error searching documents (prisonerId=${prisonerId}documentId, StatusCode=${
-          response.statusCode().value()
-        }, Response=$body)"
+        "Error searching documents by UUIDs (documentUuids=[${documentSearchRequest.documentUuids.joinToString { it.toString() }}], StatusCode=${response.statusCode().value()}, Response=$body)"
       }
-      .bodyToMono(DocumentSearchResult::class.java)
+      .bodyToMono<Collection<Document>>()
       .block()
-      ?: error("No files returned for prisonerId $prisonerId")
+      ?: error("No documents returned")
   }
 
   companion object {
