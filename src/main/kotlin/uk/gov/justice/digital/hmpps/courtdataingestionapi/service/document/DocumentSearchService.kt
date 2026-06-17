@@ -12,5 +12,5 @@ class DocumentSearchService(
   private val documentManagementApiClient: HmppsDocumentManagementApi,
 ) {
 
-  fun searchByDocumentUuids(documentSearchRequest: DocumentSearchByUuidsRequest): Collection<Document> = documentManagementApiClient.search(documentSearchRequest)
+  fun search(documentSearchRequest: DocumentSearchByUuidsRequest): Collection<Document> = documentManagementApiClient.searchByDocumentUuids(documentSearchRequest)
 }

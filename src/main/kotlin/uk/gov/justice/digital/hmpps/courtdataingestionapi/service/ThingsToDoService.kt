@@ -23,9 +23,7 @@ class ThingsToDoService(
       .filter { documentNotificationService.isUnread(it) }
 
     val unreadDocumentUuids: List<UUID> = courtDocuments.map { it.prisonDocumentId }
-    val documents = documentSearchService.searchByDocumentUuids(
-      DocumentSearchByUuidsRequest(unreadDocumentUuids)
-    )
+    val documents = documentSearchService.search(DocumentSearchByUuidsRequest(unreadDocumentUuids))
     val nonDuplicateDocumentUuids: List<UUID> = documents.filter { it.duplicateOf == null }
       .map { it.documentUuid }
 

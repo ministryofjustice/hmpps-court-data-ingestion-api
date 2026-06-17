@@ -11,9 +11,11 @@ data class Document(
   val fileExtension: String,
   val fileSize: Long,
   val fileHash: String,
+  val fileContentHash: String? = null,
   val mimeType: String,
   val metadata: Map<String, String>,
   val createdTime: LocalDateTime,
   val createdByServiceName: String,
   val createdByUsername: String?,
+  val duplicateOf: UUID? = null,
 )

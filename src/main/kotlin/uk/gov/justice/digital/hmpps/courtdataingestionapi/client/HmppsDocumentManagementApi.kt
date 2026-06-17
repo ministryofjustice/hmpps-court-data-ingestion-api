@@ -128,21 +128,19 @@ class HmppsDocumentManagementApi(
     .block()
     ?: error("No file bytes returned for document $documentId")
 
-  fun search(documentSearchRequest: DocumentSearchByUuidsRequest): Collection<Document> {
-    return webClient.post()
-      .uri("/documents/")
-      .header("Service-Name", appName)
-      .header("Username", SYSTEM_USERNAME)
-      .accept(MediaType.APPLICATION_JSON)
-      .bodyValue(documentSearchRequest)
-      .retrieve()
-      .rethrowAnyHttpErrorWithContext { response, body ->
-        "Error searching documents by UUIDs (documentUuids=[${documentSearchRequest.documentUuids.joinToString { it.toString() }}], StatusCode=${response.statusCode().value()}, Response=$body)"
-      }
-      .bodyToMono<Collection<Document>>()
-      .block()
-      ?: error("No documents returned")
-  }
+  fun searchByDocumentUuids(documentSearchRequest: DocumentSearchByUuidsRequest): Collection<Document> = webClient.post()
+    .uri("/documents/")
+    .header("Service-Name", appName)
+    .header("Username", SYSTEM_USERNAME)
+    .accept(MediaType.APPLICATION_JSON)
+    .bodyValue(documentSearchRequest)
+    .retrieve()
+    .rethrowAnyHttpErrorWithContext { response, body ->
+      "Error searching documents by UUIDs (documentUuids=[${documentSearchRequest.documentUuids.joinToString { it.toString() }}], StatusCode=${response.statusCode().value()}, Response=$body)"
+    }
+    .bodyToMono<Collection<Document>>()
+    .block()
+    ?: error("No documents returned")
 
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
