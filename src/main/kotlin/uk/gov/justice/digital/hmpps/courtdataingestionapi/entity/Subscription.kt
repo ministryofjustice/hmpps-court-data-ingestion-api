@@ -10,4 +10,5 @@ class Subscription(
   val id: String,
   val subscribedAt: LocalDateTime = LocalDateTime.now(),
   var updatedAt: LocalDateTime = LocalDateTime.now(),
+  val environment: String,
 )
