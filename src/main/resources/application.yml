@@ -2,6 +2,9 @@ info.app:
   name: HMPPS Court Data Ingestion Api
   version: 1.0
 
+environment:
+  name: ${ENVIRONMENT_NAME}
+
 spring:
   application:
     name: hmpps-court-data-ingestion-api
@@ -33,6 +36,8 @@ spring:
     url: ${spring.datasource.url}
     user: ${spring.datasource.username}
     password: ${spring.datasource.password}
+    placeholders:
+      environment: ${environment.name}
 
   security:
     oauth2:
