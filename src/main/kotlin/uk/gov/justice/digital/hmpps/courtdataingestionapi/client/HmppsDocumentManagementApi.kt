@@ -11,7 +11,7 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.bodyToMono
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Document
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentApiType
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentSearchByUuidsRequest
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentFindByUuidsRequest
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsFile
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.ResponseUtils.rethrowAnyHttpErrorWithContext
 import java.util.UUID
@@ -128,15 +128,15 @@ class HmppsDocumentManagementApi(
     .block()
     ?: error("No file bytes returned for document $documentId")
 
-  fun searchByDocumentUuids(documentSearchRequest: DocumentSearchByUuidsRequest): Collection<Document> = webClient.post()
+  fun findByDocumentUuids(documentFindRequest: DocumentFindByUuidsRequest): Collection<Document> = webClient.post()
     .uri("/documents/")
     .header("Service-Name", appName)
     .header("Username", SYSTEM_USERNAME)
     .accept(MediaType.APPLICATION_JSON)
-    .bodyValue(documentSearchRequest)
+    .bodyValue(documentFindRequest)
     .retrieve()
     .rethrowAnyHttpErrorWithContext { response, body ->
-      "Error searching documents by UUIDs (documentUuids=[${documentSearchRequest.documentUuids.joinToString { it.toString() }}], StatusCode=${response.statusCode().value()}, Response=$body)"
+      "Error whilst finding documents by UUIDs (documentUuids=[${documentFindRequest.documentUuids.joinToString { it.toString() }}], StatusCode=${response.statusCode().value()}, Response=$body)"
     }
     .bodyToMono<Collection<Document>>()
     .block()

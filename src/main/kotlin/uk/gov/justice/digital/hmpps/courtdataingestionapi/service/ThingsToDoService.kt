@@ -7,7 +7,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEn
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.ThingsToDo
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.ToDoType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Document
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentSearchByUuidsRequest
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentFindByUuidsRequest
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import java.util.UUID
 
@@ -37,7 +37,7 @@ class ThingsToDoService(
     if (courtDocuments.isEmpty()) return emptyList()
 
     val courtDocumentUuids: List<UUID> = courtDocuments.map { it.prisonDocumentId }
-    val documents = documentManagementApiClient.searchByDocumentUuids(DocumentSearchByUuidsRequest(courtDocumentUuids))
+    val documents = documentManagementApiClient.findByDocumentUuids(DocumentFindByUuidsRequest(courtDocumentUuids))
     return documents.filter { it.duplicateOf == null && courtDocumentUuids.contains(it.documentUuid) }
   }
 }

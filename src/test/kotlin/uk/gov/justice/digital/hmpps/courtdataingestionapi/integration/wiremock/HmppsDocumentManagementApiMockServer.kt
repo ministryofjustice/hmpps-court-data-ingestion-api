@@ -40,7 +40,7 @@ class HmppsDocumentManagementApiExtension :
     hmppsDocumentManagementApi.stubUpdateMetadata()
     hmppsDocumentManagementApi.stubSetFileContentHash()
     hmppsDocumentManagementApi.stubDownloadFile()
-    hmppsDocumentManagementApi.stubDocumentSearch()
+    hmppsDocumentManagementApi.stubDocumentFindByUuids()
   }
 
   override fun beforeEach(context: ExtensionContext) {
@@ -133,7 +133,7 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
     )
   }
 
-  fun stubDocumentSearch() {
+  fun stubDocumentFindByUuids() {
     stubFor(
       post(urlPathMatching("/documents/"))
         .withHeader("Service-Name", equalTo(SERVICE_NAME))
@@ -141,7 +141,7 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
         .willReturn(
           aResponse()
             .withHeader(CONTENT_TYPE, APPLICATION_JSON)
-            .withBody(happyDocumentSearch)
+            .withBody(happyDocumentFindByUuids)
             .withStatus(200),
         ),
     )
@@ -191,7 +191,7 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
     }
   """.trimMargin()
 
-  var happyDocumentSearch = """
+  var happyDocumentFindByUuids = """
     [ $happyResponse ]
   """.trimMargin()
 }
