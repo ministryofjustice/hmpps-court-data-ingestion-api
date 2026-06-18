@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import software.amazon.awssdk.services.sns.model.MessageAttributeValue
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.CorePersonApiClient
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.CorePersonProvider
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentCaseEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionContext
@@ -29,7 +29,7 @@ class CourtDataIngestionService(
   private val ingestionEnrichmentFlow: IngestionEnrichmentFlow,
   private val courtDocumentRepository: CourtDocumentRepository,
   private val courtHearingService: CourtHearingService,
-  private val corePersonApiClient: CorePersonApiClient,
+  private val corePersonApiClient: CorePersonProvider,
   private val hmppsQueueService: HmppsQueueService,
   private val objectMapper: ObjectMapper,
   private val fileService: FileService,
@@ -48,8 +48,6 @@ class CourtDataIngestionService(
       ),
     )
 
-    log.debug("Hearing ID from SQS message ${message.hearingId}")
-
     var courtDocumentEntity = courtDocumentRepository.save(
       CourtDocumentEntity(
         defendantId = message.masterDefendantId,
@@ -64,8 +62,6 @@ class CourtDataIngestionService(
       ).applyEnrichment(enriched),
     )
 
-    log.debug("Hearing ID after repository.save ${courtDocumentEntity.hmctsCourtHearingId}")
-
     val mirrorOutcome = runCatching {
       fileService.mirrorEnrichmentToDocumentStore(courtDocumentEntity)
     }.getOrElse {
@@ -76,7 +72,6 @@ class CourtDataIngestionService(
       courtDocumentEntity.mirroredToDocStoreAt = LocalDateTime.now()
       courtDocumentEntity = courtDocumentRepository.save(courtDocumentEntity)
     }
-    log.debug("Hearing ID after mirror ${courtDocumentEntity.hmctsCourtHearingId}")
 
     courtHearingService.createOrUpdateCourtHearingData(courtDocumentEntity, enriched.hmtcsApiDataEnrichment)
 
@@ -114,8 +109,7 @@ class CourtDataIngestionService(
   private fun createMatch(courtDocumentEntity: CourtDocumentEntity, prisonerNumber: String) {
     courtDocumentEntity.prisonerNumber = prisonerNumber
     courtDocumentEntity.identifiedAt = LocalDateTime.now()
-    val result = courtDocumentRepository.save(courtDocumentEntity)
-    log.debug("Hearing ID match ${result.hmctsCourtHearingId}")
+    courtDocumentRepository.save(courtDocumentEntity)
 
     fileService.setPrisonerId(courtDocumentEntity.prisonDocumentId, prisonerNumber)
     val payload = IdentifiedCourtWarrantEventPayload(
