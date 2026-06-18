@@ -22,6 +22,8 @@ generic-service:
     HMCTS_UPDATE_SUBSCRIPTION_ON_STARTUP: false
     HMCTS_EVENT_TYPES: "ALL_EVENT_TYPES"
     HMCTS_SUBSCRIPTION_ENABLED: true
+    CORE_PERSON_STUB_ENABLED: true
+    CORE_PERSON_STUB_PRISONERNUMBERS: "A8433EC,A8436EC,A8438EC"
 
 # CloudPlatform AlertManager receiver to route prometheus alerts to slack
 # See https://user-guide.cloud-platform.service.justice.gov.uk/documentation/monitoring-an-app/how-to-create-alarms.html#creating-your-own-custom-alerts

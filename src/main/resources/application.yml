@@ -147,3 +147,11 @@ extraction:
     error-cooldown: PT3H
   corpus-sampler:
     enabled: false
+
+
+core:
+  person:
+    api:
+      stub:
+        enabled: ${CORE_PERSON_STUB_ENABLED:false}
+        prisonernumbers: ${CORE_PERSON_STUB_PRISONERNUMBERS:}
