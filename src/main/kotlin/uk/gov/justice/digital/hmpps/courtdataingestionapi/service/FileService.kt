@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.service
 
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
@@ -10,7 +11,6 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEn
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Document
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentApiType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.SubscriptionRepository
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.subscription.HmctsApiConfiguration
 import java.util.UUID
 
 @Service
@@ -19,11 +19,12 @@ class FileService(
   private val hmctsSubscriptionApiClient: HmctsSubscriptionApiClient,
   private val subscriptionRepository: SubscriptionRepository,
   private val hmppsDocumentManagementApi: HmppsDocumentManagementApi,
-  private val subscriptionCallbackConfig: HmctsApiConfiguration,
+  @Value("\${environment.name}")
+  private val environmentName: String,
 ) {
 
   fun ingestFile(courtDocumentId: UUID, documentType: DocumentApiType): Document {
-    val subscription = subscriptionRepository.findAll()[0]
+    val subscription = subscriptionRepository.findByEnvironment(environmentName)!!
 
     val file = hmctsSubscriptionApiClient.getFile(subscription.id, courtDocumentId)
 
