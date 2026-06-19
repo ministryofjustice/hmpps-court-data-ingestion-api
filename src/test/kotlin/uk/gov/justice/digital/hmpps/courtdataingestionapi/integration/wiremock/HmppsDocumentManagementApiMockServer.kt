@@ -13,6 +13,8 @@ import com.github.tomakehurst.wiremock.client.WireMock.put
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import com.github.tomakehurst.wiremock.client.WireMock.urlMatching
 import com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching
+import com.github.tomakehurst.wiremock.common.ContentTypes.APPLICATION_JSON
+import com.github.tomakehurst.wiremock.common.ContentTypes.CONTENT_TYPE
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
@@ -38,6 +40,7 @@ class HmppsDocumentManagementApiExtension :
     hmppsDocumentManagementApi.stubUpdateMetadata()
     hmppsDocumentManagementApi.stubSetFileContentHash()
     hmppsDocumentManagementApi.stubDownloadFile()
+    hmppsDocumentManagementApi.stubDocumentFindByUuids()
   }
 
   override fun beforeEach(context: ExtensionContext) {
@@ -130,6 +133,20 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
     )
   }
 
+  fun stubDocumentFindByUuids() {
+    stubFor(
+      post(urlPathMatching("/documents/"))
+        .withHeader("Service-Name", equalTo(SERVICE_NAME))
+        .withHeader("Username", equalTo(USERNAME))
+        .willReturn(
+          aResponse()
+            .withHeader(CONTENT_TYPE, APPLICATION_JSON)
+            .withBody(happyDocumentFindByUuids)
+            .withStatus(200),
+        ),
+    )
+  }
+
   fun verifyUploadedDocument(
     didHappenXTimes: Int = 1,
     withUuid: String = "[a-z0-9A-Z|-]{36}",
@@ -172,5 +189,9 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
       "createdByServiceName": "court-data-ingestion-api",
       "createdByUsername": "AAA01U"
     }
+  """.trimMargin()
+
+  var happyDocumentFindByUuids = """
+    [ $happyResponse ]
   """.trimMargin()
 }
