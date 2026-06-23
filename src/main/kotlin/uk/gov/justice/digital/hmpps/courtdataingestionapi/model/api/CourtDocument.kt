@@ -7,5 +7,5 @@ data class CourtDocument(
   val caseReferences: List<String>,
   val isUnread: Boolean,
   val documentType: CourtDocumentType,
-  val courtHearing: CourtHearing?,
+  val courtHearing: DocumentCourtHearing?,
 )
