@@ -20,6 +20,7 @@ class StubCorePersonApiClient(
   override fun getPersonByCommonPlatformId(defendantId: UUID): CorePersonCanonicalRecord {
     val prisonerNumbers = prisonerNumbersProperty.split(",")
     val prisonerNumber = prisonerNumbers.random()
+    log.info("Stubbing core person api for $defendantId -> $prisonerNumber")
     return CorePersonCanonicalRecord(
       identifiers = CorePersonCanonicalIdentifiers(
         prisonNumbers = listOf(prisonerNumber),

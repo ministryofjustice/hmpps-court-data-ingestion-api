@@ -6,8 +6,8 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsCourtCasesReleaseDatesApiClient
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentViewEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocument
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentHearing
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentView
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtHearing
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import java.time.LocalDateTime
 import java.util.UUID
@@ -47,7 +47,7 @@ class CourtDocumentService(
       isUnread = documentNotificationService.isUnread(document),
       documentType = document.courtDocumentType,
       courtHearing = document.courtHearing?.let {
-        CourtHearing(
+        CourtDocumentHearing(
           it.courtName,
           it.hearingType,
           it.hearingDate,
