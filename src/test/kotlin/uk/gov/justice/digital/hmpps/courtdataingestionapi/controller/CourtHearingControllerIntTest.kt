@@ -39,7 +39,7 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
     }
 
     @Test
-    fun `View court hearing not found`() {
+    fun `Get court hearing for not found hearing`() {
       webTestClient
         .get()
         .uri("/court-hearing/${UUID.randomUUID()}")

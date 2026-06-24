@@ -32,7 +32,7 @@ class CourtHearingController(
       ApiResponse(responseCode = "403", description = "Forbidden - requires appropriate role"),
     ],
   )
-  fun getCourtDocuments(
+  fun getCourtHearings(
     @PathVariable("courtHearingId") courtHearingId: UUID,
   ): CourtHearing = courtHearingService.getCourtHearing(courtHearingId)
 }
