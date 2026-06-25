@@ -14,7 +14,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtHearingSe
 import java.util.UUID
 
 @RestController
-@RequestMapping("/court-hearing", produces = [MediaType.APPLICATION_JSON_VALUE])
+@RequestMapping("/court-hearings", produces = [MediaType.APPLICATION_JSON_VALUE])
 class CourtHearingController(
   private val courtHearingService: CourtHearingService,
 ) {

@@ -23,7 +23,7 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
       sendSubscriptionNotification(MATCHING_CORE_PERSON)
       val hearing = webTestClient
         .get()
-        .uri("/court-hearing/${HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID}")
+        .uri("/court-hearings/${HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID}")
         .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RO")))
         .exchange()
         .expectBody(CourtHearing::class.java)
@@ -42,7 +42,7 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
     fun `Get court hearing for not found hearing`() {
       webTestClient
         .get()
-        .uri("/court-hearing/${UUID.randomUUID()}")
+        .uri("/court-hearings/${UUID.randomUUID()}")
         .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RO")))
         .exchange()
         .expectStatus()
