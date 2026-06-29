@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.ThingsToDo
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.ToDoType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Document
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
+import java.time.LocalDateTime
 import java.util.UUID
 
 @Service
@@ -19,8 +20,9 @@ class ThingsToDoService(
 ) {
 
   fun getToDoList(prisonerId: String): ThingsToDo {
+    val unreadDocumentDateFrom: LocalDateTime = documentNotificationService.getUnreadDocumentDateFrom(prisonerId)
     val unreadCourtDocuments: List<CourtDocumentEntity> = courtDocumentRepository.findByPrisonerNumber(prisonerId)
-      .filter { documentNotificationService.isUnread(it) }
+      .filter { documentNotificationService.isUnread(it, unreadDocumentDateFrom) }
 
     val unreadNonDuplicateDocuments: List<Document> = getNonDuplicateDocuments(unreadCourtDocuments)
 

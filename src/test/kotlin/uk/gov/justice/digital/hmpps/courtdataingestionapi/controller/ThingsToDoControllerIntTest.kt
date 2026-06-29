@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.controller
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.springframework.test.web.reactive.server.returnResult
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.ThingsToDo
@@ -38,7 +39,7 @@ class ThingsToDoControllerIntTest : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isOk
-      .returnResult(ThingsToDo::class.java)
+      .returnResult<ThingsToDo>()
       .responseBody
       .blockFirst()!!
 
