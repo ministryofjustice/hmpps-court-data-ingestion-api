@@ -40,19 +40,22 @@ class CourtDocumentService(
   fun getCourtDocumentsByPersonIdAndPrisonDocumentIds(
     personId: String,
     prisonDocumentIds: List<UUID>,
-  ): List<CourtDocument> = courtDocumentRepository.findByPrisonerNumberAndPrisonDocumentIdIn(personId, prisonDocumentIds).map { document ->
-    CourtDocument(
-      prisonDocumentId = document.prisonDocumentId,
-      caseReferences = document.courtDocumentCases.map { it.caseReference },
-      isUnread = documentNotificationService.isUnread(document),
-      documentType = document.courtDocumentType,
-      courtHearing = document.courtHearing?.let {
-        CourtDocumentHearing(
-          it.courtName,
-          it.hearingType,
-          it.hearingDate,
-        )
-      },
-    )
+  ): List<CourtDocument> {
+    val unreadDocumentDateFrom: LocalDateTime = documentNotificationService.getUnreadDocumentDateFrom(personId)
+    return courtDocumentRepository.findByPrisonerNumberAndPrisonDocumentIdIn(personId, prisonDocumentIds).map { document ->
+      CourtDocument(
+        prisonDocumentId = document.prisonDocumentId,
+        caseReferences = document.courtDocumentCases.map { it.caseReference },
+        isUnread = documentNotificationService.isUnread(document, unreadDocumentDateFrom),
+        documentType = document.courtDocumentType,
+        courtHearing = document.courtHearing?.let {
+          CourtDocumentHearing(
+            it.courtName,
+            it.hearingType,
+            it.hearingDate,
+          )
+        },
+      )
+    }
   }
 }
