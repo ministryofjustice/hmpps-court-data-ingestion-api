@@ -7,17 +7,17 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEn
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtHearingEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.HmtcsApiDataEnrichment
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtHearing
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtHearingDocument
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtHearingRepository
 import java.time.LocalDateTime
 import java.util.UUID
 
 @Service
-@Transactional
+@Transactional(readOnly = true)
 class CourtHearingService(
   private val courtHearingRepository: CourtHearingRepository,
 ) {
 
+  @Transactional
   fun createOrUpdateCourtHearingData(
     courtDocumentEntity: CourtDocumentEntity,
     hmtcsApiDataEnrichment: HmtcsApiDataEnrichment?,
@@ -49,25 +49,10 @@ class CourtHearingService(
     }
   }
 
-  @Transactional(readOnly = true)
   fun getCourtHearing(courtHearingId: UUID): CourtHearing {
     val courtHearing = courtHearingRepository.findFirstByHmctsCourtHearingId(courtHearingId) ?: throw EntityNotFoundException("Hearing not found $courtHearingId")
-
-    return CourtHearing(
-      hearingId = courtHearing.hmctsCourtHearingId,
-      courtName = courtHearing.courtName,
-      courtId = courtHearing.courtId,
-      hearingDate = courtHearing.hearingDate,
-      caseReferences = courtHearing.courtDocuments.flatMap { it.courtDocumentCases.map { case -> case.caseReference } }.distinct(),
-      hearingType = courtHearing.hearingType,
-      documents = courtHearing.courtDocuments.map {
-        CourtHearingDocument(
-          it.courtDocumentType,
-          it.prisonDocumentId,
-          it.ingestionAt,
-          null, // TOOD when to load filename?
-        )
-      },
-    )
+    return courtHearing.toCourtHearing()
   }
+
+  fun getCourtHearingsByPrisoner(prisonerNumber: String): List<CourtHearing> = courtHearingRepository.findByCourtDocumentsPrisonerNumber(prisonerNumber).map { it.toCourtHearing() }
 }
