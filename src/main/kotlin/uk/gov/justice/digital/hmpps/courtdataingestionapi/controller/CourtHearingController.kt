@@ -35,4 +35,21 @@ class CourtHearingController(
   fun getCourtHearings(
     @PathVariable("courtHearingId") courtHearingId: UUID,
   ): CourtHearing = courtHearingService.getCourtHearing(courtHearingId)
+
+  @GetMapping("/prisoner/{prisonerNumber}")
+  @PreAuthorize("hasAnyRole('COURT_DATA_INGESTION__COURT_DATA_RO', 'COURT_DATA_INGESTION__COURT_DATA_RW')")
+  @Operation(
+    summary = "Get all court hearing info for a prisoner",
+    description = "Gets all court hearing data ingested from CP for a prisoner.",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Successfully gets court hearing."),
+      ApiResponse(responseCode = "401", description = "Unauthorized - valid Oauth2 token required"),
+      ApiResponse(responseCode = "403", description = "Forbidden - requires appropriate role"),
+    ],
+  )
+  fun getCourtHearingsByPrisoner(
+    @PathVariable("prisonerNumber") prisonerNumber: String,
+  ): List<CourtHearing> = courtHearingService.getCourtHearingsByPrisoner(prisonerNumber)
 }

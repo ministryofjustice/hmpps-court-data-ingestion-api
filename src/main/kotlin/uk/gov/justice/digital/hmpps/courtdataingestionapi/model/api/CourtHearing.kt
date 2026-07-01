@@ -17,5 +17,4 @@ data class CourtHearingDocument(
   val documentType: CourtDocumentType,
   val documentId: UUID,
   val ingestionAt: LocalDateTime,
-  val filename: String?,
 )
