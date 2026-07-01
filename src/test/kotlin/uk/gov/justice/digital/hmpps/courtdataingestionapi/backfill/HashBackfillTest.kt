@@ -49,7 +49,7 @@ class HashBackfillTest {
     val bytes = "pdf-bytes".toByteArray()
     whenever(documentManagementApi.downloadFile(item.prisonDocumentId)).thenReturn(bytes)
     whenever(pdfTextExtractor.extractText(bytes)).thenReturn("extracted text")
-    whenever(normaliser.normalisedHash("extracted text")).thenReturn("normalised-hash")
+    whenever(normaliser.getNormalisedHash("extracted text")).thenReturn("normalised-hash")
     whenever(fileService.mirrorEnrichmentToDocumentStore(item))
       .thenReturn(FileService.MirrorOutcome(contentHashPushed = true, metadataPushed = true))
 
@@ -87,7 +87,7 @@ class HashBackfillTest {
 
     assertThat(item.downloadedFileSha256).isEqualTo(Sha256.hex(bytes))
     assertThat(item.extractedTextSha256).isNull()
-    verify(normaliser, never()).normalisedHash(any())
+    verify(normaliser, never()).getNormalisedHash(any())
   }
 
   @Test
@@ -131,7 +131,7 @@ class HashBackfillTest {
 
     val expectedText = checkNotNull(realExtractor.extractText(bytes))
     assertThat(item.downloadedFileSha256).isEqualTo(Sha256.hex(bytes))
-    assertThat(item.extractedTextSha256).isEqualTo(realNormaliser.normalisedHash(expectedText))
+    assertThat(item.extractedTextSha256).isEqualTo(realNormaliser.getNormalisedHash(expectedText))
   }
 
   private fun sampleWarrant(downloadedFileSha: String?, extractedTextSha: String?): CourtDocumentEntity = CourtDocumentEntity(

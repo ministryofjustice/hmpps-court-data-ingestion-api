@@ -9,7 +9,7 @@ class ExtractedTextNormaliser(
 ) {
   private val patterns = normalisationProperties.patterns.map { it.toRegex() }
 
-  fun normalisedHash(text: String): String {
+  fun getNormalisedHash(text: String): String {
     val normalised = patterns.fold(text) { acc, pattern -> pattern.replace(acc, "") }
     return Sha256.hex(normalised.toByteArray(Charsets.UTF_8))
   }

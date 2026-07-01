@@ -13,6 +13,6 @@ class HashExtractedText(
 ) : IngestionEnricher {
   override fun enrich(context: IngestionContext): IngestionContext {
     val text = context.extractedText ?: return context
-    return context.copy(extractedTextSha256 = normaliser.normalisedHash(text))
+    return context.copy(extractedTextSha256 = normaliser.getNormalisedHash(text))
   }
 }

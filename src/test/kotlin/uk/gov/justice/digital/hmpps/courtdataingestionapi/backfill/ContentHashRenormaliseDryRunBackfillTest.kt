@@ -17,17 +17,17 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.DestinationT
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.util.Sha256
 import java.time.LocalDateTime
 import java.util.UUID
 
 class ContentHashRenormaliseDryRunBackfillTest {
 
   private val repository: CourtDocumentRepository = mock()
+  private val recomputer: ContentHashRecomputer = mock()
   private val documentManagementApi: HmppsDocumentManagementApi = mock()
-  private val pdfTextExtractor: PdfTextExtractor = mock()
-  private val normaliser: ExtractedTextNormaliser = mock()
 
-  private val backfill = ContentHashRenormaliseDryRunBackfill(repository, documentManagementApi, pdfTextExtractor, normaliser)
+  private val backfill = ContentHashRenormaliseDryRunBackfill(repository, recomputer)
 
   @Test
   fun `selectBatch delegates to findHashedAfter and advances the cursor`() {
@@ -41,54 +41,35 @@ class ContentHashRenormaliseDryRunBackfillTest {
   }
 
   @Test
-  fun `skips items with no existing content hash without downloading anything`() {
+  fun `skips items the recomputer declines to score, without writing anything`() {
     val item = sampleWarrant(extractedTextSha = null)
+    whenever(recomputer.recompute(item)).thenReturn(null)
 
     backfill.process(item)
 
-    verifyNoInteractions(documentManagementApi)
+    verify(repository, never()).save(any())
   }
 
   @Test
   fun `never writes to the repository or pushes to the document store, even when the hash would change`() {
     val item = sampleWarrant(extractedTextSha = "old-hash")
-    val bytes = "pdf-bytes".toByteArray()
-    whenever(documentManagementApi.downloadFile(item.prisonDocumentId)).thenReturn(bytes)
-    whenever(pdfTextExtractor.extractText(bytes)).thenReturn("extracted text")
-    whenever(normaliser.normalisedHash("extracted text")).thenReturn("new-hash")
+    whenever(recomputer.recompute(item)).thenReturn(ContentHashRecomputation("old-hash", "new-hash"))
 
     backfill.process(item)
 
     assertThat(item.extractedTextSha256).isEqualTo("old-hash") // unchanged in memory
     verify(repository, never()).save(any())
-    verify(documentManagementApi, never()).setFileContentHash(any(), any())
+    verifyNoInteractions(documentManagementApi)
   }
 
   @Test
   fun `does nothing further when the recomputed hash matches what is already stored`() {
     val item = sampleWarrant(extractedTextSha = "same-hash")
-    val bytes = "pdf-bytes".toByteArray()
-    whenever(documentManagementApi.downloadFile(item.prisonDocumentId)).thenReturn(bytes)
-    whenever(pdfTextExtractor.extractText(bytes)).thenReturn("extracted text")
-    whenever(normaliser.normalisedHash("extracted text")).thenReturn("same-hash")
+    whenever(recomputer.recompute(item)).thenReturn(ContentHashRecomputation("same-hash", "same-hash"))
 
     backfill.process(item)
 
     verify(repository, never()).save(any())
-    verify(documentManagementApi, never()).setFileContentHash(any(), any())
-  }
-
-  @Test
-  fun `skips items where text can no longer be extracted`() {
-    val item = sampleWarrant(extractedTextSha = "old-hash")
-    val bytes = "corrupted".toByteArray()
-    whenever(documentManagementApi.downloadFile(item.prisonDocumentId)).thenReturn(bytes)
-    whenever(pdfTextExtractor.extractText(bytes)).thenReturn(null)
-
-    backfill.process(item)
-
-    verify(repository, never()).save(any())
-    verify(documentManagementApi, never()).setFileContentHash(any(), any())
   }
 
   @Test
@@ -99,20 +80,21 @@ class ContentHashRenormaliseDryRunBackfillTest {
     )
     val bytes = readFixtureBytes("example-register.pdf")
     val text = checkNotNull(realExtractor.extractText(bytes))
-    val staleUnnormalisedHash = uk.gov.justice.digital.hmpps.courtdataingestionapi.util.Sha256.hex(text.toByteArray())
-    val expectedNewHash = realNormaliser.normalisedHash(text)
+    val staleUnnormalisedHash = Sha256.hex(text.toByteArray())
+    val expectedNewHash = realNormaliser.getNormalisedHash(text)
     assertThat(staleUnnormalisedHash).isNotEqualTo(expectedNewHash)
 
+    val realDocumentManagementApi: HmppsDocumentManagementApi = mock()
     val item = sampleWarrant(extractedTextSha = staleUnnormalisedHash)
-    whenever(documentManagementApi.downloadFile(item.prisonDocumentId)).thenReturn(bytes)
-    val realBackfill = ContentHashRenormaliseDryRunBackfill(repository, documentManagementApi, realExtractor, realNormaliser)
+    whenever(realDocumentManagementApi.downloadFile(item.prisonDocumentId)).thenReturn(bytes)
+    val realRecomputer = ContentHashRecomputer(realDocumentManagementApi, realExtractor, realNormaliser)
+    val realBackfill = ContentHashRenormaliseDryRunBackfill(repository, realRecomputer)
 
     realBackfill.process(item)
 
     // dry run: still nothing written, even though a real mismatch was detected
     assertThat(item.extractedTextSha256).isEqualTo(staleUnnormalisedHash)
     verify(repository, never()).save(any())
-    verify(documentManagementApi, never()).setFileContentHash(any(), any())
   }
 
   private fun sampleWarrant(extractedTextSha: String?): CourtDocumentEntity = CourtDocumentEntity(

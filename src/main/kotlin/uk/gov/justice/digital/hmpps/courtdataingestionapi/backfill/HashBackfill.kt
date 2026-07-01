@@ -39,7 +39,7 @@ class HashBackfill(
         item.downloadedFileSha256 = Sha256.hex(bytes)
       }
       if (needsContentHash) {
-        pdfTextExtractor.extractText(bytes)?.let { item.extractedTextSha256 = normaliser.normalisedHash(it) }
+        pdfTextExtractor.extractText(bytes)?.let { item.extractedTextSha256 = normaliser.getNormalisedHash(it) }
       }
       courtDocumentRepository.save(item)
     }

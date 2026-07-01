@@ -3,18 +3,13 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.backfill
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsDocumentManagementApi
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.extraction.ExtractedTextNormaliser
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.extraction.PdfTextExtractor
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 
 @Component
 class ContentHashRenormaliseDryRunBackfill(
   private val courtDocumentRepository: CourtDocumentRepository,
-  private val documentManagementApi: HmppsDocumentManagementApi,
-  private val pdfTextExtractor: PdfTextExtractor,
-  private val normaliser: ExtractedTextNormaliser,
+  private val recomputer: ContentHashRecomputer,
 ) : Backfill<CourtDocumentEntity> {
 
   override val id = "content-hash-renormalise-dry-run"
@@ -28,18 +23,14 @@ class ContentHashRenormaliseDryRunBackfill(
   }
 
   override fun process(item: CourtDocumentEntity) {
-    val currentHash = item.extractedTextSha256?.takeIf { it.isNotBlank() } ?: return
-    val bytes = documentManagementApi.downloadFile(item.prisonDocumentId)
-    val text = pdfTextExtractor.extractText(bytes) ?: return
-    val newHash = normaliser.normalisedHash(text)
-
-    if (newHash != currentHash) {
+    val recomputation = recomputer.recompute(item) ?: return
+    if (recomputation.changed) {
       log.info(
-        "Dry run: document {} (court_document {}) would change content hash {} -> {}",
+        "Preview only, nothing written: document {} (court_document {}) content hash {} -> {}",
         item.prisonDocumentId,
         item.id,
-        currentHash,
-        newHash,
+        recomputation.currentHash,
+        recomputation.newHash,
       )
     }
   }

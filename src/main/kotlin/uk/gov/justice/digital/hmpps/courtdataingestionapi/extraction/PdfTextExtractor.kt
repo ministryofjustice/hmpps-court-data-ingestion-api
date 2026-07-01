@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component
 class PdfTextExtractor {
 
   fun extractText(bytes: ByteArray): String? {
-    if (!hasPdfHeader(bytes)) return null
+    if (!hasHeader(bytes)) return null
     return runCatching {
       Loader.loadPDF(bytes).use { pdf ->
         PDFTextStripper().getText(pdf)?.trim()?.takeIf { it.isNotBlank() }
@@ -16,7 +16,7 @@ class PdfTextExtractor {
     }.getOrNull()
   }
 
-  private fun hasPdfHeader(bytes: ByteArray): Boolean = bytes.size >= PDF_HEADER.size &&
+  private fun hasHeader(bytes: ByteArray): Boolean = bytes.size >= PDF_HEADER.size &&
     bytes.copyOfRange(0, PDF_HEADER.size).contentEquals(PDF_HEADER)
 
   companion object {

@@ -10,7 +10,7 @@ class ExtractedTextNormaliserTest {
   fun `with no patterns configured, hash matches a plain sha256 of the text`() {
     val normaliser = ExtractedTextNormaliser(ContentNormalisationProperties(patterns = emptyList()))
 
-    val hash = normaliser.normalisedHash("some text")
+    val hash = normaliser.getNormalisedHash("some text")
 
     assertThat(hash).isEqualTo(Sha256.hex("some text".toByteArray(Charsets.UTF_8)))
   }
@@ -21,8 +21,8 @@ class ExtractedTextNormaliserTest {
       ContentNormalisationProperties(patterns = listOf("Register generated on: \\d{2}/\\d{2}/\\d{4}")),
     )
 
-    val withDateA = normaliser.normalisedHash("Register generated on: 17/06/2026\nRest of document")
-    val withDateB = normaliser.normalisedHash("Register generated on: 24/06/2026\nRest of document")
+    val withDateA = normaliser.getNormalisedHash("Register generated on: 17/06/2026\nRest of document")
+    val withDateB = normaliser.getNormalisedHash("Register generated on: 24/06/2026\nRest of document")
 
     assertThat(withDateA).isEqualTo(withDateB)
   }
@@ -33,7 +33,7 @@ class ExtractedTextNormaliserTest {
       ContentNormalisationProperties(patterns = listOf("Register generated on: \\d{2}/\\d{2}/\\d{4}")),
     )
 
-    val hash = normaliser.normalisedHash("nothing volatile here")
+    val hash = normaliser.getNormalisedHash("nothing volatile here")
 
     assertThat(hash).isEqualTo(Sha256.hex("nothing volatile here".toByteArray(Charsets.UTF_8)))
   }
@@ -49,8 +49,8 @@ class ExtractedTextNormaliserTest {
       ),
     )
 
-    val a = normaliser.normalisedHash("Register generated on: 17/06/2026\nPrinted at 09:14\nbody")
-    val b = normaliser.normalisedHash("Register generated on: 24/06/2026\nPrinted at 22:57\nbody")
+    val a = normaliser.getNormalisedHash("Register generated on: 17/06/2026\nPrinted at 09:14\nbody")
+    val b = normaliser.getNormalisedHash("Register generated on: 24/06/2026\nPrinted at 22:57\nbody")
 
     assertThat(a).isEqualTo(b)
   }
@@ -64,7 +64,7 @@ class ExtractedTextNormaliserTest {
     val page1And2 = "Register generated on: 17/06/2026\npage one\nRegister generated on: 17/06/2026\npage two"
     val regeneratedPage1And2 = "Register generated on: 24/06/2026\npage one\nRegister generated on: 24/06/2026\npage two"
 
-    assertThat(normaliser.normalisedHash(page1And2)).isEqualTo(normaliser.normalisedHash(regeneratedPage1And2))
+    assertThat(normaliser.getNormalisedHash(page1And2)).isEqualTo(normaliser.getNormalisedHash(regeneratedPage1And2))
   }
 
   @Test
@@ -73,8 +73,8 @@ class ExtractedTextNormaliserTest {
       ContentNormalisationProperties(patterns = listOf("Register generated on: \\d{2}/\\d{2}/\\d{4}")),
     )
 
-    val original = normaliser.normalisedHash("Register generated on: 17/06/2026\nCase reference ABC123")
-    val corrected = normaliser.normalisedHash("Register generated on: 24/06/2026\nCase reference XYZ999")
+    val original = normaliser.getNormalisedHash("Register generated on: 17/06/2026\nCase reference ABC123")
+    val corrected = normaliser.getNormalisedHash("Register generated on: 24/06/2026\nCase reference XYZ999")
 
     assertThat(original).isNotEqualTo(corrected)
   }
