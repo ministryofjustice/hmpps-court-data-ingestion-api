@@ -153,6 +153,10 @@ extraction:
   corpus-sampler:
     enabled: false
 
+document:
+  content-normalisation:
+    patterns:
+      - "Register generated on: \\d{2}/\\d{2}/\\d{4}"
 
 core:
   person:
