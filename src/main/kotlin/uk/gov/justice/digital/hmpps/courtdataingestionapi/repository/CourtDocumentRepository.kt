@@ -56,7 +56,23 @@ interface CourtDocumentRepository : JpaRepository<CourtDocumentEntity, UUID> {
       SELECT *
       FROM court_document
       WHERE id > :afterId
-        AND mirrored_to_doc_store_at IS NULL
+        AND extracted_text_sha256 IS NOT NULL
+      ORDER BY id
+      LIMIT :limit
+    """,
+    nativeQuery = true,
+  )
+  fun findHashedAfter(
+    @Param("afterId") afterId: UUID,
+    @Param("limit") limit: Int,
+  ): List<CourtDocumentEntity>
+
+  @Query(
+    value = """
+      SELECT *
+      FROM court_document
+      WHERE id > :afterId
+        AND extracted_text_sha256 IS NOT NULL
       ORDER BY id
       LIMIT :limit
     """,
