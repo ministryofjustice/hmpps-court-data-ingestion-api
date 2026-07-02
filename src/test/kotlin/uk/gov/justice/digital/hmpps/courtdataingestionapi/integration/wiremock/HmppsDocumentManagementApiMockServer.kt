@@ -135,7 +135,7 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
 
   fun stubDocumentFindByUuids() {
     stubFor(
-      post(urlPathMatching("/documents/"))
+      post(urlPathMatching("/documents"))
         .withHeader("Service-Name", equalTo(SERVICE_NAME))
         .withHeader("Username", equalTo(USERNAME))
         .willReturn(

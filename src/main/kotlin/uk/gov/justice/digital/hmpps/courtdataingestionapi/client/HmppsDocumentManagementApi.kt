@@ -128,7 +128,7 @@ class HmppsDocumentManagementApi(
     ?: error("No file bytes returned for document $documentId")
 
   fun findByDocumentUuids(documentUuids: Collection<UUID>): Collection<Document> = webClient.post()
-    .uri("/documents/")
+    .uri("/documents")
     .header("Service-Name", appName)
     .header("Username", SYSTEM_USERNAME)
     .accept(MediaType.APPLICATION_JSON)
