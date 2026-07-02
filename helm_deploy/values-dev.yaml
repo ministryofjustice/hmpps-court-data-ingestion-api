@@ -19,11 +19,11 @@ generic-service:
     HMCTS_AUTH_URL: "https://login.microsoftonline.com/e2995d11-9947-4e78-9de6-d44e0603518e"
     HMPPS_DOCUMENT_MANAGEMENT_API_URL: "https://document-api-dev.hmpps.service.justice.gov.uk"
     HMPPS_COURT-CASES-RELEASE-DATES_API_URL: "https://court-cases-release-dates-api-dev.hmpps.service.justice.gov.uk"
-    HMCTS_UPDATE_SUBSCRIPTION_ON_STARTUP: false
+    HMCTS_UPDATE_SUBSCRIPTION_ON_STARTUP: true
     HMCTS_EVENT_TYPES: "ALL_EVENT_TYPES"
     HMCTS_SUBSCRIPTION_ENABLED: true
     CORE_PERSON_STUB_ENABLED: true
-    CORE_PERSON_STUB_PRISONERNUMBERS: "A8433EC,A8436EC,A8438EC"
+    CORE_PERSON_STUB_PRISONERNUMBERS: "A3240ED"
     ENVIRONMENT_NAME: dev
 
 # CloudPlatform AlertManager receiver to route prometheus alerts to slack
