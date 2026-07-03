@@ -63,4 +63,8 @@ data class CourtDocumentEntity(
   init {
     courtDocumentCases.forEach { case -> case.courtDocument = this }
   }
+
+  override fun toString(): String = "CourtDocumentEntity(id=$id, prisonDocumentId=$prisonDocumentId, " +
+    "hmctsCourtHearingId=$hmctsCourtHearingId, courtDocumentType=$courtDocumentType, " +
+    "eventType=$eventType, extractedTextSha256=$extractedTextSha256)"
 }
