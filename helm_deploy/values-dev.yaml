@@ -23,7 +23,7 @@ generic-service:
     HMCTS_EVENT_TYPES: "ALL_EVENT_TYPES"
     HMCTS_SUBSCRIPTION_ENABLED: true
     CORE_PERSON_STUB_ENABLED: true
-    CORE_PERSON_STUB_PRISONERNUMBERS: "A3241ED"
+    CORE_PERSON_STUB_PRISONERNUMBERS: "A3242ED"
     ENVIRONMENT_NAME: dev
 
 # CloudPlatform AlertManager receiver to route prometheus alerts to slack
