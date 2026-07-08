@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -33,6 +34,8 @@ class CourtDataIngestionService(
   private val hmppsQueueService: HmppsQueueService,
   private val objectMapper: ObjectMapper,
   private val fileService: FileService,
+  @Value("\${extraction.mirror.metadata-version:0}")
+  private val metadataVersion: Int,
 ) {
   private val eventTopic by lazy { hmppsQueueService.findByTopicId("domainevents") as HmppsTopic }
 
@@ -48,7 +51,7 @@ class CourtDataIngestionService(
       ),
     )
 
-    var courtDocumentEntity = courtDocumentRepository.save(
+    val courtDocumentEntity = courtDocumentRepository.save(
       CourtDocumentEntity(
         defendantId = message.masterDefendantId,
         hmctsCourtDocumentId = message.documentId,
@@ -62,16 +65,7 @@ class CourtDataIngestionService(
       ).applyEnrichment(enriched),
     )
 
-    val mirrorOutcome = runCatching {
-      fileService.mirrorEnrichmentToDocumentStore(courtDocumentEntity)
-    }.getOrElse {
-      log.warn("Failed to mirror enrichment to document store for {}", courtDocumentEntity.prisonDocumentId, it)
-      null
-    }
-    if (mirrorOutcome?.fullySuccessful == true) {
-      courtDocumentEntity.mirroredToDocStoreAt = LocalDateTime.now()
-      courtDocumentEntity = courtDocumentRepository.save(courtDocumentEntity)
-    }
+    mirrorEnrichmentToDocumentStore(courtDocumentEntity)
 
     courtHearingService.createOrUpdateCourtHearingData(courtDocumentEntity, enriched.hmtcsApiDataEnrichment)
 
@@ -89,6 +83,21 @@ class CourtDataIngestionService(
       createMatch(courtDocumentEntity, person.identifiers.prisonNumbers[0])
     } else if (person.identifiers.prisonNumbers.size > 1) {
       log.info("Found more than one prisonNumber from core person: ${person.identifiers.prisonNumbers}")
+    }
+  }
+
+  private fun mirrorEnrichmentToDocumentStore(courtDocumentEntity: CourtDocumentEntity) {
+    val mirrorOutcome = runCatching {
+      fileService.mirrorEnrichmentToDocumentStore(courtDocumentEntity)
+    }.getOrElse {
+      log.warn("Failed to mirror enrichment to document store for {}", courtDocumentEntity.prisonDocumentId, it)
+      null
+    }
+
+    if (mirrorOutcome?.fullySuccessful == true) {
+      courtDocumentEntity.metadataVersion = metadataVersion
+      courtDocumentEntity.mirroredToDocStoreAt = LocalDateTime.now()
+      courtDocumentRepository.save(courtDocumentEntity)
     }
   }
 
