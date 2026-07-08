@@ -76,7 +76,7 @@ abstract class IntegrationTestBase {
   protected lateinit var courtDocumentRepository: CourtDocumentRepository
 
   @Autowired
-  private lateinit var hmppsQueueService: HmppsQueueService
+  protected lateinit var hmppsQueueService: HmppsQueueService
 
   @Autowired
   private lateinit var dataSource: DataSource
