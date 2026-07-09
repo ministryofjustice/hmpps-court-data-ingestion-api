@@ -63,7 +63,7 @@ class HmppsDocumentManagementApi(
     .header("Username", SYSTEM_USERNAME)
     .bodyValue(metadata)
     .retrieve()
-    .bodyToMono(Document::class.java)
+    .bodyToMono<Document>()
     .block()!!
 
   fun getDocument(documentId: UUID): Document = webClient

@@ -10,21 +10,14 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsSubcriptionApiMockServer
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsCase
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsSubscriptionNotificationRequestBody
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Document
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentApiType
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
-import java.time.LocalDateTime
-import java.time.ZoneOffset
-import java.time.ZonedDateTime
-import java.util.UUID
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsDocumentManagementApiExtension
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.EmailMapping
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.PrisonEmailMappingRepository
 import kotlin.Boolean
 
 class CourtDataIngestionServiceTest : IntegrationTestBase() {
   @MockitoBean
-  lateinit var fileService: FileService
+  lateinit var prisonEmailMappingRepository: PrisonEmailMappingRepository
 
   @Autowired
   lateinit var courtDataIngestionService: CourtDataIngestionService
@@ -43,62 +36,28 @@ class CourtDataIngestionServiceTest : IntegrationTestBase() {
   )
   fun `When given mirror outcome {contentHashPushed} and {metadataPushed}, then should return metadata_version as {expected}`(contentHashPushed: Boolean, metadataPushed: Boolean, expected: Int) {
     log.debug("When given mirror outcome contentHashPushed=[{}] and metadataPushed=[{}], then should return metadata_version as expected=[{}]", contentHashPushed, metadataPushed, expected)
-    val prisonDocumentUuid = UUID.randomUUID()
-    setupFileServiceMock(prisonDocumentUuid, contentHashPushed, metadataPushed)
-    val message = setupSubscriptionNotificationRequest()
+    setupMocks(contentHashPushed, metadataPushed)
 
-    courtDataIngestionService.receiveMessage(message)
+    sendSubscriptionNotification(MATCHING_CORE_PERSON)
 
-    val curtDocument = courtDocumentRepository.findFirstByPrisonDocumentId(prisonDocumentUuid).get()
-
+    val curtDocument = courtDocumentRepository.findFirstByPrisonDocumentId(PRISON_DOCUMENT_ID).get()
     assertThat(curtDocument.metadataVersion).isEqualTo(expected)
   }
 
-  private fun setupFileServiceMock(documentUuid: UUID, contentHashPushed: Boolean, metadataPushed: Boolean) {
-    whenever(fileService.ingestFile(any(), any()))
-      .thenReturn(setupDocumentResponseFromFileService(documentUuid))
+  private fun setupMocks(contentHashPushed: Boolean, metadataPushed: Boolean) {
+    whenever(prisonEmailMappingRepository.findMappingByEmail(any()))
+      .thenReturn(EmailMapping(prisonCode = "MDI", sourceType = "PRISON"))
 
-    whenever(fileService.mirrorEnrichmentToDocumentStore(any()))
-      .thenReturn(
-        FileService.MirrorOutcome(
-          contentHashPushed,
-          metadataPushed,
-          if (contentHashPushed) null else Exception(),
-          if (metadataPushed) null else Exception(),
-        ),
-      )
+    if (!contentHashPushed) {
+      HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.stubSetFileContentHashError()
+    }
+
+    if (!metadataPushed) {
+      HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.stubUpdateMetadataError()
+    }
   }
 
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
-
-    @JvmStatic
-    private fun setupSubscriptionNotificationRequest(): HmctsSubscriptionNotificationRequestBody = HmctsSubscriptionNotificationRequestBody(
-      masterDefendantId = MATCHING_CORE_PERSON,
-      documentId = COURT_DOCUMENT_ID,
-      cases = listOf(HmctsCase(CASE_REFERENCE)),
-      prisonEmailAddress = "prison.email@example.com",
-      documentGeneratedTimestamp = ZonedDateTime.of(2026, 6, 12, 16, 0, 0, 0, ZoneOffset.UTC),
-      eventType = HmctsEventType.PRISON_COURT_REGISTER_GENERATED,
-      hearingId = UUID.fromString(HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID),
-    )
-
-    @JvmStatic
-    private fun setupDocumentResponseFromFileService(documentUuid: UUID): Document = Document(
-      documentUuid = documentUuid,
-      documentType = DocumentApiType.PRISON_COURT_REGISTER,
-      documentFilename = "mocked-test-file",
-      filename = "mocked-test-file",
-      fileExtension = "",
-      fileSize = 1L,
-      fileHash = "mocked-file-hash",
-      fileContentHash = null,
-      mimeType = "mock",
-      metadata = mapOf(),
-      createdTime = LocalDateTime.now(),
-      createdByServiceName = "test",
-      createdByUsername = "test",
-      duplicateOf = null,
-    )
   }
 }
