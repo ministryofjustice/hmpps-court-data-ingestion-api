@@ -1,18 +1,14 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.service
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
-import org.mockito.Mock
-import org.mockito.MockitoAnnotations
 import org.mockito.kotlin.any
 import org.mockito.kotlin.whenever
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.CorePersonApiClient
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionEnrichmentFlow
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsSubcriptionApiMockServer
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsCase
@@ -27,36 +23,14 @@ import java.util.UUID
 import kotlin.Boolean
 
 class CourtDataIngestionServiceTest : IntegrationTestBase() {
-  @Autowired
-  lateinit var ingestionEnrichmentFlow: IngestionEnrichmentFlow
-
-  @Autowired
-  lateinit var courtHearingService: CourtHearingService
-
-  @Autowired
-  lateinit var corePersonApiClient: CorePersonApiClient
-
-  @Autowired
-  lateinit var objectMapper: ObjectMapper
-
-  @Mock
+  @MockitoBean
   lateinit var fileService: FileService
 
+  @Autowired
   lateinit var courtDataIngestionService: CourtDataIngestionService
 
   @BeforeEach
   fun setUp() {
-    MockitoAnnotations.initMocks(this)
-    courtDataIngestionService = CourtDataIngestionService(
-      fileService = fileService,
-      ingestionEnrichmentFlow = ingestionEnrichmentFlow,
-      courtDocumentRepository = courtDocumentRepository,
-      courtHearingService = courtHearingService,
-      corePersonApiClient = corePersonApiClient,
-      hmppsQueueService = hmppsQueueService,
-      objectMapper = objectMapper,
-      metadataVersion = 1,
-    )
     courtDocumentRepository.deleteAll()
   }
 
