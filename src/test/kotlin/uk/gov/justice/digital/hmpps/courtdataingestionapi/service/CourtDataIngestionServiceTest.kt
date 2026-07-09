@@ -7,6 +7,8 @@ import org.junit.jupiter.params.provider.CsvSource
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.jdbc.core.JdbcTemplate
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.AddressedPrisonResolutionIntegrationTest.Companion.PRISON_CODE_MAPPING
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.AddressedPrisonResolutionIntegrationTest.Companion.PRISON_EMAIL_ADD_MAPPING_SQL
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsDocumentManagementApiExtension
 import kotlin.Boolean
@@ -53,7 +55,7 @@ class CourtDataIngestionServiceTest : IntegrationTestBase() {
 
   fun setupPrisonEmailMappingRepository() = jdbcTemplate.update(
     PRISON_EMAIL_ADD_MAPPING_SQL.trimIndent(),
-    PRISON_EMAIL_MAPPING,
+    PRISON_EMAIL,
     PRISON_CODE_MAPPING,
     "PRISON",
   )
