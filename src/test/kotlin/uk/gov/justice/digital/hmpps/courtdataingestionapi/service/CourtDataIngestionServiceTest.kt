@@ -4,20 +4,16 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
-import org.mockito.kotlin.any
-import org.mockito.kotlin.whenever
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.test.context.bean.override.mockito.MockitoBean
+import org.springframework.jdbc.core.JdbcTemplate
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsDocumentManagementApiExtension
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.EmailMapping
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.PrisonEmailMappingRepository
 import kotlin.Boolean
 
 class CourtDataIngestionServiceTest : IntegrationTestBase() {
-  @MockitoBean
-  lateinit var prisonEmailMappingRepository: PrisonEmailMappingRepository
+  @Autowired
+  private lateinit var jdbcTemplate: JdbcTemplate
 
   @Autowired
   lateinit var courtDataIngestionService: CourtDataIngestionService
@@ -25,6 +21,7 @@ class CourtDataIngestionServiceTest : IntegrationTestBase() {
   @BeforeEach
   fun setUp() {
     courtDocumentRepository.deleteAll()
+    setupPrisonEmailMappingRepository()
   }
 
   @ParameterizedTest
@@ -45,9 +42,6 @@ class CourtDataIngestionServiceTest : IntegrationTestBase() {
   }
 
   private fun setupMocks(contentHashPushed: Boolean, metadataPushed: Boolean) {
-    whenever(prisonEmailMappingRepository.findMappingByEmail(any()))
-      .thenReturn(EmailMapping(prisonCode = "MDI", sourceType = "PRISON"))
-
     if (!contentHashPushed) {
       HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.stubSetFileContentHashError()
     }
@@ -56,6 +50,13 @@ class CourtDataIngestionServiceTest : IntegrationTestBase() {
       HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.stubUpdateMetadataError()
     }
   }
+
+  fun setupPrisonEmailMappingRepository() = jdbcTemplate.update(
+    PRISON_EMAIL_ADD_MAPPING_SQL.trimIndent(),
+    PRISON_EMAIL_MAPPING,
+    PRISON_CODE_MAPPING,
+    "PRISON",
+  )
 
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)

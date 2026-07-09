@@ -136,7 +136,7 @@ abstract class IntegrationTestBase {
         cases = listOf(
           HmctsCase(CASE_REFERENCE),
         ),
-        prisonEmailAddress = "prison.email@example.com",
+        prisonEmailAddress = PRISON_EMAIL_MAPPING,
         documentGeneratedTimestamp = ZonedDateTime.of(2026, 6, 12, 16, 0, 0, 0, ZoneOffset.UTC),
         eventType = HmctsEventType.PRISON_COURT_REGISTER_GENERATED,
         hearingId = UUID.fromString(HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID),
@@ -207,6 +207,13 @@ abstract class IntegrationTestBase {
     val CASE_REFERENCE = "CASE123456"
     const val MATCHING_PRISONER_NUMBER = "ABC123"
     const val TEST_USERNAME = "testuser"
+    const val PRISON_EMAIL_MAPPING: String = "prison.email@example.com"
+    const val PRISON_CODE_MAPPING: String = "LII"
+    const val PRISON_EMAIL_ADD_MAPPING_SQL: String = """
+      INSERT INTO prison_email_mapping (email, prison_code, source_type)
+      VALUES (?, ?, ?)
+      ON CONFLICT (email) DO UPDATE SET prison_code = EXCLUDED.prison_code, source_type = EXCLUDED.source_type
+      """
 
     @JvmStatic
     private val localStackContainer: LocalStackContainer =

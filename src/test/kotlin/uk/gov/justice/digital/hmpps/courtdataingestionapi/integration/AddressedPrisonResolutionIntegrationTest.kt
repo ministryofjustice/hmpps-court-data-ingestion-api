@@ -18,13 +18,9 @@ class AddressedPrisonResolutionIntegrationTest : IntegrationTestBase() {
   @BeforeEach
   fun seedMapping() {
     jdbcTemplate.update(
-      """
-      INSERT INTO prison_email_mapping (email, prison_code, source_type)
-      VALUES (?, ?, ?)
-      ON CONFLICT (email) DO UPDATE SET prison_code = EXCLUDED.prison_code, source_type = EXCLUDED.source_type
-      """.trimIndent(),
-      "prison.email@example.com",
-      "LII",
+      PRISON_EMAIL_ADD_MAPPING_SQL.trimIndent(),
+      PRISON_EMAIL_MAPPING,
+      PRISON_CODE_MAPPING,
       "PRISON",
     )
   }
@@ -32,7 +28,7 @@ class AddressedPrisonResolutionIntegrationTest : IntegrationTestBase() {
   @Test
   fun `diagnostic - the seeded mapping is readable through the repository`() {
     // If this fails, the problem is the seed, the table, or the lookup query, not the enricher.
-    assertThat(prisonEmailMappingRepository.findMappingByEmail("prison.email@example.com")?.prisonCode).isEqualTo("LII")
+    assertThat(prisonEmailMappingRepository.findMappingByEmail(PRISON_EMAIL_MAPPING)?.prisonCode).isEqualTo(PRISON_CODE_MAPPING)
   }
 
   @Test
@@ -41,7 +37,7 @@ class AddressedPrisonResolutionIntegrationTest : IntegrationTestBase() {
 
     val document = courtDocumentRepository.findFirstByDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
 
-    assertThat(document.prisonEmailAddress).isEqualTo("prison.email@example.com")
-    assertThat(document.addressedPrison).isEqualTo("LII")
+    assertThat(document.prisonEmailAddress).isEqualTo(PRISON_EMAIL_MAPPING)
+    assertThat(document.addressedPrison).isEqualTo(PRISON_CODE_MAPPING)
   }
 }
