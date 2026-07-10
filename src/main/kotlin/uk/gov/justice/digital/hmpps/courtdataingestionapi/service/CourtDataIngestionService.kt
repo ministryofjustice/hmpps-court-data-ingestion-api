@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import software.amazon.awssdk.services.sns.model.MessageAttributeValue
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.CorePersonProvider
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmctsCourtDefendantApiClient
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentCaseEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.MatchOutcome
@@ -16,6 +17,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionCon
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionEnrichmentFlow
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.applyEnrichment
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsSubscriptionNotificationRequestBody
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtCaseDefendantRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.HmppsTopic
@@ -35,6 +37,9 @@ class CourtDataIngestionService(
   private val hmppsQueueService: HmppsQueueService,
   private val objectMapper: ObjectMapper,
   private val fileService: FileService,
+  private val hmctsCourtDefendantApiClient: HmctsCourtDefendantApiClient,
+  private val courtCaseDefendantStore: CourtCaseDefendantStore,
+  private val courtCaseDefendantRepository: CourtCaseDefendantRepository,
   @Value("\${extraction.mirror.metadata-version:0}")
   private val metadataVersion: Int,
 ) {
@@ -70,8 +75,13 @@ class CourtDataIngestionService(
 
     courtHearingService.createOrUpdateCourtHearingData(courtDocumentEntity, enriched.hmtcsApiDataEnrichment)
 
+    val resolvedDefendantId = resolveDefendantId(message)
+    val commonPlatformId = resolvedDefendantId ?: message.masterDefendantId
+    val matchOutcomeOnMatch =
+      if (resolvedDefendantId != null) MatchOutcome.MATCHED_ON_DEFENDANT_ID else MatchOutcome.MATCHED_ON_MASTER_DEFENDANT_ID
+
     val person = try {
-      corePersonApiClient.getPersonByCommonPlatformId(message.masterDefendantId)
+      corePersonApiClient.getPersonByCommonPlatformId(commonPlatformId)
     } catch (e: WebClientResponseException) {
       if (HttpStatus.NOT_FOUND.isSameCodeAs(e.statusCode)) {
         courtDocumentEntity.matchOutcome = MatchOutcome.NO_CORE_PERSON
@@ -83,7 +93,7 @@ class CourtDataIngestionService(
     }
 
     if (person.identifiers.prisonNumbers.size == 1) {
-      createMatch(courtDocumentEntity, person.identifiers.prisonNumbers[0], MatchOutcome.MATCHED_ON_MASTER_DEFENDANT_ID)
+      createMatch(courtDocumentEntity, person.identifiers.prisonNumbers[0], matchOutcomeOnMatch)
     } else {
       if (person.identifiers.prisonNumbers.size > 1) {
         log.info("Found more than one prisonNumber from core person: ${person.identifiers.prisonNumbers}")
@@ -93,6 +103,22 @@ class CourtDataIngestionService(
       }
       courtDocumentRepository.save(courtDocumentEntity)
     }
+  }
+
+  private fun resolveDefendantId(message: HmctsSubscriptionNotificationRequestBody): UUID? = message.cases
+    .map { ensureStoredAndResolve(message.masterDefendantId, it.urn) }
+    .filterNotNull()
+    .firstOrNull()
+
+  private fun ensureStoredAndResolve(masterDefendantId: UUID, caseReference: String): UUID? {
+    courtCaseDefendantRepository.findByMasterDefendantIdAndCaseReference(masterDefendantId, caseReference)
+      ?.let { return it.defendantId }
+
+    val defendants = hmctsCourtDefendantApiClient.getDefendants(caseReference, masterDefendantId = masterDefendantId)
+    defendants.forEach {
+      courtCaseDefendantStore.upsert(it.defendantId, caseReference, it.masterDefendantId, it.name, it.dateOfBirth)
+    }
+    return defendants.singleOrNull()?.defendantId
   }
 
   private fun mirrorEnrichmentToDocumentStore(courtDocumentEntity: CourtDocumentEntity) {
