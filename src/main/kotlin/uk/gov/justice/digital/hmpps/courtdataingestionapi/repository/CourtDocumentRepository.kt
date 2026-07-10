@@ -72,7 +72,8 @@ interface CourtDocumentRepository : JpaRepository<CourtDocumentEntity, UUID> {
       SELECT *
       FROM court_document
       WHERE id > :afterId
-        AND extracted_text_sha256 IS NOT NULL
+        AND (metadata_version < :metadataVersion
+          OR extracted_text_sha256 IS NOT NULL)
       ORDER BY id
       LIMIT :limit
     """,
@@ -80,6 +81,7 @@ interface CourtDocumentRepository : JpaRepository<CourtDocumentEntity, UUID> {
   )
   fun findUnmirroredAfter(
     @Param("afterId") afterId: UUID,
+    @Param("metadataVersion") metadataVersion: Int,
     @Param("limit") limit: Int,
   ): List<CourtDocumentEntity>
 }
