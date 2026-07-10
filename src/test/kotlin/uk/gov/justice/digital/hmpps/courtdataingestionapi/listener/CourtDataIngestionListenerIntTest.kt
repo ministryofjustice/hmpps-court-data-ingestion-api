@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.io.ClassPathResource
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.UnmatchedReason
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsDocumentManagementApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
@@ -31,6 +32,7 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
     assertThat(file.prisonDocumentId).isEqualTo(PRISON_DOCUMENT_ID)
     assertThat(file.prisonerNumber).isNull()
     assertThat(file.identifiedAt).isNull()
+    assertThat(file.unmatchedReason).isEqualTo(UnmatchedReason.NO_CORE_PERSON)
     assertThat(file.courtDocumentCases.size).isEqualTo(1)
     assertThat(file.courtDocumentCases[0].caseReference).isEqualTo(event.cases[0].urn)
     // 16:00 UTC in June is 17:00 BST: pin the converted value
@@ -50,6 +52,7 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
     assertThat(file.hmctsCourtDocumentId).isEqualTo(COURT_DOCUMENT_ID)
     assertThat(file.prisonerNumber).isNull()
     assertThat(file.identifiedAt).isNull()
+    assertThat(file.unmatchedReason).isEqualTo(UnmatchedReason.NO_PRISON_NUMBER)
   }
 
   @Test
@@ -61,6 +64,7 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
     assertThat(file.hmctsCourtDocumentId).isEqualTo(COURT_DOCUMENT_ID)
     assertThat(file.prisonerNumber).isEqualTo("ABC123")
     assertThat(file.identifiedAt).isNotNull
+    assertThat(file.unmatchedReason).isNull()
 
     awaitAtMost30Secs untilCallTo {
       courtWarrantTestQueue.sqsClient.countMessagesOnQueue(courtWarrantTestQueue.queueUrl).get()
@@ -91,5 +95,6 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
     assertThat(file.hmctsCourtDocumentId).isEqualTo(COURT_DOCUMENT_ID)
     assertThat(file.prisonerNumber).isNull()
     assertThat(file.identifiedAt).isNull()
+    assertThat(file.unmatchedReason).isEqualTo(UnmatchedReason.MULTIPLE_PRISON_NUMBERS)
   }
 }

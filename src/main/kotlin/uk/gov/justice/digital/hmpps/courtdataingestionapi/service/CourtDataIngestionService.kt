@@ -10,6 +10,7 @@ import software.amazon.awssdk.services.sns.model.MessageAttributeValue
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.CorePersonProvider
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentCaseEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.UnmatchedReason
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionContext
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionEnrichmentFlow
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.applyEnrichment
@@ -79,6 +80,8 @@ class CourtDataIngestionService(
       corePersonApiClient.getPersonByCommonPlatformId(message.masterDefendantId)
     } catch (e: WebClientResponseException) {
       if (HttpStatus.NOT_FOUND.isSameCodeAs(e.statusCode)) {
+        courtDocumentEntity.unmatchedReason = UnmatchedReason.NO_CORE_PERSON
+        courtDocumentRepository.save(courtDocumentEntity)
         return
       } else {
         throw e
@@ -87,8 +90,14 @@ class CourtDataIngestionService(
 
     if (person.identifiers.prisonNumbers.size == 1) {
       createMatch(courtDocumentEntity, person.identifiers.prisonNumbers[0])
-    } else if (person.identifiers.prisonNumbers.size > 1) {
-      log.info("Found more than one prisonNumber from core person: ${person.identifiers.prisonNumbers}")
+    } else {
+      if (person.identifiers.prisonNumbers.size > 1) {
+        log.info("Found more than one prisonNumber from core person: ${person.identifiers.prisonNumbers}")
+        courtDocumentEntity.unmatchedReason = UnmatchedReason.MULTIPLE_PRISON_NUMBERS
+      } else {
+        courtDocumentEntity.unmatchedReason = UnmatchedReason.NO_PRISON_NUMBER
+      }
+      courtDocumentRepository.save(courtDocumentEntity)
     }
   }
 
@@ -109,6 +118,8 @@ class CourtDataIngestionService(
   private fun createMatch(courtDocumentEntity: CourtDocumentEntity, prisonerNumber: String) {
     courtDocumentEntity.prisonerNumber = prisonerNumber
     courtDocumentEntity.identifiedAt = LocalDateTime.now()
+    // A successful match clears any stale unmatched reason (e.g. a later back-match after custody).
+    courtDocumentEntity.unmatchedReason = null
     courtDocumentRepository.save(courtDocumentEntity)
 
     fileService.setPrisonerId(courtDocumentEntity.prisonDocumentId, prisonerNumber)
