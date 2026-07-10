@@ -62,6 +62,10 @@ data class CourtDocumentEntity(
   // Updated once identified
   var prisonerNumber: String? = null,
   var identifiedAt: LocalDateTime? = null,
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "match_outcome")
+  var matchOutcome: MatchOutcome? = null,
 ) {
   init {
     courtDocumentCases.forEach { case -> case.courtDocument = this }

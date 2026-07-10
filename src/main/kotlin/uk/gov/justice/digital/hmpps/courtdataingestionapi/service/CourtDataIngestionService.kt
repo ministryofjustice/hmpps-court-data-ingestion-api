@@ -11,6 +11,7 @@ import software.amazon.awssdk.services.sns.model.MessageAttributeValue
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.CorePersonProvider
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentCaseEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.MatchOutcome
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionContext
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionEnrichmentFlow
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.applyEnrichment
@@ -73,6 +74,8 @@ class CourtDataIngestionService(
       corePersonApiClient.getPersonByCommonPlatformId(message.masterDefendantId)
     } catch (e: WebClientResponseException) {
       if (HttpStatus.NOT_FOUND.isSameCodeAs(e.statusCode)) {
+        courtDocumentEntity.matchOutcome = MatchOutcome.NO_CORE_PERSON
+        courtDocumentRepository.save(courtDocumentEntity)
         return
       } else {
         throw e
@@ -80,9 +83,15 @@ class CourtDataIngestionService(
     }
 
     if (person.identifiers.prisonNumbers.size == 1) {
-      createMatch(courtDocumentEntity, person.identifiers.prisonNumbers[0])
-    } else if (person.identifiers.prisonNumbers.size > 1) {
-      log.info("Found more than one prisonNumber from core person: ${person.identifiers.prisonNumbers}")
+      createMatch(courtDocumentEntity, person.identifiers.prisonNumbers[0], MatchOutcome.MATCHED_ON_MASTER_DEFENDANT_ID)
+    } else {
+      if (person.identifiers.prisonNumbers.size > 1) {
+        log.info("Found more than one prisonNumber from core person: ${person.identifiers.prisonNumbers}")
+        courtDocumentEntity.matchOutcome = MatchOutcome.MULTIPLE_PRISON_NUMBERS
+      } else {
+        courtDocumentEntity.matchOutcome = MatchOutcome.NO_PRISON_NUMBER
+      }
+      courtDocumentRepository.save(courtDocumentEntity)
     }
   }
 
@@ -109,15 +118,20 @@ class CourtDataIngestionService(
         val files =
           courtDocumentRepository.findByMasterDefendantIdIn(person.identifiers.defendantIds.map { UUID.fromString(it) })
         files.forEach {
-          createMatch(it, prisonerNumber)
+          createMatch(it, prisonerNumber, MatchOutcome.MATCHED_ON_DEFENDANT_ID)
         }
       }
     }
   }
 
-  private fun createMatch(courtDocumentEntity: CourtDocumentEntity, prisonerNumber: String) {
+  private fun createMatch(
+    courtDocumentEntity: CourtDocumentEntity,
+    prisonerNumber: String,
+    matchOutcome: MatchOutcome,
+  ) {
     courtDocumentEntity.prisonerNumber = prisonerNumber
     courtDocumentEntity.identifiedAt = LocalDateTime.now()
+    courtDocumentEntity.matchOutcome = matchOutcome
     courtDocumentRepository.save(courtDocumentEntity)
 
     fileService.setPrisonerId(courtDocumentEntity.prisonDocumentId, prisonerNumber)
