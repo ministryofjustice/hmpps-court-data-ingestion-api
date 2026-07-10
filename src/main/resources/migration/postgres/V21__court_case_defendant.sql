@@ -10,4 +10,6 @@ CREATE TABLE court_case_defendant
 );
 
 CREATE INDEX court_case_defendant_master ON court_case_defendant (master_defendant_id);
+CREATE UNIQUE INDEX court_case_defendant_master_and_case
+    ON court_case_defendant (master_defendant_id, case_reference);
 CREATE INDEX court_case_defendant_case_reference ON court_case_defendant (case_reference);
