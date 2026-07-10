@@ -12,6 +12,7 @@ data class HmctsApiConfiguration(
   val updateSubscriptionOnStartup: Boolean,
   val courthouseKey: String,
   val courtScheduleKey: String,
+  val courtDefendantKey: String,
 ) {
 
   fun getEventTypesToSubscribe(): List<HmctsEventType> = if (eventTypes.contains(SUBSCRIBE_TO_ALL_EVENT_TYPES)) {
