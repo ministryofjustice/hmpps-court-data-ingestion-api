@@ -3,34 +3,36 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.backfill
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.MatchOutcome
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtDataIngestionService
+import java.util.UUID
 
 @Component
 class ReAnchorUnmatchedDryRunBackfill(
   private val courtDocumentRepository: CourtDocumentRepository,
   private val courtDataIngestionService: CourtDataIngestionService,
-) : Backfill<CourtDocumentEntity> {
+) : Backfill<UUID> {
 
   override val id = "re-anchor-unmatched-dry-run"
   override val concurrency = 4
 
-  override fun selectBatch(cursor: String, batchSize: Int): BackfillBatch<CourtDocumentEntity> {
+  override fun selectBatch(cursor: String, batchSize: Int): BackfillBatch<UUID> {
     val afterId = parseCursor(cursor)
-    val items = courtDocumentRepository.findUnmatchedAfter(afterId, batchSize)
-    val nextCursor = items.lastOrNull()?.id?.toString() ?: cursor
+    val items = courtDocumentRepository.findUnmatchedMasterDefendantIdsAfter(afterId, batchSize)
+    val nextCursor = items.lastOrNull()?.toString() ?: cursor
     return BackfillBatch(items, nextCursor)
   }
 
-  override fun process(item: CourtDocumentEntity) {
-    val outcome = courtDataIngestionService.previewReAttemptMatch(item.id) ?: return
-    val wouldMatch = outcome == MatchOutcome.MATCHED_ON_DEFENDANT_ID || outcome == MatchOutcome.MATCHED_ON_MASTER_DEFENDANT_ID
+  override fun process(item: UUID) {
+    val preview = courtDataIngestionService.previewReAttemptMatchForMaster(item) ?: return
+    val wouldMatch = preview.outcome == MatchOutcome.MATCHED_ON_DEFENDANT_ID ||
+      preview.outcome == MatchOutcome.MATCHED_ON_MASTER_DEFENDANT_ID
     log.info(
-      "Preview only, nothing written: court_document {} would record {} (would match: {})",
-      item.id,
-      outcome,
+      "Preview only, nothing written: master {} would record {} across {} document(s) (would match: {})",
+      item,
+      preview.outcome,
+      preview.documentCount,
       wouldMatch,
     )
   }

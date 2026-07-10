@@ -38,11 +38,11 @@ class ReAnchorBackfillIntTest : IntegrationTestBase() {
     courtCaseDefendantStore.upsert(defendantId, CASE_REFERENCE, masterDefendantId, "Some One", dob)
     CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantId, listOf("RES900"))
 
-    // 3. re-anchor that document
-    val matched = courtDataIngestionService.reAttemptMatch(before.id)
+    // 3. re-anchor by master (matches every unmatched document for the person in one resolution)
+    val matched = courtDataIngestionService.reAttemptMatchForMaster(masterDefendantId)
 
     // 4. it now matches, on the defendant id
-    assertThat(matched).isTrue()
+    assertThat(matched).isEqualTo(1)
     val after = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(masterDefendantId)!!
     assertThat(after.prisonerNumber).isEqualTo("RES900")
     assertThat(after.identifiedAt).isNotNull
@@ -60,8 +60,8 @@ class ReAnchorBackfillIntTest : IntegrationTestBase() {
     val doc = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(masterDefendantId)!!
     assertThat(doc.prisonerNumber).isEqualTo("RES901")
 
-    val matched = courtDataIngestionService.reAttemptMatch(doc.id)
+    val matched = courtDataIngestionService.reAttemptMatchForMaster(masterDefendantId)
 
-    assertThat(matched).isFalse()
+    assertThat(matched).isEqualTo(0)
   }
 }

@@ -75,50 +75,7 @@ class CourtDataIngestionService(
 
     courtHearingService.createOrUpdateCourtHearingData(courtDocumentEntity, enriched.hmtcsApiDataEnrichment)
 
-    val resolvedDefendantId = resolveDefendantId(message)
-    val commonPlatformId = resolvedDefendantId ?: message.masterDefendantId
-    val matchOutcomeOnMatch =
-      if (resolvedDefendantId != null) MatchOutcome.MATCHED_ON_DEFENDANT_ID else MatchOutcome.MATCHED_ON_MASTER_DEFENDANT_ID
-
-    val person = try {
-      corePersonApiClient.getPersonByCommonPlatformId(commonPlatformId)
-    } catch (e: WebClientResponseException) {
-      if (HttpStatus.NOT_FOUND.isSameCodeAs(e.statusCode)) {
-        courtDocumentEntity.matchOutcome = MatchOutcome.NO_CORE_PERSON
-        courtDocumentRepository.save(courtDocumentEntity)
-        return
-      } else {
-        throw e
-      }
-    }
-
-    if (person.identifiers.prisonNumbers.size == 1) {
-      createMatch(courtDocumentEntity, person.identifiers.prisonNumbers[0], matchOutcomeOnMatch)
-    } else {
-      if (person.identifiers.prisonNumbers.size > 1) {
-        log.info("Found more than one prisonNumber from core person: ${person.identifiers.prisonNumbers}")
-        courtDocumentEntity.matchOutcome = MatchOutcome.MULTIPLE_PRISON_NUMBERS
-      } else {
-        courtDocumentEntity.matchOutcome = MatchOutcome.NO_PRISON_NUMBER
-      }
-      courtDocumentRepository.save(courtDocumentEntity)
-    }
-  }
-
-  private fun resolveDefendantId(message: HmctsSubscriptionNotificationRequestBody): UUID? = message.cases
-    .map { ensureStoredAndResolve(message.masterDefendantId, it.urn) }
-    .filterNotNull()
-    .firstOrNull()
-
-  private fun ensureStoredAndResolve(masterDefendantId: UUID, caseReference: String): UUID? {
-    courtCaseDefendantRepository.findByMasterDefendantIdAndCaseReference(masterDefendantId, caseReference)
-      ?.let { return it.defendantId }
-
-    val defendants = hmctsCourtDefendantApiClient.getDefendants(caseReference, masterDefendantId = masterDefendantId)
-    defendants.forEach {
-      courtCaseDefendantStore.upsert(it.defendantId, caseReference, it.masterDefendantId, it.name, it.dateOfBirth)
-    }
-    return defendants.singleOrNull()?.defendantId
+    resolveAndMatch(courtDocumentEntity, message.masterDefendantId, message.cases.map { it.urn })
   }
 
   private fun mirrorEnrichmentToDocumentStore(courtDocumentEntity: CourtDocumentEntity) {
@@ -223,36 +180,74 @@ class CourtDataIngestionService(
     }
   }
 
-  fun reAttemptMatch(courtDocumentId: UUID): Boolean {
-    val courtDocumentEntity = courtDocumentRepository.findById(courtDocumentId).orElse(null) ?: return false
-    if (courtDocumentEntity.prisonerNumber != null) return false
-    return resolveAndMatch(
-      courtDocumentEntity,
-      courtDocumentEntity.masterDefendantId,
-      courtDocumentEntity.courtDocumentCases.map { it.caseReference },
-    )
-  }
+  fun reAttemptMatchForMaster(masterDefendantId: UUID): Int {
+    val documents = unmatchedDocumentsFor(masterDefendantId)
+    if (documents.isEmpty()) return 0
 
-  fun previewReAttemptMatch(courtDocumentId: UUID): MatchOutcome? {
-    val courtDocumentEntity = courtDocumentRepository.findById(courtDocumentId).orElse(null) ?: return null
-    if (courtDocumentEntity.prisonerNumber != null) return null
-    val resolvedDefendantId = resolveDefendantId(
-      courtDocumentEntity.masterDefendantId,
-      courtDocumentEntity.courtDocumentCases.map { it.caseReference },
-      populateOnMiss = false,
-    )
-    val commonPlatformId = resolvedDefendantId ?: courtDocumentEntity.masterDefendantId
+    val resolvedDefendantId = resolveDefendantId(masterDefendantId, caseReferencesOf(documents), populateOnMiss = true)
+    val commonPlatformId = resolvedDefendantId ?: masterDefendantId
+    val matchOutcomeOnMatch =
+      if (resolvedDefendantId != null) MatchOutcome.MATCHED_ON_DEFENDANT_ID else MatchOutcome.MATCHED_ON_MASTER_DEFENDANT_ID
+
     val person = try {
       corePersonApiClient.getPersonByCommonPlatformId(commonPlatformId)
     } catch (e: WebClientResponseException) {
-      if (HttpStatus.NOT_FOUND.isSameCodeAs(e.statusCode)) return MatchOutcome.NO_CORE_PERSON else throw e
+      if (HttpStatus.NOT_FOUND.isSameCodeAs(e.statusCode)) {
+        documents.forEach { recordOutcome(it, MatchOutcome.NO_CORE_PERSON) }
+        return 0
+      } else {
+        throw e
+      }
     }
+
     return when {
-      person.identifiers.prisonNumbers.size == 1 ->
-        if (resolvedDefendantId != null) MatchOutcome.MATCHED_ON_DEFENDANT_ID else MatchOutcome.MATCHED_ON_MASTER_DEFENDANT_ID
-      person.identifiers.prisonNumbers.size > 1 -> MatchOutcome.MULTIPLE_PRISON_NUMBERS
-      else -> MatchOutcome.NO_PRISON_NUMBER
+      person.identifiers.prisonNumbers.size == 1 -> {
+        documents.forEach { createMatch(it, person.identifiers.prisonNumbers[0], matchOutcomeOnMatch) }
+        documents.size
+      }
+      person.identifiers.prisonNumbers.size > 1 -> {
+        documents.forEach { recordOutcome(it, MatchOutcome.MULTIPLE_PRISON_NUMBERS) }
+        0
+      }
+      else -> {
+        documents.forEach { recordOutcome(it, MatchOutcome.NO_PRISON_NUMBER) }
+        0
+      }
     }
+  }
+
+  /**
+   * Read-only preview of what re-anchoring a master would record, using only the current store (no
+   * HMCTS fetch, no writes). Returns the outcome and how many unmatched documents it covers, or null
+   * if the master has none. Used by the re-anchor dry-run backfill.
+   */
+  fun previewReAttemptMatchForMaster(masterDefendantId: UUID): ReAnchorPreview? {
+    val documents = unmatchedDocumentsFor(masterDefendantId)
+    if (documents.isEmpty()) return null
+
+    val resolvedDefendantId = resolveDefendantId(masterDefendantId, caseReferencesOf(documents), populateOnMiss = false)
+    val commonPlatformId = resolvedDefendantId ?: masterDefendantId
+    val outcome = try {
+      val person = corePersonApiClient.getPersonByCommonPlatformId(commonPlatformId)
+      when {
+        person.identifiers.prisonNumbers.size == 1 ->
+          if (resolvedDefendantId != null) MatchOutcome.MATCHED_ON_DEFENDANT_ID else MatchOutcome.MATCHED_ON_MASTER_DEFENDANT_ID
+        person.identifiers.prisonNumbers.size > 1 -> MatchOutcome.MULTIPLE_PRISON_NUMBERS
+        else -> MatchOutcome.NO_PRISON_NUMBER
+      }
+    } catch (e: WebClientResponseException) {
+      if (HttpStatus.NOT_FOUND.isSameCodeAs(e.statusCode)) MatchOutcome.NO_CORE_PERSON else throw e
+    }
+    return ReAnchorPreview(outcome, documents.size)
+  }
+
+  private fun unmatchedDocumentsFor(masterDefendantId: UUID): List<CourtDocumentEntity> = courtDocumentRepository.findByMasterDefendantIdIn(listOf(masterDefendantId)).filter { it.prisonerNumber == null }
+
+  private fun caseReferencesOf(documents: List<CourtDocumentEntity>): List<String> = documents.flatMap { document -> document.courtDocumentCases.map { it.caseReference } }.distinct()
+
+  private fun recordOutcome(courtDocumentEntity: CourtDocumentEntity, outcome: MatchOutcome) {
+    courtDocumentEntity.matchOutcome = outcome
+    courtDocumentRepository.save(courtDocumentEntity)
   }
 
   private fun resolveDefendantId(
@@ -285,6 +280,11 @@ class CourtDataIngestionService(
     private val log = LoggerFactory.getLogger(this::class.java)
   }
 }
+
+data class ReAnchorPreview(
+  val outcome: MatchOutcome,
+  val documentCount: Int,
+)
 
 data class IdentifiedCourtWarrantEventPayload(
   val eventType: String = CourtDataIngestionService.EVENT_TYPE,
