@@ -14,4 +14,6 @@ interface CourtCaseDefendantRepository : JpaRepository<CourtCaseDefendantEntity,
     masterDefendantId: UUID,
     caseReference: String,
   ): CourtCaseDefendantEntity?
+
+  fun findAllByDefendantIdIn(defendantIds: List<UUID>): List<CourtCaseDefendantEntity>
 }

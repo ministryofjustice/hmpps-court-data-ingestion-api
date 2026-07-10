@@ -141,10 +141,14 @@ class CourtDataIngestionService(
     if (previouslyIdentified == 0L) {
       val person = corePersonApiClient.getPersonByPrisonerNumber(prisonerNumber)
       if (person?.identifiers?.defendantIds?.isNotEmpty() == true) {
-        val files =
-          courtDocumentRepository.findByMasterDefendantIdIn(person.identifiers.defendantIds.map { UUID.fromString(it) })
-        files.forEach {
-          createMatch(it, prisonerNumber, MatchOutcome.MATCHED_ON_DEFENDANT_ID)
+        val defendantIds = person.identifiers.defendantIds.map { UUID.fromString(it) }
+        val masterDefendantIds = courtCaseDefendantRepository.findAllByDefendantIdIn(defendantIds)
+          .map { it.masterDefendantId }
+          .distinct()
+        if (masterDefendantIds.isNotEmpty()) {
+          courtDocumentRepository.findByMasterDefendantIdIn(masterDefendantIds).forEach {
+            createMatch(it, prisonerNumber, MatchOutcome.MATCHED_ON_DEFENDANT_ID)
+          }
         }
       }
     }
