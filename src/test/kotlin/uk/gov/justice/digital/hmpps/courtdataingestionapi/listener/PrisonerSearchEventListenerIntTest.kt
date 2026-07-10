@@ -30,7 +30,7 @@ class PrisonerSearchEventListenerIntTest : IntegrationTestBase() {
     assertThat(latestMessage).contains(COURT_DOCUMENT_ID.toString())
     assertThat(latestMessage).contains(PRISON_DOCUMENT_ID.toString())
 
-    val file = courtDocumentRepository.findFirstByDefendantIdOrderByIngestionAtDesc(DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION)!!
+    val file = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION)!!
 
     assertThat(file.prisonerNumber).isEqualTo(PRISONER_NUMBER_WITH_MATCH)
     assertThat(file.identifiedAt).isNotNull
@@ -53,7 +53,7 @@ class PrisonerSearchEventListenerIntTest : IntegrationTestBase() {
     assertThat(latestMessage).contains(COURT_DOCUMENT_ID.toString())
     assertThat(latestMessage).contains(PRISON_DOCUMENT_ID.toString())
 
-    val file = courtDocumentRepository.findFirstByDefendantIdOrderByIngestionAtDesc(DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION)!!
+    val file = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION)!!
 
     assertThat(file.prisonerNumber).isEqualTo(PRISONER_NUMBER_WITH_MATCH)
     assertThat(file.identifiedAt).isNotNull
@@ -67,7 +67,7 @@ class PrisonerSearchEventListenerIntTest : IntegrationTestBase() {
     // Later a prisoner is created matching the file created above.
     sendPrisonerUpdatedMessage(PRISONER_NUMBER_WITH_MATCH, listOf("SENTENCE"))
 
-    val file = courtDocumentRepository.findFirstByDefendantIdOrderByIngestionAtDesc(DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION)!!
+    val file = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION)!!
 
     assertThat(file.prisonerNumber).isNull()
     assertThat(file.identifiedAt).isNull()

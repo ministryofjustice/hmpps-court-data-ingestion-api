@@ -19,7 +19,7 @@ import java.util.UUID
 data class CourtDocumentEntity(
   @Id
   val id: UUID = UUID.randomUUID(),
-  var defendantId: UUID,
+  var masterDefendantId: UUID,
   var hmctsCourtDocumentId: UUID,
   var prisonDocumentId: UUID,
   var hmctsCourtHearingId: UUID?,

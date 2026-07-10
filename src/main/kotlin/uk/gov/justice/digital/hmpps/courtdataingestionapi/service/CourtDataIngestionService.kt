@@ -53,7 +53,7 @@ class CourtDataIngestionService(
 
     val courtDocumentEntity = courtDocumentRepository.save(
       CourtDocumentEntity(
-        defendantId = message.masterDefendantId,
+        masterDefendantId = message.masterDefendantId,
         hmctsCourtDocumentId = message.documentId,
         prisonEmailAddress = message.prisonEmailAddress,
         documentGeneratedTimestamp = message.documentGeneratedTimestamp.withZoneSameInstant(ZoneId.of("Europe/London")).toLocalDateTime(),
@@ -107,7 +107,7 @@ class CourtDataIngestionService(
       val person = corePersonApiClient.getPersonByPrisonerNumber(prisonerNumber)
       if (person?.identifiers?.defendantIds?.isNotEmpty() == true) {
         val files =
-          courtDocumentRepository.findByDefendantIdIn(person.identifiers.defendantIds.map { UUID.fromString(it) })
+          courtDocumentRepository.findByMasterDefendantIdIn(person.identifiers.defendantIds.map { UUID.fromString(it) })
         files.forEach {
           createMatch(it, prisonerNumber)
         }

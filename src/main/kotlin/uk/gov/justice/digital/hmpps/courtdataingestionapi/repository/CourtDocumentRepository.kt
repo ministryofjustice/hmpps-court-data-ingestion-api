@@ -10,9 +10,9 @@ import java.util.UUID
 
 @Repository
 interface CourtDocumentRepository : JpaRepository<CourtDocumentEntity, UUID> {
-  fun countByDefendantId(defendantId: UUID): Long
-  fun findFirstByDefendantIdOrderByIngestionAtDesc(defendantId: UUID): CourtDocumentEntity?
-  fun findByDefendantIdIn(defendantIds: List<UUID>): List<CourtDocumentEntity>
+  fun countByMasterDefendantId(masterDefendantId: UUID): Long
+  fun findFirstByMasterDefendantIdOrderByIngestionAtDesc(masterDefendantId: UUID): CourtDocumentEntity?
+  fun findByMasterDefendantIdIn(masterDefendantIds: List<UUID>): List<CourtDocumentEntity>
   fun countByPrisonerNumber(prisonerNumber: String): Long
   fun findByPrisonerNumber(prisonerNumber: String): List<CourtDocumentEntity>
   fun findByPrisonerNumberAndPrisonDocumentIdIn(personId: String, prisonDocumentIds: List<UUID>): List<CourtDocumentEntity>

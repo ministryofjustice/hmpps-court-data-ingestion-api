@@ -18,7 +18,7 @@ class CourtDocumentEntityTest {
 
     val entity = CourtDocumentEntity(
       id = id,
-      defendantId = UUID.randomUUID(),
+      masterDefendantId = UUID.randomUUID(),
       hmctsCourtDocumentId = UUID.randomUUID(),
       prisonDocumentId = prisonDocumentId,
       hmctsCourtHearingId = hearingId,
