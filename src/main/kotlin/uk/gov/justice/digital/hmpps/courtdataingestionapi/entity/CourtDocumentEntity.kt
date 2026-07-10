@@ -61,8 +61,8 @@ data class CourtDocumentEntity(
   var identifiedAt: LocalDateTime? = null,
 
   @Enumerated(EnumType.STRING)
-  @Column(name = "unmatched_reason")
-  var unmatchedReason: UnmatchedReason? = null,
+  @Column(name = "match_outcome")
+  var matchOutcome: MatchOutcome? = null,
 ) {
   init {
     courtDocumentCases.forEach { case -> case.courtDocument = this }
