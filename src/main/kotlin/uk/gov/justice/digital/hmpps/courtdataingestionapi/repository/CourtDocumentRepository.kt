@@ -82,4 +82,20 @@ interface CourtDocumentRepository : JpaRepository<CourtDocumentEntity, UUID> {
     @Param("afterId") afterId: UUID,
     @Param("limit") limit: Int,
   ): List<CourtDocumentEntity>
+
+  @Query(
+    value = """
+      SELECT *
+      FROM court_document
+      WHERE prisoner_number IS NULL
+      AND id > :afterId
+      ORDER BY id
+      LIMIT :limit
+    """,
+    nativeQuery = true,
+  )
+  fun findUnmatchedAfter(
+    @Param("afterId") afterId: UUID,
+    @Param("limit") limit: Int,
+  ): List<CourtDocumentEntity>
 }

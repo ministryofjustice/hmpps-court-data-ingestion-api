@@ -182,6 +182,100 @@ class CourtDataIngestionService(
     }
   }
 
+  fun resolveAndMatch(
+    courtDocumentEntity: CourtDocumentEntity,
+    masterDefendantId: UUID,
+    caseReferences: List<String>,
+  ): Boolean {
+    val resolvedDefendantId = resolveDefendantId(masterDefendantId, caseReferences, populateOnMiss = true)
+    val commonPlatformId = resolvedDefendantId ?: masterDefendantId
+    val matchOutcomeOnMatch =
+      if (resolvedDefendantId != null) MatchOutcome.MATCHED_ON_DEFENDANT_ID else MatchOutcome.MATCHED_ON_MASTER_DEFENDANT_ID
+
+    val person = try {
+      corePersonApiClient.getPersonByCommonPlatformId(commonPlatformId)
+    } catch (e: WebClientResponseException) {
+      if (HttpStatus.NOT_FOUND.isSameCodeAs(e.statusCode)) {
+        courtDocumentEntity.matchOutcome = MatchOutcome.NO_CORE_PERSON
+        courtDocumentRepository.save(courtDocumentEntity)
+        return false
+      } else {
+        throw e
+      }
+    }
+
+    return if (person.identifiers.prisonNumbers.size == 1) {
+      createMatch(courtDocumentEntity, person.identifiers.prisonNumbers[0], matchOutcomeOnMatch)
+      true
+    } else {
+      courtDocumentEntity.matchOutcome = if (person.identifiers.prisonNumbers.size > 1) {
+        log.info("Found more than one prisonNumber from core person: ${person.identifiers.prisonNumbers}")
+        MatchOutcome.MULTIPLE_PRISON_NUMBERS
+      } else {
+        MatchOutcome.NO_PRISON_NUMBER
+      }
+      courtDocumentRepository.save(courtDocumentEntity)
+      false
+    }
+  }
+
+  fun reAttemptMatch(courtDocumentId: UUID): Boolean {
+    val courtDocumentEntity = courtDocumentRepository.findById(courtDocumentId).orElse(null) ?: return false
+    if (courtDocumentEntity.prisonerNumber != null) return false
+    return resolveAndMatch(
+      courtDocumentEntity,
+      courtDocumentEntity.masterDefendantId,
+      courtDocumentEntity.courtDocumentCases.map { it.caseReference },
+    )
+  }
+
+  fun previewReAttemptMatch(courtDocumentId: UUID): MatchOutcome? {
+    val courtDocumentEntity = courtDocumentRepository.findById(courtDocumentId).orElse(null) ?: return null
+    if (courtDocumentEntity.prisonerNumber != null) return null
+    val resolvedDefendantId = resolveDefendantId(
+      courtDocumentEntity.masterDefendantId,
+      courtDocumentEntity.courtDocumentCases.map { it.caseReference },
+      populateOnMiss = false,
+    )
+    val commonPlatformId = resolvedDefendantId ?: courtDocumentEntity.masterDefendantId
+    val person = try {
+      corePersonApiClient.getPersonByCommonPlatformId(commonPlatformId)
+    } catch (e: WebClientResponseException) {
+      if (HttpStatus.NOT_FOUND.isSameCodeAs(e.statusCode)) return MatchOutcome.NO_CORE_PERSON else throw e
+    }
+    return when {
+      person.identifiers.prisonNumbers.size == 1 ->
+        if (resolvedDefendantId != null) MatchOutcome.MATCHED_ON_DEFENDANT_ID else MatchOutcome.MATCHED_ON_MASTER_DEFENDANT_ID
+      person.identifiers.prisonNumbers.size > 1 -> MatchOutcome.MULTIPLE_PRISON_NUMBERS
+      else -> MatchOutcome.NO_PRISON_NUMBER
+    }
+  }
+
+  private fun resolveDefendantId(
+    masterDefendantId: UUID,
+    caseReferences: List<String>,
+    populateOnMiss: Boolean,
+  ): UUID? = caseReferences
+    .map { ensureStoredAndResolve(masterDefendantId, it, populateOnMiss) }
+    .filterNotNull()
+    .firstOrNull()
+
+  private fun ensureStoredAndResolve(
+    masterDefendantId: UUID,
+    caseReference: String,
+    populateOnMiss: Boolean,
+  ): UUID? {
+    courtCaseDefendantRepository.findByMasterDefendantIdAndCaseReference(masterDefendantId, caseReference)
+      ?.let { return it.defendantId }
+    if (!populateOnMiss) return null
+
+    val defendants = hmctsCourtDefendantApiClient.getDefendants(caseReference, masterDefendantId = masterDefendantId)
+    defendants.forEach {
+      courtCaseDefendantStore.upsert(it.defendantId, caseReference, it.masterDefendantId, it.name, it.dateOfBirth)
+    }
+    return defendants.singleOrNull()?.defendantId
+  }
+
   companion object {
     const val EVENT_TYPE = "court-document.file.received"
     private val log = LoggerFactory.getLogger(this::class.java)
