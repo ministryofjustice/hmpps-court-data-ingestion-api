@@ -94,8 +94,6 @@ spring:
             client-id: ${client.creds.client.id}
             client-secret: ${client.creds.client.secret}
             authorization-grant-type: client_credentials
-          # TODO(confirm): served via the HMCTS CP gateway, registered under hmcts-auth with a scope,
-          # mirroring the other hmcts-* clients. Confirm client id/scope with the CP team.
           hmcts-court-defendant-api:
             provider: hmcts-auth
             client-id: ${hmcts.client.creds.client.id}

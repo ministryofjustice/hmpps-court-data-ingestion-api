@@ -108,8 +108,6 @@ class WebClientConfiguration(
     builder: WebClient.Builder,
   ): WebClient = builder.authorisedWebClient(
     authorizedClientManager,
-    // TODO(confirm): served via the HMCTS CP gateway (amp.*.cjscp.org.uk), so registered under
-    //  hmcts-auth with a scope, mirroring hmcts-court-schedule-api. Confirm client id/scope with CP.
     "hmcts-court-defendant-api",
     hmctsCourtDefendantApiUrl,
   )
