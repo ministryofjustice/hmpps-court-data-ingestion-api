@@ -6,23 +6,23 @@ import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.MatchOutcome
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.CorePersonApiExtension
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtCaseDefendantStore
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtDataIngestionService
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtCaseDefendantService
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.DefendantMatchingService
 import java.time.LocalDate
 import java.util.UUID
 
-class ReAnchorBackfillIntTest : IntegrationTestBase() {
+class DefendantResolutionBackfillIntTest : IntegrationTestBase() {
 
   @Autowired
-  private lateinit var courtDataIngestionService: CourtDataIngestionService
+  private lateinit var defendantMatchingService: DefendantMatchingService
 
   @Autowired
-  private lateinit var courtCaseDefendantStore: CourtCaseDefendantStore
+  private lateinit var courtCaseDefendantService: CourtCaseDefendantService
 
   private val dob = LocalDate.of(1990, 6, 1)
 
   @Test
-  fun `re-anchor matches a previously unmatched document once the store resolves it`() {
+  fun `defendant resolution matches a previously unmatched document once the store resolves it`() {
     val masterDefendantId = UUID.randomUUID()
     val defendantId = UUID.randomUUID()
 
@@ -35,11 +35,11 @@ class ReAnchorBackfillIntTest : IntegrationTestBase() {
     assertThat(before.matchOutcome).isEqualTo(MatchOutcome.NO_CORE_PERSON)
 
     // 2. the store now resolves (master, case) -> defendant, and CPR knows that defendant
-    courtCaseDefendantStore.upsert(defendantId, CASE_REFERENCE, masterDefendantId, "Some One", dob)
+    courtCaseDefendantService.upsert(defendantId, CASE_REFERENCE, masterDefendantId, "Some One", dob)
     CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantId, listOf("RES900"))
 
-    // 3. re-anchor by master (matches every unmatched document for the person in one resolution)
-    val matched = courtDataIngestionService.reAttemptMatchForMaster(masterDefendantId)
+    // 3. defendant resolution by master (matches every unmatched document for the person in one resolution)
+    val matched = defendantMatchingService.resolveDefendantForMasterDefendant(masterDefendantId)
 
     // 4. it now matches, on the defendant id
     assertThat(matched).isEqualTo(1)
@@ -50,17 +50,17 @@ class ReAnchorBackfillIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `re-anchor leaves an already-matched document alone`() {
+  fun `defendant resolution leaves an already-matched document alone`() {
     val masterDefendantId = UUID.randomUUID()
     val defendantId = UUID.randomUUID()
-    courtCaseDefendantStore.upsert(defendantId, CASE_REFERENCE, masterDefendantId, "Some One", dob)
+    courtCaseDefendantService.upsert(defendantId, CASE_REFERENCE, masterDefendantId, "Some One", dob)
     CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantId, listOf("RES901"))
     sendSubscriptionNotification(masterDefendantId)
 
     val doc = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(masterDefendantId)!!
     assertThat(doc.prisonerNumber).isEqualTo("RES901")
 
-    val matched = courtDataIngestionService.reAttemptMatchForMaster(masterDefendantId)
+    val matched = defendantMatchingService.resolveDefendantForMasterDefendant(masterDefendantId)
 
     assertThat(matched).isEqualTo(0)
   }

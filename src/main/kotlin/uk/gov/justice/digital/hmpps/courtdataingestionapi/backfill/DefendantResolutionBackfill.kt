@@ -4,16 +4,16 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtDataIngestionService
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.DefendantMatchingService
 import java.util.UUID
 
 @Component
-class ReAnchorUnmatchedApplyBackfill(
+class DefendantResolutionBackfill(
   private val courtDocumentRepository: CourtDocumentRepository,
-  private val courtDataIngestionService: CourtDataIngestionService,
+  private val defendantMatchingService: DefendantMatchingService,
 ) : Backfill<UUID> {
 
-  override val id = "re-anchor-unmatched-apply"
+  override val id = "defendant-resolution-apply"
   override val concurrency = 4
 
   override fun selectBatch(cursor: String, batchSize: Int): BackfillBatch<UUID> {
@@ -24,13 +24,20 @@ class ReAnchorUnmatchedApplyBackfill(
   }
 
   override fun process(item: UUID) {
-    val matched = courtDataIngestionService.reAttemptMatchForMaster(item)
-    if (matched > 0) {
-      log.info("Re-anchored document {}: {} document(s) now match a prisoner", item, matched)
+    val masterDefendantId: UUID = item
+    val matchedDocumentCount = defendantMatchingService.resolveDefendantForMasterDefendant(masterDefendantId)
+    if (matchedDocumentCount > 0) {
+      log.info(
+        "Resolved defendant for masterDefendantId {}: {} document(s) now match a prisoner",
+        item,
+        matchedDocumentCount,
+      )
+    } else {
+      log.debug("No documents matched for masterDefendantId {}", item)
     }
   }
 
   companion object {
-    private val log: Logger = LoggerFactory.getLogger(ReAnchorUnmatchedApplyBackfill::class.java)
+    private val log: Logger = LoggerFactory.getLogger(DefendantResolutionBackfill::class.java)
   }
 }

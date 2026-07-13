@@ -7,5 +7,3 @@ UPDATE court_document
 
 CREATE INDEX court_document_match_outcome
     ON court_document (match_outcome)
-    WHERE match_outcome IS NOT NULL
-      AND match_outcome NOT LIKE 'MATCHED\_%';

@@ -56,8 +56,8 @@ data class CourtDocumentEntity(
   @Column(name = "metadata_version")
   var metadataVersion: Int = 0,
 
-  @Column(name = "mirrored_to_doc_store_at")
-  var mirroredToDocStoreAt: LocalDateTime? = null,
+  @Column(name = "metadata_updated_at")
+  var metadataUpdatedAt: LocalDateTime? = null,
 
   // Updated once identified
   var prisonerNumber: String? = null,

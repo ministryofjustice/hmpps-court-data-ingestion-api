@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.backfill
 
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsDocumentManagementApi
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
@@ -17,6 +18,8 @@ class HashBackfill(
   private val fileService: FileService,
   private val pdfTextExtractor: PdfTextExtractor,
   private val normaliser: ExtractedTextNormaliser,
+  @Value("\${extraction.mirror.metadata-version:0}")
+  private val metadataVersion: Int,
 ) : Backfill<CourtDocumentEntity> {
 
   override val id = "hash"
@@ -30,28 +33,33 @@ class HashBackfill(
   }
 
   override fun process(item: CourtDocumentEntity) {
-    val needsFileHash = item.downloadedFileSha256.isNullOrBlank()
-    val needsContentHash = item.extractedTextSha256.isNullOrBlank()
-
-    if (needsFileHash || needsContentHash) {
-      val bytes = documentManagementApi.downloadFile(item.prisonDocumentId)
-      if (needsFileHash) {
-        item.downloadedFileSha256 = Sha256.hex(bytes)
-      }
-      if (needsContentHash) {
-        pdfTextExtractor.extractText(bytes)?.let { item.extractedTextSha256 = normaliser.getNormalisedHash(it) }
-      }
-      courtDocumentRepository.save(item)
-    }
-
+    updateCourtDocumentFileHash(item)
     val outcome = fileService.mirrorEnrichmentToDocumentStore(item)
+
     if (outcome.fullySuccessful) {
-      item.mirroredToDocStoreAt = LocalDateTime.now()
+      item.metadataVersion = metadataVersion
+      item.metadataUpdatedAt = LocalDateTime.now()
       courtDocumentRepository.save(item)
     } else {
       val cause = outcome.contentHashError ?: outcome.metadataError
         ?: IllegalStateException("Mirror failed with no captured cause")
       throw cause
+    }
+  }
+
+  private fun updateCourtDocumentFileHash(document: CourtDocumentEntity) {
+    val needsFileHash = document.downloadedFileSha256.isNullOrBlank()
+    val needsContentHash = document.extractedTextSha256.isNullOrBlank()
+
+    if (needsFileHash || needsContentHash) {
+      val bytes = documentManagementApi.downloadFile(document.prisonDocumentId)
+      if (needsFileHash) {
+        document.downloadedFileSha256 = Sha256.hex(bytes)
+      }
+      if (needsContentHash) {
+        pdfTextExtractor.extractText(bytes)?.let { document.extractedTextSha256 = normaliser.getNormalisedHash(it) }
+      }
+      courtDocumentRepository.save(document)
     }
   }
 }
