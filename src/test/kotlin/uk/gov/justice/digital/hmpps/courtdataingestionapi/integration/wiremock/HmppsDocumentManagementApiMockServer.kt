@@ -7,7 +7,6 @@ import com.github.tomakehurst.wiremock.client.WireMock.binaryEqualTo
 import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.equalToJson
 import com.github.tomakehurst.wiremock.client.WireMock.get
-import com.github.tomakehurst.wiremock.client.WireMock.matchingJsonPath
 import com.github.tomakehurst.wiremock.client.WireMock.notContaining
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor
@@ -104,19 +103,6 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
   }
 
   fun stubUpdateMetadataError() {
-    stubFor(
-      put(urlEqualTo("/documents/${IntegrationTestBase.PRISON_DOCUMENT_ID}/metadata"))
-        .withHeader("Service-Name", equalTo(SERVICE_NAME))
-        .withHeader("Username", equalTo(USERNAME))
-        .withRequestBody(matchingJsonPath("$.prisonerId"))
-        .willReturn(
-          aResponse()
-            .withHeader("Content-Type", "application/json")
-            .withBody(happyResponse)
-            .withStatus(200),
-        ),
-    )
-
     stubFor(
       put(urlEqualTo("/documents/${IntegrationTestBase.PRISON_DOCUMENT_ID}/metadata"))
         .withHeader("Service-Name", equalTo(SERVICE_NAME))

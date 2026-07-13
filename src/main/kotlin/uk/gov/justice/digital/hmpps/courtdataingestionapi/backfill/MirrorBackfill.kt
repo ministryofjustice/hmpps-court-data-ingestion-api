@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.backfill
 
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
@@ -10,6 +11,8 @@ import java.time.LocalDateTime
 class MirrorBackfill(
   private val courtDocumentRepository: CourtDocumentRepository,
   private val fileService: FileService,
+  @Value("\${extraction.mirror.metadata-version:0}")
+  private val metadataVersion: Int,
 ) : Backfill<CourtDocumentEntity> {
 
   override val id = "mirror"
@@ -17,14 +20,16 @@ class MirrorBackfill(
 
   override fun selectBatch(cursor: String, batchSize: Int): BackfillBatch<CourtDocumentEntity> {
     val afterId = parseCursor(cursor)
-    val items = courtDocumentRepository.findUnmirroredAfter(afterId, batchSize)
+    val items = courtDocumentRepository.findUnmirroredAfter(afterId, metadataVersion, batchSize)
     val nextCursor = items.lastOrNull()?.id?.toString() ?: cursor
     return BackfillBatch(items, nextCursor)
   }
 
   override fun process(item: CourtDocumentEntity) {
     val outcome = fileService.mirrorEnrichmentToDocumentStore(item)
+
     if (outcome.fullySuccessful) {
+      item.metadataVersion = metadataVersion
       item.mirroredToDocStoreAt = LocalDateTime.now()
       courtDocumentRepository.save(item)
     } else {
