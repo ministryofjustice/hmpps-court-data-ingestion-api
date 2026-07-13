@@ -5,13 +5,13 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.MatchOutcome
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtDataIngestionService
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.DefendantMatchingService
 import java.util.UUID
 
 @Component
 class DefendantResolutionDryRunBackfill(
   private val courtDocumentRepository: CourtDocumentRepository,
-  private val courtDataIngestionService: CourtDataIngestionService,
+  private val defendantMatchingService: DefendantMatchingService,
 ) : Backfill<UUID> {
 
   override val id = "defendant-resolution-dry-run"
@@ -25,7 +25,7 @@ class DefendantResolutionDryRunBackfill(
   }
 
   override fun process(item: UUID) {
-    val preview = courtDataIngestionService.previewResolveDefendantForMasterDefendant(item) ?: return
+    val preview = defendantMatchingService.previewResolveDefendantForMasterDefendant(item) ?: return
     val wouldMatch = preview.outcome == MatchOutcome.MATCHED_ON_DEFENDANT_ID ||
       preview.outcome == MatchOutcome.MATCHED_ON_MASTER_DEFENDANT_ID
     log.info(

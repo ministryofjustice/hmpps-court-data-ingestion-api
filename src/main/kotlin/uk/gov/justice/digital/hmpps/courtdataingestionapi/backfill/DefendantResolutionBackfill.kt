@@ -4,13 +4,13 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtDataIngestionService
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.DefendantMatchingService
 import java.util.UUID
 
 @Component
 class DefendantResolutionBackfill(
   private val courtDocumentRepository: CourtDocumentRepository,
-  private val courtDataIngestionService: CourtDataIngestionService,
+  private val defendantMatchingService: DefendantMatchingService,
 ) : Backfill<UUID> {
 
   override val id = "defendant-resolution-apply"
@@ -25,7 +25,7 @@ class DefendantResolutionBackfill(
 
   override fun process(item: UUID) {
     val masterDefendantId: UUID = item
-    val matchedDocumentCount = courtDataIngestionService.resolveDefendantForMasterDefendant(masterDefendantId)
+    val matchedDocumentCount = defendantMatchingService.resolveDefendantForMasterDefendant(masterDefendantId)
     if (matchedDocumentCount > 0) {
       log.info(
         "Resolved defendant for master {}: {} document(s) now match a prisoner",
