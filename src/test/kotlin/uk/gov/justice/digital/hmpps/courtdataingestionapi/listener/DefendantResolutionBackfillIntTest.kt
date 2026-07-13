@@ -11,7 +11,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtDataInges
 import java.time.LocalDate
 import java.util.UUID
 
-class ReanchorBackfillIntTest : IntegrationTestBase() {
+class DefendantResolutionBackfillIntTest : IntegrationTestBase() {
 
   @Autowired
   private lateinit var courtDataIngestionService: CourtDataIngestionService
@@ -22,7 +22,7 @@ class ReanchorBackfillIntTest : IntegrationTestBase() {
   private val dob = LocalDate.of(1990, 6, 1)
 
   @Test
-  fun `reanchor matches a previously unmatched document once the store resolves it`() {
+  fun `defendant resolution matches a previously unmatched document once the store resolves it`() {
     val masterDefendantId = UUID.randomUUID()
     val defendantId = UUID.randomUUID()
 
@@ -38,8 +38,8 @@ class ReanchorBackfillIntTest : IntegrationTestBase() {
     courtCaseDefendantService.upsert(defendantId, CASE_REFERENCE, masterDefendantId, "Some One", dob)
     CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantId, listOf("RES900"))
 
-    // 3. reanchor by master (matches every unmatched document for the person in one resolution)
-    val matched = courtDataIngestionService.reattemptMatchForMaster(masterDefendantId)
+    // 3. defendant resolution by master (matches every unmatched document for the person in one resolution)
+    val matched = courtDataIngestionService.resolveDefendantForMasterDefendant(masterDefendantId)
 
     // 4. it now matches, on the defendant id
     assertThat(matched).isEqualTo(1)
@@ -50,7 +50,7 @@ class ReanchorBackfillIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `reanchor leaves an already-matched document alone`() {
+  fun `defendant resolution leaves an already-matched document alone`() {
     val masterDefendantId = UUID.randomUUID()
     val defendantId = UUID.randomUUID()
     courtCaseDefendantService.upsert(defendantId, CASE_REFERENCE, masterDefendantId, "Some One", dob)
@@ -60,7 +60,7 @@ class ReanchorBackfillIntTest : IntegrationTestBase() {
     val doc = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(masterDefendantId)!!
     assertThat(doc.prisonerNumber).isEqualTo("RES901")
 
-    val matched = courtDataIngestionService.reattemptMatchForMaster(masterDefendantId)
+    val matched = courtDataIngestionService.resolveDefendantForMasterDefendant(masterDefendantId)
 
     assertThat(matched).isEqualTo(0)
   }

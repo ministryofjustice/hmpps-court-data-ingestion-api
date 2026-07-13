@@ -65,5 +65,39 @@ class CourtCaseDefendantServiceTest : IntegrationTestBase() {
     assertThat(found?.defendantId).isEqualTo(defendantOnCaseB)
   }
 
+  @Test
+  fun `resolves core person per-case defendant ids to the masters documents are keyed on`() {
+    courtCaseDefendantService.upsert(defendantOnCaseA, "20GD1234567", master, "John Doe", dob())
+    courtCaseDefendantService.upsert(defendantOnCaseB, "20GD7654321", master, "John Doe", dob())
+
+    val masters = courtCaseDefendantService.findMasterDefendantIds(listOf(defendantOnCaseA, defendantOnCaseB))
+
+    assertThat(masters.distinct()).containsExactly(master)
+  }
+
+  @Test
+  fun `unknown defendant ids resolve to nothing rather than failing`() {
+    assertThat(courtCaseDefendantService.findMasterDefendantIds(listOf(UUID.randomUUID()))).isEmpty()
+  }
+
+  @Test
+  fun `finds the case-scoped defendant id for a person on a case`() {
+    courtCaseDefendantService.upsert(defendantOnCaseB, "20GD7654321", master, "John Doe", dob())
+
+    assertThat(courtCaseDefendantService.findDefendantId(master, "20GD7654321")).isEqualTo(defendantOnCaseB)
+    assertThat(courtCaseDefendantService.findDefendantId(master, "UNKNOWN")).isNull()
+  }
+
+  @Test
+  fun `a defendant moving master is repointed and stored, not rejected`() {
+    val originalMaster = UUID.randomUUID()
+    val mergedMaster = UUID.randomUUID()
+    courtCaseDefendantService.upsert(defendantOnCaseA, "20GD1234567", originalMaster, "John Doe", dob())
+    courtCaseDefendantService.upsert(defendantOnCaseA, "20GD1234567", mergedMaster, "John Doe", dob())
+
+    val stored = courtCaseDefendantRepository.findById(defendantOnCaseA).orElseThrow()
+    assertThat(stored.masterDefendantId).isEqualTo(mergedMaster)
+  }
+
   private fun dob() = LocalDate.of(1980, 1, 31)
 }

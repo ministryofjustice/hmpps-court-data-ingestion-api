@@ -17,7 +17,6 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionCon
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionEnrichmentFlow
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.applyEnrichment
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsSubscriptionNotificationRequestBody
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtCaseDefendantRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.HmppsTopic
@@ -39,7 +38,6 @@ class CourtDataIngestionService(
   private val fileService: FileService,
   private val hmctsCourtDefendantApiClient: HmctsCourtDefendantApiClient,
   private val courtCaseDefendantService: CourtCaseDefendantService,
-  private val courtCaseDefendantRepository: CourtCaseDefendantRepository,
   @Value("\${extraction.mirror.metadata-version:0}")
   private val metadataVersion: Int,
 ) {
@@ -98,8 +96,10 @@ class CourtDataIngestionService(
     if (previouslyIdentified == 0L) {
       val person = corePersonApiClient.getPersonByPrisonerNumber(prisonerNumber)
       if (person?.identifiers?.defendantIds?.isNotEmpty() == true) {
+        val defendantIds = person.identifiers.defendantIds.map { UUID.fromString(it) }
+        val resolvedMasterIds = courtCaseDefendantService.findMasterDefendantIds(defendantIds)
         val files =
-          courtDocumentRepository.findByMasterDefendantIdIn(person.identifiers.defendantIds.map { UUID.fromString(it) })
+          courtDocumentRepository.findByMasterDefendantIdIn((resolvedMasterIds + defendantIds).distinct())
         files.forEach {
           createMatch(it, prisonerNumber, MatchOutcome.MATCHED_ON_DEFENDANT_ID)
         }
@@ -176,7 +176,7 @@ class CourtDataIngestionService(
     }
   }
 
-  fun reattemptMatchForMaster(masterDefendantId: UUID): Int {
+  fun resolveDefendantForMasterDefendant(masterDefendantId: UUID): Int {
     val documents = unmatchedDocumentsFor(masterDefendantId)
     if (documents.isEmpty()) return 0
 
@@ -212,12 +212,7 @@ class CourtDataIngestionService(
     }
   }
 
-  /**
-   * Read-only preview of what reanchoring a master would record, using only the current store (no
-   * HMCTS fetch, no writes). Returns the outcome and how many unmatched documents it covers, or null
-   * if the master has none. Used by the reanchor dry-run backfill.
-   */
-  fun previewReattemptMatchForMaster(masterDefendantId: UUID): ReanchorPreview? {
+  fun previewResolveDefendantForMasterDefendant(masterDefendantId: UUID): DefendantResolutionPreview? {
     val documents = unmatchedDocumentsFor(masterDefendantId)
     if (documents.isEmpty()) return null
 
@@ -234,7 +229,7 @@ class CourtDataIngestionService(
     } catch (e: WebClientResponseException) {
       if (HttpStatus.NOT_FOUND.isSameCodeAs(e.statusCode)) MatchOutcome.NO_CORE_PERSON else throw e
     }
-    return ReanchorPreview(outcome, documents.size)
+    return DefendantResolutionPreview(outcome, documents.size)
   }
 
   private fun unmatchedDocumentsFor(masterDefendantId: UUID): List<CourtDocumentEntity> = courtDocumentRepository.findByMasterDefendantIdIn(listOf(masterDefendantId)).filter { it.prisonerNumber == null }
@@ -260,15 +255,16 @@ class CourtDataIngestionService(
     caseReference: String,
     populateOnMiss: Boolean,
   ): UUID? {
-    courtCaseDefendantRepository.findByMasterDefendantIdAndCaseReference(masterDefendantId, caseReference)
-      ?.let { return it.defendantId }
+    courtCaseDefendantService.findDefendantId(masterDefendantId, caseReference)
+      ?.let { return it }
     if (!populateOnMiss) return null
 
-    val defendants = hmctsCourtDefendantApiClient.getDefendants(caseReference, masterDefendantId = masterDefendantId)
+    val defendants = hmctsCourtDefendantApiClient.getDefendants(caseReference)
     defendants.forEach {
       courtCaseDefendantService.upsert(it.defendantId, caseReference, it.masterDefendantId, it.name, it.dateOfBirth)
     }
-    return defendants.singleOrNull()?.defendantId
+    return defendants.firstOrNull { it.masterDefendantId == masterDefendantId }?.defendantId
+      ?: defendants.firstOrNull { it.defendantId == masterDefendantId }?.defendantId
   }
 
   companion object {
@@ -277,7 +273,7 @@ class CourtDataIngestionService(
   }
 }
 
-data class ReanchorPreview(
+data class DefendantResolutionPreview(
   val outcome: MatchOutcome,
   val documentCount: Int,
 )
