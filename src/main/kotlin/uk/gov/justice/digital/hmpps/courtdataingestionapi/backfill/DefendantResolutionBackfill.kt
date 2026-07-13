@@ -28,10 +28,12 @@ class DefendantResolutionBackfill(
     val matchedDocumentCount = defendantMatchingService.resolveDefendantForMasterDefendant(masterDefendantId)
     if (matchedDocumentCount > 0) {
       log.info(
-        "Resolved defendant for master {}: {} document(s) now match a prisoner",
+        "Resolved defendant for masterDefendantId {}: {} document(s) now match a prisoner",
         item,
         matchedDocumentCount,
       )
+    } else {
+      log.debug("No documents matched for masterDefendantId {}", item)
     }
   }
 
