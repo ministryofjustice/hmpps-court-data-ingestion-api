@@ -96,7 +96,7 @@ class CourtDataIngestionService(
 
     if (mirrorOutcome?.fullySuccessful == true) {
       courtDocumentEntity.metadataVersion = metadataVersion
-      courtDocumentEntity.mirroredToDocStoreAt = LocalDateTime.now()
+      courtDocumentEntity.metadataUpdatedAt = LocalDateTime.now()
       courtDocumentRepository.save(courtDocumentEntity)
     }
   }
