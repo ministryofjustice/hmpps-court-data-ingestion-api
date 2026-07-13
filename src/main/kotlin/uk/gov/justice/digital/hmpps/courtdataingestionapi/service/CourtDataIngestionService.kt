@@ -245,12 +245,11 @@ class CourtDataIngestionService(
     masterDefendantId: UUID,
     caseReferences: List<String>,
     populateOnMiss: Boolean,
-  ): UUID? = caseReferences
-    .map { ensureStoredAndResolve(masterDefendantId, it, populateOnMiss) }
-    .filterNotNull()
-    .firstOrNull()
+  ): UUID? = caseReferences.firstNotNullOfOrNull {
+    ensureStoredAndResolveDefendantId(masterDefendantId, it, populateOnMiss)
+  }
 
-  private fun ensureStoredAndResolve(
+  private fun ensureStoredAndResolveDefendantId(
     masterDefendantId: UUID,
     caseReference: String,
     populateOnMiss: Boolean,
