@@ -29,6 +29,10 @@ generic-service:
 
   scheduledDowntime:
     enabled: true
+    # Start at 6:55am Monday-Friday - 10 minutes after hmpps-person-record
+    startupOverride: '55 6 * * 1-5'
+    timeZone: Europe/London
+
 # CloudPlatform AlertManager receiver to route prometheus alerts to slack
 # See https://user-guide.cloud-platform.service.justice.gov.uk/documentation/monitoring-an-app/how-to-create-alarms.html#creating-your-own-custom-alerts
 generic-prometheus-alerts:
