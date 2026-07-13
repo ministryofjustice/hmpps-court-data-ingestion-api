@@ -38,7 +38,7 @@ class HashBackfill(
 
     if (outcome.fullySuccessful) {
       item.metadataVersion = metadataVersion
-      item.mirroredToDocStoreAt = LocalDateTime.now()
+      item.metadataUpdatedAt = LocalDateTime.now()
       courtDocumentRepository.save(item)
     } else {
       val cause = outcome.contentHashError ?: outcome.metadataError
