@@ -44,7 +44,7 @@ class MirrorBackfillTest {
   }
 
   @Test
-  fun `process updates metadata version and sets mirroredToDocStoreAt on full success`() {
+  fun `process updates metadata version and sets metadataUpdatedAt on full success`() {
     val item = sampleWarrant(extractedTextSha = "604576bd")
     val initialMetadataVersion = item.metadataVersion
     whenever(fileService.mirrorEnrichmentToDocumentStore(item))
@@ -54,7 +54,7 @@ class MirrorBackfillTest {
 
     assertThat(initialMetadataVersion).isLessThan(METADATA_VERSION)
     assertThat(item.metadataVersion).isEqualTo(METADATA_VERSION)
-    assertThat(item.mirroredToDocStoreAt).isNotNull
+    assertThat(item.metadataUpdatedAt).isNotNull
     verify(repository).save(item)
   }
 
@@ -74,7 +74,7 @@ class MirrorBackfillTest {
     assertThatThrownBy { backfill.process(item) }.isEqualTo(failure)
     assertThat(item.metadataVersion).isLessThan(METADATA_VERSION)
     assertThat(item.metadataVersion).isEqualTo(initialMetadataVersion)
-    assertThat(item.mirroredToDocStoreAt).isNull()
+    assertThat(item.metadataUpdatedAt).isNull()
   }
 
   @Test
@@ -98,7 +98,7 @@ class MirrorBackfillTest {
     assertThatThrownBy { backfill.process(item) }.isEqualTo(failure)
     assertThat(item.metadataVersion).isLessThan(METADATA_VERSION)
     assertThat(item.metadataVersion).isEqualTo(initialMetadataVersion)
-    assertThat(item.mirroredToDocStoreAt).isNull()
+    assertThat(item.metadataUpdatedAt).isNull()
   }
 
   @Test
@@ -114,7 +114,7 @@ class MirrorBackfillTest {
 
     assertThat(initialMetadataVersion).isLessThan(METADATA_VERSION)
     assertThat(item.metadataVersion).isEqualTo(METADATA_VERSION)
-    assertThat(item.mirroredToDocStoreAt).isNotNull
+    assertThat(item.metadataUpdatedAt).isNotNull
   }
 
   private fun sampleWarrant(extractedTextSha: String?): CourtDocumentEntity = CourtDocumentEntity(

@@ -1,0 +1,1 @@
+ALTER TABLE court_document RENAME COLUMN mirrored_to_doc_store_at TO metadata_updated_at;

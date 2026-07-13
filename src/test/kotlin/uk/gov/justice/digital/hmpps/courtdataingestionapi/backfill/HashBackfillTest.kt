@@ -109,11 +109,11 @@ class HashBackfillTest {
     assertThatThrownBy { backfill.process(item) }.isEqualTo(failure)
     assertThat(item.metadataVersion).isLessThan(METADATA_VERSION)
     assertThat(item.metadataVersion).isEqualTo(initialMetadataVersion)
-    assertThat(item.mirroredToDocStoreAt).isNull()
+    assertThat(item.metadataUpdatedAt).isNull()
   }
 
   @Test
-  fun `process updates metadata version and marks mirroredToDocStoreAt on full success`() {
+  fun `process updates metadata version and marks metadataUpdatedAt on full success`() {
     val item = sampleWarrant(downloadedFileSha = "set", extractedTextSha = "set")
     val initialMetadataVersion = item.metadataVersion
     whenever(fileService.mirrorEnrichmentToDocumentStore(item))
@@ -123,7 +123,7 @@ class HashBackfillTest {
 
     assertThat(initialMetadataVersion).isLessThan(METADATA_VERSION)
     assertThat(item.metadataVersion).isEqualTo(METADATA_VERSION)
-    assertThat(item.mirroredToDocStoreAt).isNotNull
+    assertThat(item.metadataUpdatedAt).isNotNull
   }
 
   @Test
