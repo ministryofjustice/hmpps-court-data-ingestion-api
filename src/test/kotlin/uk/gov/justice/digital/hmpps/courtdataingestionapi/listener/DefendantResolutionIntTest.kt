@@ -11,7 +11,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.C
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsCourtDefendantApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.DefendantDetails
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtCaseDefendantRepository
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtCaseDefendantStore
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtCaseDefendantService
 import java.time.LocalDate
 import java.util.UUID
 
@@ -21,7 +21,7 @@ class DefendantResolutionIntTest : IntegrationTestBase() {
   private lateinit var courtCaseDefendantRepository: CourtCaseDefendantRepository
 
   @Autowired
-  private lateinit var courtCaseDefendantStore: CourtCaseDefendantStore
+  private lateinit var courtCaseDefendantService: CourtCaseDefendantService
 
   private val dob = LocalDate.of(1990, 6, 1)
 
@@ -62,7 +62,7 @@ class DefendantResolutionIntTest : IntegrationTestBase() {
   fun `uses the store and does not call HMCTS when the master and case are already known`() {
     val masterDefendantId = UUID.randomUUID()
     val defendantId = UUID.randomUUID()
-    courtCaseDefendantStore.upsert(defendantId, CASE_REFERENCE, masterDefendantId, "Some One", dob)
+    courtCaseDefendantService.upsert(defendantId, CASE_REFERENCE, masterDefendantId, "Some One", dob)
     CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantId, listOf("RES003"))
 
     sendSubscriptionNotification(masterDefendantId)

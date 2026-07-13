@@ -9,7 +9,7 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 @Component
-class CourtCaseDefendantStore(
+class CourtCaseDefendantService(
   private val courtCaseDefendantRepository: CourtCaseDefendantRepository,
 ) {
 

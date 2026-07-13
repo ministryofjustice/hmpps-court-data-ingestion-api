@@ -38,7 +38,7 @@ class CourtDataIngestionService(
   private val objectMapper: ObjectMapper,
   private val fileService: FileService,
   private val hmctsCourtDefendantApiClient: HmctsCourtDefendantApiClient,
-  private val courtCaseDefendantStore: CourtCaseDefendantStore,
+  private val courtCaseDefendantService: CourtCaseDefendantService,
   private val courtCaseDefendantRepository: CourtCaseDefendantRepository,
   @Value("\${extraction.mirror.metadata-version:0}")
   private val metadataVersion: Int,
@@ -266,7 +266,7 @@ class CourtDataIngestionService(
 
     val defendants = hmctsCourtDefendantApiClient.getDefendants(caseReference, masterDefendantId = masterDefendantId)
     defendants.forEach {
-      courtCaseDefendantStore.upsert(it.defendantId, caseReference, it.masterDefendantId, it.name, it.dateOfBirth)
+      courtCaseDefendantService.upsert(it.defendantId, caseReference, it.masterDefendantId, it.name, it.dateOfBirth)
     }
     return defendants.singleOrNull()?.defendantId
   }

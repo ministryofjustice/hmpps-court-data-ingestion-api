@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.MatchOutcome
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.CorePersonApiExtension
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtCaseDefendantStore
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtCaseDefendantService
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtDataIngestionService
 import java.time.LocalDate
 import java.util.UUID
@@ -17,7 +17,7 @@ class ReanchorBackfillIntTest : IntegrationTestBase() {
   private lateinit var courtDataIngestionService: CourtDataIngestionService
 
   @Autowired
-  private lateinit var courtCaseDefendantStore: CourtCaseDefendantStore
+  private lateinit var courtCaseDefendantService: CourtCaseDefendantService
 
   private val dob = LocalDate.of(1990, 6, 1)
 
@@ -35,7 +35,7 @@ class ReanchorBackfillIntTest : IntegrationTestBase() {
     assertThat(before.matchOutcome).isEqualTo(MatchOutcome.NO_CORE_PERSON)
 
     // 2. the store now resolves (master, case) -> defendant, and CPR knows that defendant
-    courtCaseDefendantStore.upsert(defendantId, CASE_REFERENCE, masterDefendantId, "Some One", dob)
+    courtCaseDefendantService.upsert(defendantId, CASE_REFERENCE, masterDefendantId, "Some One", dob)
     CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantId, listOf("RES900"))
 
     // 3. reanchor by master (matches every unmatched document for the person in one resolution)
@@ -53,7 +53,7 @@ class ReanchorBackfillIntTest : IntegrationTestBase() {
   fun `reanchor leaves an already-matched document alone`() {
     val masterDefendantId = UUID.randomUUID()
     val defendantId = UUID.randomUUID()
-    courtCaseDefendantStore.upsert(defendantId, CASE_REFERENCE, masterDefendantId, "Some One", dob)
+    courtCaseDefendantService.upsert(defendantId, CASE_REFERENCE, masterDefendantId, "Some One", dob)
     CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantId, listOf("RES901"))
     sendSubscriptionNotification(masterDefendantId)
 
