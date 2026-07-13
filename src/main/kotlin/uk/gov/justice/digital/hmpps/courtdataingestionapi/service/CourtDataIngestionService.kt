@@ -2,26 +2,25 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import software.amazon.awssdk.services.sns.model.MessageAttributeValue
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.CorePersonApiClient
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.CorePersonProvider
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentCaseEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtHearingEntity
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.HmtcsApiDataEnrichment
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionContext
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionEnrichmentFlow
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.applyEnrichment
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsSubscriptionNotificationRequestBody
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtHearingRepository
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.HmppsTopic
 import uk.gov.justice.hmpps.sqs.publish
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.util.UUID
 import kotlin.String
 
@@ -30,11 +29,13 @@ import kotlin.String
 class CourtDataIngestionService(
   private val ingestionEnrichmentFlow: IngestionEnrichmentFlow,
   private val courtDocumentRepository: CourtDocumentRepository,
-  private val courtHearingRepository: CourtHearingRepository,
-  private val corePersonApiClient: CorePersonApiClient,
+  private val courtHearingService: CourtHearingService,
+  private val corePersonApiClient: CorePersonProvider,
   private val hmppsQueueService: HmppsQueueService,
   private val objectMapper: ObjectMapper,
   private val fileService: FileService,
+  @Value("\${extraction.mirror.metadata-version:0}")
+  private val metadataVersion: Int,
 ) {
   private val eventTopic by lazy { hmppsQueueService.findByTopicId("domainevents") as HmppsTopic }
 
@@ -50,14 +51,12 @@ class CourtDataIngestionService(
       ),
     )
 
-    log.debug("Hearing ID from SQS message ${message.hearingId}")
-
-    var courtDocumentEntity = courtDocumentRepository.save(
+    val courtDocumentEntity = courtDocumentRepository.save(
       CourtDocumentEntity(
         defendantId = message.masterDefendantId,
         hmctsCourtDocumentId = message.documentId,
         prisonEmailAddress = message.prisonEmailAddress,
-        documentGeneratedTimestamp = message.documentGeneratedTimestamp,
+        documentGeneratedTimestamp = message.documentGeneratedTimestamp.withZoneSameInstant(ZoneId.of("Europe/London")).toLocalDateTime(),
         courtDocumentCases = message.cases.map { CourtDocumentCaseEntity(caseReference = it.urn) }.toMutableList(),
         prisonDocumentId = prisonDocument.documentUuid,
         eventType = message.eventType,
@@ -66,21 +65,9 @@ class CourtDataIngestionService(
       ).applyEnrichment(enriched),
     )
 
-    log.debug("Hearing ID after repository.save ${courtDocumentEntity.hmctsCourtHearingId}")
+    mirrorEnrichmentToDocumentStore(courtDocumentEntity)
 
-    val mirrorOutcome = runCatching {
-      fileService.mirrorEnrichmentToDocumentStore(courtDocumentEntity)
-    }.getOrElse {
-      log.warn("Failed to mirror enrichment to document store for {}", courtDocumentEntity.prisonDocumentId, it)
-      null
-    }
-    if (mirrorOutcome?.fullySuccessful == true) {
-      courtDocumentEntity.mirroredToDocStoreAt = LocalDateTime.now()
-      courtDocumentEntity = courtDocumentRepository.save(courtDocumentEntity)
-    }
-    log.debug("Hearing ID after mirror ${courtDocumentEntity.hmctsCourtHearingId}")
-
-    createOrUpdateCourtHearingData(courtDocumentEntity, enriched.hmtcsApiDataEnrichment)
+    courtHearingService.createOrUpdateCourtHearingData(courtDocumentEntity, enriched.hmtcsApiDataEnrichment)
 
     val person = try {
       corePersonApiClient.getPersonByCommonPlatformId(message.masterDefendantId)
@@ -99,34 +86,18 @@ class CourtDataIngestionService(
     }
   }
 
-  private fun createOrUpdateCourtHearingData(
-    courtDocumentEntity: CourtDocumentEntity,
-    hmtcsApiDataEnrichment: HmtcsApiDataEnrichment?,
-  ) {
-    if (hmtcsApiDataEnrichment != null) {
-      var hearing = courtHearingRepository.findByHmctsCourtHearingId(courtDocumentEntity.hmctsCourtHearingId!!)
-      if (hearing != null) {
-        hearing.apply {
-          courtId = hmtcsApiDataEnrichment.courtId
-          courtName = hmtcsApiDataEnrichment.courtName
-          hearingType = hmtcsApiDataEnrichment.hearingType
-          hearingDate = hmtcsApiDataEnrichment.hearingDate
-          updatedAt = LocalDateTime.now()
-        }
-        hearing.courtDocuments.add(courtDocumentEntity)
-        courtDocumentEntity.courtHearing = hearing
-      } else {
-        courtDocumentEntity.courtHearing = courtHearingRepository.save(
-          CourtHearingEntity(
-            courtId = hmtcsApiDataEnrichment.courtId,
-            courtName = hmtcsApiDataEnrichment.courtName,
-            hearingType = hmtcsApiDataEnrichment.hearingType,
-            hearingDate = hmtcsApiDataEnrichment.hearingDate,
-            hmctsCourtHearingId = courtDocumentEntity.hmctsCourtHearingId!!,
-            courtDocuments = mutableListOf(courtDocumentEntity),
-          ),
-        )
-      }
+  private fun mirrorEnrichmentToDocumentStore(courtDocumentEntity: CourtDocumentEntity) {
+    val mirrorOutcome = runCatching {
+      fileService.mirrorEnrichmentToDocumentStore(courtDocumentEntity)
+    }.getOrElse {
+      log.warn("Failed to mirror enrichment to document store for {}", courtDocumentEntity.prisonDocumentId, it)
+      null
+    }
+
+    if (mirrorOutcome?.fullySuccessful == true) {
+      courtDocumentEntity.metadataVersion = metadataVersion
+      courtDocumentEntity.mirroredToDocStoreAt = LocalDateTime.now()
+      courtDocumentRepository.save(courtDocumentEntity)
     }
   }
 
@@ -147,8 +118,7 @@ class CourtDataIngestionService(
   private fun createMatch(courtDocumentEntity: CourtDocumentEntity, prisonerNumber: String) {
     courtDocumentEntity.prisonerNumber = prisonerNumber
     courtDocumentEntity.identifiedAt = LocalDateTime.now()
-    val result = courtDocumentRepository.save(courtDocumentEntity)
-    log.debug("Hearing ID match ${result.hmctsCourtHearingId}")
+    courtDocumentRepository.save(courtDocumentEntity)
 
     fileService.setPrisonerId(courtDocumentEntity.prisonDocumentId, prisonerNumber)
     val payload = IdentifiedCourtWarrantEventPayload(

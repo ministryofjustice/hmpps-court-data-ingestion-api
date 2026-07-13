@@ -7,12 +7,16 @@ import com.github.tomakehurst.wiremock.client.WireMock.binaryEqualTo
 import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.equalToJson
 import com.github.tomakehurst.wiremock.client.WireMock.get
+import com.github.tomakehurst.wiremock.client.WireMock.matchingJsonPath
+import com.github.tomakehurst.wiremock.client.WireMock.notContaining
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor
 import com.github.tomakehurst.wiremock.client.WireMock.put
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import com.github.tomakehurst.wiremock.client.WireMock.urlMatching
 import com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching
+import com.github.tomakehurst.wiremock.common.ContentTypes.APPLICATION_JSON
+import com.github.tomakehurst.wiremock.common.ContentTypes.CONTENT_TYPE
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
@@ -38,6 +42,7 @@ class HmppsDocumentManagementApiExtension :
     hmppsDocumentManagementApi.stubUpdateMetadata()
     hmppsDocumentManagementApi.stubSetFileContentHash()
     hmppsDocumentManagementApi.stubDownloadFile()
+    hmppsDocumentManagementApi.stubDocumentFindByUuids()
   }
 
   override fun beforeEach(context: ExtensionContext) {
@@ -98,6 +103,34 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
     )
   }
 
+  fun stubUpdateMetadataError() {
+    stubFor(
+      put(urlEqualTo("/documents/${IntegrationTestBase.PRISON_DOCUMENT_ID}/metadata"))
+        .withHeader("Service-Name", equalTo(SERVICE_NAME))
+        .withHeader("Username", equalTo(USERNAME))
+        .withRequestBody(matchingJsonPath("$.prisonerId"))
+        .willReturn(
+          aResponse()
+            .withHeader("Content-Type", "application/json")
+            .withBody(happyResponse)
+            .withStatus(200),
+        ),
+    )
+
+    stubFor(
+      put(urlEqualTo("/documents/${IntegrationTestBase.PRISON_DOCUMENT_ID}/metadata"))
+        .withHeader("Service-Name", equalTo(SERVICE_NAME))
+        .withHeader("Username", equalTo(USERNAME))
+        .withRequestBody(notContaining("prisonerId"))
+        .willReturn(
+          aResponse()
+            .withHeader("Content-Type", "application/json")
+            .withBody(happyResponse)
+            .withStatus(400),
+        ),
+    )
+  }
+
   fun stubSetFileContentHash() {
     stubFor(
       put(urlPathMatching("/documents/[a-zA-Z0-9\\-]{36}/file-content-hash"))
@@ -108,6 +141,20 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
             .withHeader("Content-Type", "application/json")
             .withBody(happyResponse)
             .withStatus(200),
+        ),
+    )
+  }
+
+  fun stubSetFileContentHashError() {
+    stubFor(
+      put(urlPathMatching("/documents/[a-zA-Z0-9\\-]{36}/file-content-hash"))
+        .withHeader("Service-Name", equalTo(SERVICE_NAME))
+        .withHeader("Username", equalTo(USERNAME))
+        .willReturn(
+          aResponse()
+            .withHeader("Content-Type", "application/json")
+            .withBody(happyResponse)
+            .withStatus(400),
         ),
     )
   }
@@ -126,6 +173,20 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
             .withHeader("Content-Type", contentType)
             .withHeader("Content-Disposition", "attachment; filename=\"test.pdf\"")
             .withBody(fileBytes),
+        ),
+    )
+  }
+
+  fun stubDocumentFindByUuids() {
+    stubFor(
+      post(urlPathMatching("/documents"))
+        .withHeader("Service-Name", equalTo(SERVICE_NAME))
+        .withHeader("Username", equalTo(USERNAME))
+        .willReturn(
+          aResponse()
+            .withHeader(CONTENT_TYPE, APPLICATION_JSON)
+            .withBody(happyDocumentFindByUuids)
+            .withStatus(200),
         ),
     )
   }
@@ -172,5 +233,9 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
       "createdByServiceName": "court-data-ingestion-api",
       "createdByUsername": "AAA01U"
     }
+  """.trimMargin()
+
+  var happyDocumentFindByUuids = """
+    [ $happyResponse ]
   """.trimMargin()
 }

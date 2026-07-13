@@ -10,9 +10,9 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.TestUtil
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsCourtCasesReleaseDatesApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocument
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentHearing
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentView
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtHearing
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.typeReference
 import java.time.LocalDateTime
 import java.util.UUID
@@ -42,7 +42,7 @@ class CourtDocumentControllerIntTest : IntegrationTestBase() {
       assertThat(documents[0].prisonDocumentId).isEqualTo(dbCourtDocument.prisonDocumentId)
       assertThat(documents[0].documentType).isEqualTo(CourtDocumentType.PRISON_COURT_REGISTER)
       assertThat(documents[0].courtHearing).isEqualTo(
-        CourtHearing(
+        CourtDocumentHearing(
           "Central London County Court",
           "First hearing",
           LocalDateTime.of(2026, 6, 4, 11, 0),

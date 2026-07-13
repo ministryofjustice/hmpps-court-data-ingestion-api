@@ -6,8 +6,8 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsCourtCasesReleaseDatesApiClient
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentViewEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocument
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentHearing
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentView
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtHearing
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import java.time.LocalDateTime
 import java.util.UUID
@@ -40,19 +40,22 @@ class CourtDocumentService(
   fun getCourtDocumentsByPersonIdAndPrisonDocumentIds(
     personId: String,
     prisonDocumentIds: List<UUID>,
-  ): List<CourtDocument> = courtDocumentRepository.findByPrisonerNumberAndPrisonDocumentIdIn(personId, prisonDocumentIds).map { document ->
-    CourtDocument(
-      prisonDocumentId = document.prisonDocumentId,
-      caseReferences = document.courtDocumentCases.map { it.caseReference },
-      isUnread = documentNotificationService.isUnread(document),
-      documentType = document.courtDocumentType,
-      courtHearing = document.courtHearing?.let {
-        CourtHearing(
-          it.courtName,
-          it.hearingType,
-          it.hearingDate,
-        )
-      },
-    )
+  ): List<CourtDocument> {
+    val unreadDocumentDateFrom: LocalDateTime = documentNotificationService.getUnreadDocumentDateFrom(personId)
+    return courtDocumentRepository.findByPrisonerNumberAndPrisonDocumentIdIn(personId, prisonDocumentIds).map { document ->
+      CourtDocument(
+        prisonDocumentId = document.prisonDocumentId,
+        caseReferences = document.courtDocumentCases.map { it.caseReference },
+        isUnread = documentNotificationService.isUnread(document, unreadDocumentDateFrom),
+        documentType = document.courtDocumentType,
+        courtHearing = document.courtHearing?.let {
+          CourtDocumentHearing(
+            it.courtName,
+            it.hearingType,
+            it.hearingDate,
+          )
+        },
+      )
+    }
   }
 }

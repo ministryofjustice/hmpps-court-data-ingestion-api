@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.PrisonDocNotificationConfigRepository
+import java.time.LocalDateTime
 import kotlin.jvm.optionals.getOrElse
 
 @Service
@@ -13,23 +14,29 @@ class PrisonDocumentNotificationService(
   private val prisonerSearchService: PrisonerSearchService,
   private val notificationConfigRepository: PrisonDocNotificationConfigRepository,
 ) {
-  fun isUnread(document: CourtDocumentEntity): Boolean {
+  fun isUnread(document: CourtDocumentEntity, unreadDocumentDateFrom: LocalDateTime): Boolean {
     if (document.courtDocumentViews.isNotEmpty()) return false
 
     val prisonerNumber = document.prisonerNumber
 
     if (prisonerNumber.isNullOrBlank()) return true
 
-    val prisonId = prisonerSearchService.getPrison(prisonerNumber)
+    return (document.ingestionAt.isAfter(unreadDocumentDateFrom))
+  }
 
-    if (prisonId.isNullOrBlank()) return true
+  fun getUnreadDocumentDateFrom(prisonerId: String): LocalDateTime {
+    if (prisonerId.isBlank()) return LocalDateTime.MIN
+
+    val prisonId = prisonerSearchService.getPrison(prisonerId)
+
+    if (prisonId.isNullOrBlank()) return LocalDateTime.MIN
 
     val notificationConfig = notificationConfigRepository.findByPrisonId(prisonId).getOrElse {
       log.debug("No notification configuration found for prisonId={} ", prisonId)
-      return true
+      return LocalDateTime.MIN
     }
 
-    return (document.ingestionAt.isAfter(notificationConfig.newDocDateFrom))
+    return notificationConfig.newDocDateFrom
   }
 
   private companion object {

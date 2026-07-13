@@ -4,6 +4,8 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtHearing
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtHearingDocument
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -21,5 +23,21 @@ data class CourtHearingEntity(
   var courtDocuments: MutableList<CourtDocumentEntity>,
   var createdAt: LocalDateTime = LocalDateTime.now(),
   var updatedAt: LocalDateTime = LocalDateTime.now(),
+) {
 
-)
+  fun toCourtHearing(): CourtHearing = CourtHearing(
+    hearingId = hmctsCourtHearingId,
+    courtName = courtName,
+    courtId = courtId,
+    hearingDate = hearingDate,
+    caseReferences = courtDocuments.flatMap { it.courtDocumentCases.map { case -> case.caseReference } }.distinct(),
+    hearingType = hearingType,
+    documents = courtDocuments.map {
+      CourtHearingDocument(
+        it.courtDocumentType,
+        it.prisonDocumentId,
+        it.ingestionAt,
+      )
+    },
+  )
+}

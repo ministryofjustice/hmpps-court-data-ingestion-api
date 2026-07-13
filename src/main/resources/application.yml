@@ -2,6 +2,9 @@ info.app:
   name: HMPPS Court Data Ingestion Api
   version: 1.0
 
+environment:
+  name: ${ENVIRONMENT_NAME}
+
 spring:
   application:
     name: hmpps-court-data-ingestion-api
@@ -33,6 +36,8 @@ spring:
     url: ${spring.datasource.url}
     user: ${spring.datasource.username}
     password: ${spring.datasource.password}
+    placeholders:
+      environment: ${environment.name}
 
   security:
     oauth2:
@@ -147,3 +152,17 @@ extraction:
     error-cooldown: PT3H
   corpus-sampler:
     enabled: false
+  mirror:
+    metadata-version: 1
+
+document:
+  content-normalisation:
+    patterns:
+      - "Register generated on: \\d{2}/\\d{2}/\\d{4}"
+
+core:
+  person:
+    api:
+      stub:
+        enabled: ${CORE_PERSON_STUB_ENABLED:false}
+        prisonernumbers: ${CORE_PERSON_STUB_PRISONERNUMBERS:}

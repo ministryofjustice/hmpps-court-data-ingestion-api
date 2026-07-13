@@ -84,3 +84,6 @@ hmcts-api-config:
   subscription-key: "KEY_1234"
   event-types: "PRISON_COURT_REGISTER_GENERATED, WEE_CustodialSentenceWitness"
   update-subscription-on-startup: true
+
+environment:
+  name: test

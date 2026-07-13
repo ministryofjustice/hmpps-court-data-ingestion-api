@@ -8,6 +8,7 @@ import org.springframework.http.MediaType
 import org.springframework.http.client.MultipartBodyBuilder
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.bodyToMono
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Document
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentApiType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsFile
@@ -125,6 +126,20 @@ class HmppsDocumentManagementApi(
     .bodyToMono(ByteArray::class.java)
     .block()
     ?: error("No file bytes returned for document $documentId")
+
+  fun findByDocumentUuids(documentUuids: Collection<UUID>): Collection<Document> = webClient.post()
+    .uri("/documents")
+    .header("Service-Name", appName)
+    .header("Username", SYSTEM_USERNAME)
+    .accept(MediaType.APPLICATION_JSON)
+    .bodyValue(documentUuids)
+    .retrieve()
+    .rethrowAnyHttpErrorWithContext { response, body ->
+      "Error whilst finding documents by UUIDs (documentUuids=[${documentUuids.joinToString { it.toString() }}], StatusCode=${response.statusCode().value()}, Response=$body)"
+    }
+    .bodyToMono<Collection<Document>>()
+    .block()
+    ?: error("No documents returned")
 
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)

@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.backfill
 
+import java.util.UUID
+
 interface Backfill<T> {
   val id: String
 
@@ -8,6 +10,12 @@ interface Backfill<T> {
   fun selectBatch(cursor: String, batchSize: Int): BackfillBatch<T>
 
   fun process(item: T)
+
+  fun parseCursor(cursor: String): UUID = if (cursor.isEmpty()) ZERO_UUID else UUID.fromString(cursor)
+
+  companion object {
+    private val ZERO_UUID = UUID(0L, 0L)
+  }
 }
 
 data class BackfillBatch<T>(

@@ -53,6 +53,9 @@ data class CourtDocumentEntity(
   @Column(name = "delivery_source")
   var deliverySource: uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.DestinationType? = null,
 
+  @Column(name = "metadata_version")
+  var metadataVersion: Int = 0,
+
   @Column(name = "mirrored_to_doc_store_at")
   var mirroredToDocStoreAt: LocalDateTime? = null,
 
@@ -63,4 +66,8 @@ data class CourtDocumentEntity(
   init {
     courtDocumentCases.forEach { case -> case.courtDocument = this }
   }
+
+  override fun toString(): String = "CourtDocumentEntity(id=$id, prisonDocumentId=$prisonDocumentId, " +
+    "hmctsCourtHearingId=$hmctsCourtHearingId, courtDocumentType=$courtDocumentType, " +
+    "eventType=$eventType, extractedTextSha256=$extractedTextSha256)"
 }
