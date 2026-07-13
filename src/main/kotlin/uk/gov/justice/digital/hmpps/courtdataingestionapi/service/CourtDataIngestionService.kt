@@ -14,11 +14,6 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocume
 import java.time.LocalDateTime
 import java.time.ZoneId
 
-/**
- * Ingests a court document notification: fetch the file, enrich it, persist it, mirror the
- * enrichment to the document store, record hearing data, then hand off to [DefendantMatchingService]
- * to work out who the document is about.
- */
 @Service
 @Transactional
 class CourtDataIngestionService(

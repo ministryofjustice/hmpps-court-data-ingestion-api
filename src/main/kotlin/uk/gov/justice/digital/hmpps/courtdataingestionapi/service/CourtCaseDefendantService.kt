@@ -27,7 +27,7 @@ class CourtCaseDefendantService(
     dateOfBirth: LocalDate?,
   ) {
     val existing = courtCaseDefendantRepository.findById(defendantId).orElse(null)
-    // Changed Master Defendant Id in record (Warn)
+    // Changed Master Defendant Id in record
     if (existing != null) {
       if (existing.masterDefendantId != masterDefendantId) {
         log.warn(
@@ -40,7 +40,7 @@ class CourtCaseDefendantService(
       }
       // Changed Name or DOB
       if (existing.name != name || existing.dateOfBirth != dateOfBirth) {
-        log.info("Identity changed upstream for defendant {} on case {}", defendantId, caseReference)
+        log.warn("Identity changed upstream for defendant {} on case {}", defendantId, caseReference)
       }
     }
 
