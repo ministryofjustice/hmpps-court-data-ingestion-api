@@ -9,12 +9,12 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtDataInges
 import java.util.UUID
 
 @Component
-class ReAnchorUnmatchedDryRunBackfill(
+class ReanchorUnmatchedDryRunBackfill(
   private val courtDocumentRepository: CourtDocumentRepository,
   private val courtDataIngestionService: CourtDataIngestionService,
 ) : Backfill<UUID> {
 
-  override val id = "re-anchor-unmatched-dry-run"
+  override val id = "reanchor-unmatched-dry-run"
   override val concurrency = 4
 
   override fun selectBatch(cursor: String, batchSize: Int): BackfillBatch<UUID> {
@@ -25,7 +25,7 @@ class ReAnchorUnmatchedDryRunBackfill(
   }
 
   override fun process(item: UUID) {
-    val preview = courtDataIngestionService.previewReAttemptMatchForMaster(item) ?: return
+    val preview = courtDataIngestionService.previewReattemptMatchForMaster(item) ?: return
     val wouldMatch = preview.outcome == MatchOutcome.MATCHED_ON_DEFENDANT_ID ||
       preview.outcome == MatchOutcome.MATCHED_ON_MASTER_DEFENDANT_ID
     log.info(
@@ -38,6 +38,6 @@ class ReAnchorUnmatchedDryRunBackfill(
   }
 
   companion object {
-    private val log: Logger = LoggerFactory.getLogger(ReAnchorUnmatchedDryRunBackfill::class.java)
+    private val log: Logger = LoggerFactory.getLogger(ReanchorUnmatchedDryRunBackfill::class.java)
   }
 }

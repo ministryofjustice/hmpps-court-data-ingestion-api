@@ -176,7 +176,7 @@ class CourtDataIngestionService(
     }
   }
 
-  fun reAttemptMatchForMaster(masterDefendantId: UUID): Int {
+  fun reattemptMatchForMaster(masterDefendantId: UUID): Int {
     val documents = unmatchedDocumentsFor(masterDefendantId)
     if (documents.isEmpty()) return 0
 
@@ -213,11 +213,11 @@ class CourtDataIngestionService(
   }
 
   /**
-   * Read-only preview of what re-anchoring a master would record, using only the current store (no
+   * Read-only preview of what reanchoring a master would record, using only the current store (no
    * HMCTS fetch, no writes). Returns the outcome and how many unmatched documents it covers, or null
-   * if the master has none. Used by the re-anchor dry-run backfill.
+   * if the master has none. Used by the reanchor dry-run backfill.
    */
-  fun previewReAttemptMatchForMaster(masterDefendantId: UUID): ReAnchorPreview? {
+  fun previewReattemptMatchForMaster(masterDefendantId: UUID): ReanchorPreview? {
     val documents = unmatchedDocumentsFor(masterDefendantId)
     if (documents.isEmpty()) return null
 
@@ -234,7 +234,7 @@ class CourtDataIngestionService(
     } catch (e: WebClientResponseException) {
       if (HttpStatus.NOT_FOUND.isSameCodeAs(e.statusCode)) MatchOutcome.NO_CORE_PERSON else throw e
     }
-    return ReAnchorPreview(outcome, documents.size)
+    return ReanchorPreview(outcome, documents.size)
   }
 
   private fun unmatchedDocumentsFor(masterDefendantId: UUID): List<CourtDocumentEntity> = courtDocumentRepository.findByMasterDefendantIdIn(listOf(masterDefendantId)).filter { it.prisonerNumber == null }
@@ -277,7 +277,7 @@ class CourtDataIngestionService(
   }
 }
 
-data class ReAnchorPreview(
+data class ReanchorPreview(
   val outcome: MatchOutcome,
   val documentCount: Int,
 )

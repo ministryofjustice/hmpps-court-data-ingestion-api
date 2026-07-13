@@ -8,12 +8,12 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtDataInges
 import java.util.UUID
 
 @Component
-class ReAnchorUnmatchedApplyBackfill(
+class ReanchorUnmatchedApplyBackfill(
   private val courtDocumentRepository: CourtDocumentRepository,
   private val courtDataIngestionService: CourtDataIngestionService,
 ) : Backfill<UUID> {
 
-  override val id = "re-anchor-unmatched-apply"
+  override val id = "reanchor-unmatched-apply"
   override val concurrency = 4
 
   override fun selectBatch(cursor: String, batchSize: Int): BackfillBatch<UUID> {
@@ -24,13 +24,13 @@ class ReAnchorUnmatchedApplyBackfill(
   }
 
   override fun process(item: UUID) {
-    val matched = courtDataIngestionService.reAttemptMatchForMaster(item)
+    val matched = courtDataIngestionService.reattemptMatchForMaster(item)
     if (matched > 0) {
-      log.info("Re-anchored document {}: {} document(s) now match a prisoner", item, matched)
+      log.info("Reanchored document {}: {} document(s) now match a prisoner", item, matched)
     }
   }
 
   companion object {
-    private val log: Logger = LoggerFactory.getLogger(ReAnchorUnmatchedApplyBackfill::class.java)
+    private val log: Logger = LoggerFactory.getLogger(ReanchorUnmatchedApplyBackfill::class.java)
   }
 }
