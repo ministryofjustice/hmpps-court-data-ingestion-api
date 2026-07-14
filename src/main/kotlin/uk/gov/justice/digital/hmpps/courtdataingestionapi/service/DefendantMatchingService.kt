@@ -115,14 +115,6 @@ class DefendantMatchingService(
 
   private fun caseReferencesOf(documents: List<CourtDocumentEntity>): List<String> = documents.flatMap { document -> document.courtDocumentCases.map { it.caseReference } }.distinct()
 
-  /**
-   * Match the notification's id to the defendant id Core Person Record actually keys on.
-   *
-   * When the feature is disabled this returns null, which makes every caller fall back to the id the
-   * notification carried: no HMCTS call, no writes to court_case_defendant, and the same prisoner
-   * lookup the service performed before defendant resolution existed. The only visible difference is
-   * that documents now record a match outcome, which is additive.
-   */
   private fun matchDefendantId(
     masterDefendantId: UUID,
     caseReferences: List<String>,
