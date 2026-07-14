@@ -33,7 +33,7 @@ class FileService(
       file,
       mapOf(
         "source" to "court-data-ingestion-api",
-        "status" to "LIVE",
+        "status" to DOCUMENT_STATUS_ACTIVE,
       ),
     )
   }
@@ -95,5 +95,7 @@ class FileService(
 
   companion object {
     private val log = LoggerFactory.getLogger(FileService::class.java)
+
+    const val DOCUMENT_STATUS_ACTIVE = "ACTIVE"
   }
 }
