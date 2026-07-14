@@ -19,6 +19,7 @@ generic-service:
     HMCTS_COURTHOUSE_API_URL: "https://amp.cjscp.org.uk/rcc"
     HMCTS_COURT_SCHEDULE_API_URL: "https://amp.cjscp.org.uk/slc"
     HMCTS_COURT_DEFENDANT_API_URL: "https://amp.cjscp.org.uk/cdd"
+    FEATURE_DEFENDANT_RESOLUTION: "false"
     HMCTS_AUTH_URL: "https://login.microsoftonline.com/77f54315-6dde-4fe7-9e17-74762c3eb096"
     HMCTS_UPDATE_SUBSCRIPTION_ON_STARTUP: true
     HMCTS_EVENT_TYPES: "ALL_EVENT_TYPES"

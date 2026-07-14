@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import software.amazon.awssdk.services.sns.model.MessageAttributeValue
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmctsCourtDefendantApiClient
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.config.FeatureToggles
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.MatchOutcome
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
@@ -25,6 +26,7 @@ class DefendantMatchingService(
   private val fileService: FileService,
   private val hmppsQueueService: HmppsQueueService,
   private val objectMapper: ObjectMapper,
+  private val featureToggles: FeatureToggles,
 ) {
   private val eventTopic by lazy { hmppsQueueService.findByTopicId("domainevents") as HmppsTopic }
 
@@ -81,8 +83,13 @@ class DefendantMatchingService(
     val defendantIds = corePersonRecordService.findDefendantIdsByPrisonerNumber(prisonerNumber)
     if (defendantIds.isEmpty()) return
 
-    val masterDefendantIds = courtCaseDefendantService.findMasterDefendantIds(defendantIds)
-    courtDocumentRepository.findByMasterDefendantIdIn((masterDefendantIds + defendantIds).distinct())
+    val lookupIds = if (featureToggles.defendantResolution) {
+      (courtCaseDefendantService.findMasterDefendantIds(defendantIds) + defendantIds).distinct()
+    } else {
+      defendantIds
+    }
+
+    courtDocumentRepository.findByMasterDefendantIdIn(lookupIds)
       .forEach { createPrisonerMatch(it, prisonerNumber, MatchOutcome.MATCHED_ON_DEFENDANT_ID) }
   }
 
@@ -108,12 +115,24 @@ class DefendantMatchingService(
 
   private fun caseReferencesOf(documents: List<CourtDocumentEntity>): List<String> = documents.flatMap { document -> document.courtDocumentCases.map { it.caseReference } }.distinct()
 
+  /**
+   * Match the notification's id to the defendant id Core Person Record actually keys on.
+   *
+   * When the feature is disabled this returns null, which makes every caller fall back to the id the
+   * notification carried: no HMCTS call, no writes to court_case_defendant, and the same prisoner
+   * lookup the service performed before defendant resolution existed. The only visible difference is
+   * that documents now record a match outcome, which is additive.
+   */
   private fun matchDefendantId(
     masterDefendantId: UUID,
     caseReferences: List<String>,
     populateOnMiss: Boolean,
-  ): UUID? = caseReferences.firstNotNullOfOrNull {
-    matchDefendantId(masterDefendantId, it, populateOnMiss)
+  ): UUID? {
+    if (!featureToggles.defendantResolution) return null
+
+    return caseReferences.firstNotNullOfOrNull {
+      matchDefendantId(masterDefendantId, it, populateOnMiss)
+    }
   }
 
   private fun matchDefendantId(
