@@ -8,7 +8,6 @@ generic-service:
   env:
     HMPPS_AUTH_URL: "https://sign-in.hmpps.service.justice.gov.uk/auth"
     CORE_PERSON_API_URL: "https://hmpps-person-record.hmpps.service.justice.gov.uk"
-    HMCTS_COURT_DEFENDANT_API_URL: "https://amp.cjscp.org.uk/cdd"
     PRISONER_SEARCH_API_URL: "https://prisoner-search.prison.service.justice.gov.uk"
     HMPPS_DOCUMENT_MANAGEMENT_API_URL: "https://document-api.hmpps.service.justice.gov.uk"
     HMPPS_COURT-CASES-RELEASE-DATES_API_URL: "https://court-cases-release-dates-api.hmpps.service.justice.gov.uk"
@@ -16,6 +15,7 @@ generic-service:
     HMCTS_SUBSCRIPTION_API_URL: "https://amp.cjscp.org.uk/hrds"
     HMCTS_COURTHOUSE_API_URL: "https://amp.cjscp.org.uk/rcc"
     HMCTS_COURT_SCHEDULE_API_URL: "https://amp.cjscp.org.uk/slc"
+    HMCTS_COURT_DEFENDANT_API_URL: "https://amp.cjscp.org.uk/cdd"
     HMCTS_AUTH_URL: "https://login.microsoftonline.com/77f54315-6dde-4fe7-9e17-74762c3eb096"
     HMCTS_UPDATE_SUBSCRIPTION_ON_STARTUP: true
     HMCTS_EVENT_TYPES: "PRISON_COURT_REGISTER_GENERATED, WEE_CustodialSentence, OXE_DetentionAndTraining, WEE_Remand, WEE_RemandAfterBailAppealByProsecutor, WEE_CommittalToCrownCourtForSentence, WEE_CommittalToCrownCourtForConsiderationOfTheQuestionOfBailOnAChargeOfMurder, WEE_CommittalToCrownCourtAuthorityToHoldInYouthDetentionAccommodation, WEE_SendingToCrownCourtForTrial"
