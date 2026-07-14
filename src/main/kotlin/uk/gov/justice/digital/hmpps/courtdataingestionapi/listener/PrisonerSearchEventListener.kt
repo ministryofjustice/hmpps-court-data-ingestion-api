@@ -30,11 +30,16 @@ class PrisonerSearchEventListener(
         val event = objectMapper.readValue<HMPPSPrisonerSearchEvent>(sqsMessage.Message)
         if (event.eventType == "prisoner-offender-search.prisoner.created") {
           log.debug("Received prisoner created event message {}", rawMessage)
-          defendantMatchingService.attemptToMatchForNewPrisoner(event.additionalInformation.nomsNumber)
+          defendantMatchingService.matchDocumentsForPrisoner(event.additionalInformation.nomsNumber)
         } else if (event.eventType == "prisoner-offender-search.prisoner.updated") {
           if (event.additionalInformation.categoriesChanged.contains("PERSONAL_DETAILS")) {
             log.debug("Received prisoner updated event message {}", rawMessage)
-            defendantMatchingService.attemptToMatchForNewPrisoner(event.additionalInformation.nomsNumber)
+            defendantMatchingService.matchDocumentsForPrisoner(event.additionalInformation.nomsNumber)
+          } else {
+            log.debug(
+              "Ignoring prisoner updated event, no PERSONAL_DETAILS change: categories {}",
+              event.additionalInformation.categoriesChanged,
+            )
           }
         } else {
           log.debug("Received unknown message {}", rawMessage)

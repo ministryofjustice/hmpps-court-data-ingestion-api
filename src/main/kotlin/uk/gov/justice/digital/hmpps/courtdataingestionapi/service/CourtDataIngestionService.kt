@@ -56,11 +56,7 @@ class CourtDataIngestionService(
 
     courtHearingService.createOrUpdateCourtHearingData(courtDocumentEntity, enriched.hmtcsApiDataEnrichment)
 
-    defendantMatchingService.resolveDefendantAndMatchPrisoner(
-      courtDocumentEntity,
-      message.masterDefendantId,
-      message.cases.map { it.urn },
-    )
+    defendantMatchingService.matchPrisonerForDocument(courtDocumentEntity)
   }
 
   private fun mirrorEnrichmentToDocumentStore(courtDocumentEntity: CourtDocumentEntity) {

@@ -10,7 +10,7 @@ CREATE TABLE court_case_defendant
 );
 
 -- defendant_id is the key: it identifies the defendant on a case, and identity (name, dob, and
--- later CRO/CRN) is what that case recorded for them. defendant_id is does not change.
+-- later CRO/CRN) is what that case recorded for them. defendant_id does not change.
 -- master_defendant_id and case_reference are references the row carries, so both are plain indexes.
 
 -- (master_defendant_id) and therefore (master_defendant_id, case_reference) is unique in

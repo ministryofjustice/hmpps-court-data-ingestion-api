@@ -25,7 +25,7 @@ class DefendantResolutionBackfill(
 
   override fun process(item: UUID) {
     val masterDefendantId: UUID = item
-    val matchedDocumentCount = defendantMatchingService.resolveDefendantForMasterDefendant(masterDefendantId)
+    val matchedDocumentCount = defendantMatchingService.matchPrisonerForMasterDefendant(masterDefendantId)
     if (matchedDocumentCount > 0) {
       log.info(
         "Resolved defendant for masterDefendantId {}: {} document(s) now match a prisoner",

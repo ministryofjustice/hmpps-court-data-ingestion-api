@@ -28,76 +28,71 @@ class DefendantMatchingService(
 ) {
   private val eventTopic by lazy { hmppsQueueService.findByTopicId("domainevents") as HmppsTopic }
 
-  fun resolveDefendantAndMatchPrisoner(
-    courtDocumentEntity: CourtDocumentEntity,
-    masterDefendantId: UUID,
-    caseReferences: List<String>,
-  ): Boolean {
-    val resolvedDefendantId = resolveDefendantId(masterDefendantId, caseReferences, populateOnMiss = true)
-    val lookup = lookupPrisoner(resolvedDefendantId, masterDefendantId)
+  fun matchPrisonerForDocument(courtDocumentEntity: CourtDocumentEntity): Boolean {
+    val masterDefendantId = courtDocumentEntity.masterDefendantId
+    val defendantId = matchDefendantId(masterDefendantId, caseReferencesOf(listOf(courtDocumentEntity)), populateOnMiss = true)
+    val lookup = lookupPrisoner(defendantId, masterDefendantId)
 
-    val prisonerNumber = matchedPrisonerNumber(lookup)
+    val prisonerNumber = lookup.matchedPrisonerNumber
     if (prisonerNumber == null) {
-      recordOutcome(courtDocumentEntity, nonMatchOutcome(lookup))
+      saveOutcome(courtDocumentEntity, nonMatchOutcome(lookup))
       return false
     }
 
-    createMatch(courtDocumentEntity, prisonerNumber, matchOutcomeFor(resolvedDefendantId))
+    createPrisonerMatch(courtDocumentEntity, prisonerNumber, matchOutcomeFor(defendantId))
     return true
   }
 
-  fun resolveDefendantForMasterDefendant(masterDefendantId: UUID): Int {
+  fun matchPrisonerForMasterDefendant(masterDefendantId: UUID): Int {
     val documents = unmatchedDocumentsFor(masterDefendantId)
     if (documents.isEmpty()) return 0
 
-    val resolvedDefendantId = resolveDefendantId(masterDefendantId, caseReferencesOf(documents), populateOnMiss = true)
-    val lookup = lookupPrisoner(resolvedDefendantId, masterDefendantId)
+    val defendantId = matchDefendantId(masterDefendantId, caseReferencesOf(documents), populateOnMiss = true)
+    val lookup = lookupPrisoner(defendantId, masterDefendantId)
 
-    val prisonerNumber = matchedPrisonerNumber(lookup)
+    val prisonerNumber = lookup.matchedPrisonerNumber
     if (prisonerNumber == null) {
       val outcome = nonMatchOutcome(lookup)
-      documents.forEach { recordOutcome(it, outcome) }
+      documents.forEach { saveOutcome(it, outcome) }
       return 0
     }
 
-    documents.forEach { createMatch(it, prisonerNumber, matchOutcomeFor(resolvedDefendantId)) }
+    documents.forEach { createPrisonerMatch(it, prisonerNumber, matchOutcomeFor(defendantId)) }
     return documents.size
   }
 
-  fun previewResolveDefendantForMasterDefendant(masterDefendantId: UUID): DefendantResolutionPreview? {
+  fun previewMatchPrisonerForMasterDefendant(masterDefendantId: UUID): PrisonerMatchPreview? {
     val documents = unmatchedDocumentsFor(masterDefendantId)
     if (documents.isEmpty()) return null
 
-    val resolvedDefendantId = resolveDefendantId(masterDefendantId, caseReferencesOf(documents), populateOnMiss = false)
-    val lookup = lookupPrisoner(resolvedDefendantId, masterDefendantId)
+    val defendantId = matchDefendantId(masterDefendantId, caseReferencesOf(documents), populateOnMiss = false)
+    val lookup = lookupPrisoner(defendantId, masterDefendantId)
     val outcome = if (lookup.result == PrisonerLookupResult.MATCHED) {
-      matchOutcomeFor(resolvedDefendantId)
+      matchOutcomeFor(defendantId)
     } else {
       nonMatchOutcome(lookup)
     }
-    return DefendantResolutionPreview(outcome, documents.size)
+    return PrisonerMatchPreview(outcome, documents.size)
   }
 
-  fun attemptToMatchForNewPrisoner(prisonerNumber: String) {
+  fun matchDocumentsForPrisoner(prisonerNumber: String) {
     if (courtDocumentRepository.countByPrisonerNumber(prisonerNumber) > 0L) return
 
     val defendantIds = corePersonRecordService.findDefendantIdsByPrisonerNumber(prisonerNumber)
     if (defendantIds.isEmpty()) return
 
-    val resolvedMasterIds = courtCaseDefendantService.findMasterDefendantIds(defendantIds)
-    courtDocumentRepository.findByMasterDefendantIdIn((resolvedMasterIds + defendantIds).distinct())
-      .forEach { createMatch(it, prisonerNumber, MatchOutcome.MATCHED_ON_DEFENDANT_ID) }
+    val masterDefendantIds = courtCaseDefendantService.findMasterDefendantIds(defendantIds)
+    courtDocumentRepository.findByMasterDefendantIdIn((masterDefendantIds + defendantIds).distinct())
+      .forEach { createPrisonerMatch(it, prisonerNumber, MatchOutcome.MATCHED_ON_DEFENDANT_ID) }
   }
 
-  private fun lookupPrisoner(resolvedDefendantId: UUID?, masterDefendantId: UUID): PrisonerLookup = corePersonRecordService.findPrisonerByCommonPlatformId(resolvedDefendantId ?: masterDefendantId)
+  private fun lookupPrisoner(defendantId: UUID?, masterDefendantId: UUID): PrisonerLookup = corePersonRecordService.findPrisonerByCommonPlatformId(defendantId ?: masterDefendantId)
 
-  private fun matchOutcomeFor(resolvedDefendantId: UUID?): MatchOutcome = if (resolvedDefendantId != null) {
+  private fun matchOutcomeFor(defendantId: UUID?): MatchOutcome = if (defendantId != null) {
     MatchOutcome.MATCHED_ON_DEFENDANT_ID
   } else {
     MatchOutcome.MATCHED_ON_MASTER_DEFENDANT_ID
   }
-
-  private fun matchedPrisonerNumber(lookup: PrisonerLookup): String? = if (lookup.result == PrisonerLookupResult.MATCHED) lookup.prisonerNumber else null
 
   private fun nonMatchOutcome(lookup: PrisonerLookup): MatchOutcome = when (lookup.result) {
     PrisonerLookupResult.NO_CORE_PERSON -> MatchOutcome.NO_CORE_PERSON
@@ -113,23 +108,25 @@ class DefendantMatchingService(
 
   private fun caseReferencesOf(documents: List<CourtDocumentEntity>): List<String> = documents.flatMap { document -> document.courtDocumentCases.map { it.caseReference } }.distinct()
 
-  private fun resolveDefendantId(
+  private fun matchDefendantId(
     masterDefendantId: UUID,
     caseReferences: List<String>,
     populateOnMiss: Boolean,
   ): UUID? = caseReferences.firstNotNullOfOrNull {
-    ensureStoredAndResolveDefendantId(masterDefendantId, it, populateOnMiss)
+    matchDefendantId(masterDefendantId, it, populateOnMiss)
   }
 
-  private fun ensureStoredAndResolveDefendantId(
+  private fun matchDefendantId(
     masterDefendantId: UUID,
     caseReference: String,
     populateOnMiss: Boolean,
   ): UUID? {
-    courtCaseDefendantService.findDefendantId(masterDefendantId, caseReference)
-      ?.let { return it }
+    courtCaseDefendantService.findDefendantId(masterDefendantId, caseReference)?.let { return it }
     if (!populateOnMiss) return null
+    return createDefendantMatch(masterDefendantId, caseReference)
+  }
 
+  private fun createDefendantMatch(masterDefendantId: UUID, caseReference: String): UUID? {
     val defendants = hmctsCourtDefendantApiClient.getDefendants(caseReference)
     defendants.forEach {
       courtCaseDefendantService.upsert(it.defendantId, caseReference, it.masterDefendantId, it.name, it.dateOfBirth)
@@ -138,12 +135,12 @@ class DefendantMatchingService(
       ?: defendants.firstOrNull { it.defendantId == masterDefendantId }?.defendantId
   }
 
-  private fun recordOutcome(courtDocumentEntity: CourtDocumentEntity, outcome: MatchOutcome) {
+  private fun saveOutcome(courtDocumentEntity: CourtDocumentEntity, outcome: MatchOutcome) {
     courtDocumentEntity.matchOutcome = outcome
     courtDocumentRepository.save(courtDocumentEntity)
   }
 
-  private fun createMatch(
+  private fun createPrisonerMatch(
     courtDocumentEntity: CourtDocumentEntity,
     prisonerNumber: String,
     matchOutcome: MatchOutcome,
@@ -181,7 +178,7 @@ class DefendantMatchingService(
   }
 }
 
-data class DefendantResolutionPreview(
+data class PrisonerMatchPreview(
   val outcome: MatchOutcome,
   val documentCount: Int,
 )

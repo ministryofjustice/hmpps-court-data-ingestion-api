@@ -25,7 +25,8 @@ class DefendantResolutionDryRunBackfill(
   }
 
   override fun process(item: UUID) {
-    val preview = defendantMatchingService.previewResolveDefendantForMasterDefendant(item) ?: return
+    val masterDefendantId: UUID = item
+    val preview = defendantMatchingService.previewMatchPrisonerForMasterDefendant(masterDefendantId) ?: return
     val wouldMatch = preview.outcome == MatchOutcome.MATCHED_ON_DEFENDANT_ID ||
       preview.outcome == MatchOutcome.MATCHED_ON_MASTER_DEFENDANT_ID
     log.info(

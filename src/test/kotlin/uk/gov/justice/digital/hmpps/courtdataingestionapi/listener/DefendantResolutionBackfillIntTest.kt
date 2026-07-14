@@ -34,14 +34,11 @@ class DefendantResolutionBackfillIntTest : IntegrationTestBase() {
     assertThat(before.prisonerNumber).isNull()
     assertThat(before.matchOutcome).isEqualTo(MatchOutcome.NO_CORE_PERSON)
 
-    // 2. the store now resolves (master, case) -> defendant, and CPR knows that defendant
     courtCaseDefendantService.upsert(defendantId, CASE_REFERENCE, masterDefendantId, "Some One", dob)
     CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantId, listOf("RES900"))
 
-    // 3. defendant resolution by master (matches every unmatched document for the person in one resolution)
-    val matched = defendantMatchingService.resolveDefendantForMasterDefendant(masterDefendantId)
+    val matched = defendantMatchingService.matchPrisonerForMasterDefendant(masterDefendantId)
 
-    // 4. it now matches, on the defendant id
     assertThat(matched).isEqualTo(1)
     val after = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(masterDefendantId)!!
     assertThat(after.prisonerNumber).isEqualTo("RES900")
@@ -60,7 +57,7 @@ class DefendantResolutionBackfillIntTest : IntegrationTestBase() {
     val doc = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(masterDefendantId)!!
     assertThat(doc.prisonerNumber).isEqualTo("RES901")
 
-    val matched = defendantMatchingService.resolveDefendantForMasterDefendant(masterDefendantId)
+    val matched = defendantMatchingService.matchPrisonerForMasterDefendant(masterDefendantId)
 
     assertThat(matched).isEqualTo(0)
   }

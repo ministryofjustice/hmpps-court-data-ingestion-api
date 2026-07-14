@@ -15,9 +15,11 @@ enum class PrisonerLookupResult {
 
 data class PrisonerLookup(
   val result: PrisonerLookupResult,
-  val prisonerNumber: String? = null,
   val prisonerNumbers: List<String> = emptyList(),
-)
+) {
+  val matchedPrisonerNumber: String?
+    get() = if (result == PrisonerLookupResult.MATCHED) prisonerNumbers.single() else null
+}
 
 @Service
 class CorePersonRecordService(
@@ -37,8 +39,8 @@ class CorePersonRecordService(
 
     val prisonNumbers = person.identifiers.prisonNumbers
     return when {
-      prisonNumbers.size == 1 -> PrisonerLookup(PrisonerLookupResult.MATCHED, prisonerNumber = prisonNumbers.first())
-      prisonNumbers.size > 1 -> PrisonerLookup(PrisonerLookupResult.MULTIPLE_PRISON_NUMBERS, prisonerNumbers = prisonNumbers)
+      prisonNumbers.size == 1 -> PrisonerLookup(PrisonerLookupResult.MATCHED, prisonNumbers)
+      prisonNumbers.size > 1 -> PrisonerLookup(PrisonerLookupResult.MULTIPLE_PRISON_NUMBERS, prisonNumbers)
       else -> PrisonerLookup(PrisonerLookupResult.NO_PRISON_NUMBER)
     }
   }
