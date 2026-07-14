@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Docume
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentApiType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsFile
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.ResponseUtils.rethrowAnyHttpErrorWithContext
+import java.io.Serializable
 import java.util.UUID
 
 @Component
@@ -56,14 +57,14 @@ class HmppsDocumentManagementApi(
     return prisonDocument
   }
 
-  fun updateMetadata(documentId: UUID, metadata: Map<String, String> = mapOf()): Document = webClient
+  fun updateMetadata(documentId: UUID, metadata: Map<String, Serializable> = mapOf()): Document = webClient
     .put()
     .uri("/documents/$documentId/metadata")
     .header("Service-Name", appName)
     .header("Username", SYSTEM_USERNAME)
     .bodyValue(metadata)
     .retrieve()
-    .bodyToMono(Document::class.java)
+    .bodyToMono<Document>()
     .block()!!
 
   fun getDocument(documentId: UUID): Document = webClient
@@ -80,7 +81,7 @@ class HmppsDocumentManagementApi(
     .block()
     ?: error("No document returned for $documentId")
 
-  fun mergeMetadata(documentId: UUID, updates: Map<String, String>): Document {
+  fun mergeMetadata(documentId: UUID, updates: Map<String, Serializable>): Document {
     if (updates.isEmpty()) return getDocument(documentId)
     return updateMetadata(documentId, getDocument(documentId).metadata + updates)
   }

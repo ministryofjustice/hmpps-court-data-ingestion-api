@@ -52,9 +52,9 @@ class CourtDataIngestionService(
       ).applyEnrichment(enriched),
     )
 
-    mirrorEnrichmentToDocumentStore(courtDocumentEntity)
-
     courtHearingService.createOrUpdateCourtHearingData(courtDocumentEntity, enriched.hmtcsApiDataEnrichment)
+
+    mirrorEnrichmentToDocumentStore(courtDocumentEntity)
 
     defendantMatchingService.matchPrisonerForDocument(courtDocumentEntity)
   }

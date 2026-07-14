@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Docume
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentApiType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.SubscriptionRepository
 import java.util.UUID
+import kotlin.emptyArray
 
 @Service
 @Transactional
@@ -61,6 +62,10 @@ class FileService(
 
     val metadata = buildMap {
       document.deliverySource?.let { put("deliverySource", it.name) }
+      put("documentSubType", document.courtDocumentType.name)
+      // TODO (CDIA-173): Update courtCode mapping, using courtId for now as a place holder
+      document.courtHearing?.courtId.let { put("courtCode", it.toString()) }
+      put("caseReferences", document.courtHearing?.toCourtHearing()?.caseReferences?.toTypedArray() ?: emptyArray<String>())
     }
     val metadataOutcome = if (metadata.isNotEmpty()) {
       runCatching { hmppsDocumentManagementApi.mergeMetadata(document.prisonDocumentId, metadata) }
