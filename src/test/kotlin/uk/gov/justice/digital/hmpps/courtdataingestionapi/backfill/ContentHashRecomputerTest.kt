@@ -80,7 +80,7 @@ class ContentHashRecomputerTest {
   }
 
   private fun sampleWarrant(extractedTextSha: String?): CourtDocumentEntity = CourtDocumentEntity(
-    defendantId = UUID.randomUUID(),
+    masterDefendantId = UUID.randomUUID(),
     hmctsCourtDocumentId = UUID.randomUUID(),
     prisonDocumentId = UUID.randomUUID(),
     hmctsCourtHearingId = UUID.fromString("509b295e-22d1-4cc0-9925-d5690503ce3c"),

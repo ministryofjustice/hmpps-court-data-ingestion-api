@@ -18,7 +18,7 @@ class CourtDataIngestionServiceTest : IntegrationTestBase() {
   private lateinit var jdbcTemplate: JdbcTemplate
 
   @Autowired
-  lateinit var courtDataIngestionService: CourtDataIngestionService
+  lateinit var defendantMatchingService: DefendantMatchingService
 
   @BeforeEach
   fun setUp() {

@@ -19,7 +19,7 @@ import java.util.UUID
 data class CourtDocumentEntity(
   @Id
   val id: UUID = UUID.randomUUID(),
-  var defendantId: UUID,
+  var masterDefendantId: UUID,
   var hmctsCourtDocumentId: UUID,
   var prisonDocumentId: UUID,
   var hmctsCourtHearingId: UUID?,
@@ -62,6 +62,10 @@ data class CourtDocumentEntity(
   // Updated once identified
   var prisonerNumber: String? = null,
   var identifiedAt: LocalDateTime? = null,
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "match_outcome")
+  var matchOutcome: MatchOutcome? = null,
 ) {
   init {
     courtDocumentCases.forEach { case -> case.courtDocument = this }
