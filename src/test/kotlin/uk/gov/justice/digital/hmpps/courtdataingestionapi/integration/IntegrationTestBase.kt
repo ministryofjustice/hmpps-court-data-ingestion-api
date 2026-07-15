@@ -130,11 +130,14 @@ abstract class IntegrationTestBase {
     hmppsAuth.stubHealthPing(status)
   }
 
-  protected fun sendSubscriptionNotification(defendantId: UUID): HmctsSubscriptionNotificationRequestBody {
+  protected fun sendSubscriptionNotification(
+    defendantId: UUID,
+    documentId: UUID = COURT_DOCUMENT_ID,
+  ): HmctsSubscriptionNotificationRequestBody {
     val event =
       HmctsSubscriptionNotificationRequestBody(
         masterDefendantId = defendantId,
-        documentId = COURT_DOCUMENT_ID,
+        documentId = documentId,
         cases = listOf(
           HmctsCase(CASE_REFERENCE),
         ),
