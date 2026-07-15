@@ -5,6 +5,7 @@ import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.Test
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.MatchOutcome
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.hmpps.sqs.countMessagesOnQueue
 import java.util.UUID
@@ -30,10 +31,11 @@ class PrisonerSearchEventListenerIntTest : IntegrationTestBase() {
     assertThat(latestMessage).contains(COURT_DOCUMENT_ID.toString())
     assertThat(latestMessage).contains(PRISON_DOCUMENT_ID.toString())
 
-    val file = courtDocumentRepository.findFirstByDefendantIdOrderByIngestionAtDesc(DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION)!!
+    val file = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION)!!
 
     assertThat(file.prisonerNumber).isEqualTo(PRISONER_NUMBER_WITH_MATCH)
     assertThat(file.identifiedAt).isNotNull
+    assertThat(file.matchOutcome).isEqualTo(MatchOutcome.MATCHED_ON_DEFENDANT_ID)
   }
 
   @Test
@@ -53,10 +55,11 @@ class PrisonerSearchEventListenerIntTest : IntegrationTestBase() {
     assertThat(latestMessage).contains(COURT_DOCUMENT_ID.toString())
     assertThat(latestMessage).contains(PRISON_DOCUMENT_ID.toString())
 
-    val file = courtDocumentRepository.findFirstByDefendantIdOrderByIngestionAtDesc(DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION)!!
+    val file = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION)!!
 
     assertThat(file.prisonerNumber).isEqualTo(PRISONER_NUMBER_WITH_MATCH)
     assertThat(file.identifiedAt).isNotNull
+    assertThat(file.matchOutcome).isEqualTo(MatchOutcome.MATCHED_ON_DEFENDANT_ID)
   }
 
   @Test
@@ -67,7 +70,7 @@ class PrisonerSearchEventListenerIntTest : IntegrationTestBase() {
     // Later a prisoner is created matching the file created above.
     sendPrisonerUpdatedMessage(PRISONER_NUMBER_WITH_MATCH, listOf("SENTENCE"))
 
-    val file = courtDocumentRepository.findFirstByDefendantIdOrderByIngestionAtDesc(DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION)!!
+    val file = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION)!!
 
     assertThat(file.prisonerNumber).isNull()
     assertThat(file.identifiedAt).isNull()

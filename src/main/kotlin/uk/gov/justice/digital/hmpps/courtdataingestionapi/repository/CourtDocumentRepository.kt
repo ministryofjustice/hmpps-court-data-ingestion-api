@@ -10,9 +10,9 @@ import java.util.UUID
 
 @Repository
 interface CourtDocumentRepository : JpaRepository<CourtDocumentEntity, UUID> {
-  fun countByDefendantId(defendantId: UUID): Long
-  fun findFirstByDefendantIdOrderByIngestionAtDesc(defendantId: UUID): CourtDocumentEntity?
-  fun findByDefendantIdIn(defendantIds: List<UUID>): List<CourtDocumentEntity>
+  fun countByMasterDefendantId(masterDefendantId: UUID): Long
+  fun findFirstByMasterDefendantIdOrderByIngestionAtDesc(masterDefendantId: UUID): CourtDocumentEntity?
+  fun findByMasterDefendantIdIn(masterDefendantIds: List<UUID>): List<CourtDocumentEntity>
   fun countByPrisonerNumber(prisonerNumber: String): Long
   fun findByPrisonerNumber(prisonerNumber: String): List<CourtDocumentEntity>
   fun findByPrisonerNumberAndPrisonDocumentIdIn(personId: String, prisonDocumentIds: List<UUID>): List<CourtDocumentEntity>
@@ -72,7 +72,8 @@ interface CourtDocumentRepository : JpaRepository<CourtDocumentEntity, UUID> {
       SELECT *
       FROM court_document
       WHERE id > :afterId
-        AND extracted_text_sha256 IS NOT NULL
+        AND (metadata_version < :metadataVersion
+          OR extracted_text_sha256 IS NOT NULL)
       ORDER BY id
       LIMIT :limit
     """,
@@ -80,6 +81,23 @@ interface CourtDocumentRepository : JpaRepository<CourtDocumentEntity, UUID> {
   )
   fun findUnmirroredAfter(
     @Param("afterId") afterId: UUID,
+    @Param("metadataVersion") metadataVersion: Int,
     @Param("limit") limit: Int,
   ): List<CourtDocumentEntity>
+
+  @Query(
+    value = """
+      SELECT DISTINCT master_defendant_id
+      FROM court_document
+      WHERE prisoner_number IS NULL
+      AND master_defendant_id > :afterId
+      ORDER BY master_defendant_id
+      LIMIT :limit
+    """,
+    nativeQuery = true,
+  )
+  fun findUnmatchedMasterDefendantIdsAfter(
+    @Param("afterId") afterId: UUID,
+    @Param("limit") limit: Int,
+  ): List<UUID>
 }

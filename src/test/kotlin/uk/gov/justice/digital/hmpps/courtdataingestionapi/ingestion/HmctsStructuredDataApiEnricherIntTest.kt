@@ -18,7 +18,7 @@ class HmctsStructuredDataApiEnricherIntTest : IntegrationTestBase() {
   fun `Test receiving a message from the queue will lookup data`() {
     sendSubscriptionNotification(MATCHING_CORE_PERSON)
 
-    val file = courtDocumentRepository.findFirstByDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
+    val file = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
 
     assertThat(file.courtHearing).isNotNull
     assertThat(file.courtHearing!!.courtId.toString()).isEqualTo(HmctsSubcriptionApiMockServer.TEST_HMCTS_COURTHOUSE_ID)
@@ -29,10 +29,10 @@ class HmctsStructuredDataApiEnricherIntTest : IntegrationTestBase() {
   @Test
   fun `Test receiving a message from the queue will replace existing hearing `() {
     sendSubscriptionNotification(MATCHING_CORE_PERSON)
-    val fileOne = courtDocumentRepository.findFirstByDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
+    val fileOne = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
     val created = fileOne.courtHearing!!.createdAt
     sendSubscriptionNotification(MATCHING_CORE_PERSON)
-    val fileTwo = courtDocumentRepository.findFirstByDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
+    val fileTwo = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
     val updated = fileTwo.courtHearing!!.updatedAt
     assertThat(updated > created).isTrue
     assertThat(fileOne.courtHearing!!.id).isEqualTo(fileTwo.courtHearing!!.id)

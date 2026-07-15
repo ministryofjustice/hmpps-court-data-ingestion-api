@@ -8,12 +8,12 @@ import io.awspring.cloud.sqs.annotation.SqsListener
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtDataIngestionService
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.DefendantMatchingService
 
 @Service
 class PrisonerSearchEventListener(
   private val objectMapper: ObjectMapper,
-  private val courtDataIngestionService: CourtDataIngestionService,
+  private val defendantMatchingService: DefendantMatchingService,
 ) {
 
   companion object {
@@ -30,11 +30,16 @@ class PrisonerSearchEventListener(
         val event = objectMapper.readValue<HMPPSPrisonerSearchEvent>(sqsMessage.Message)
         if (event.eventType == "prisoner-offender-search.prisoner.created") {
           log.debug("Received prisoner created event message {}", rawMessage)
-          courtDataIngestionService.attemptToMatchForNewPrisoner(event.additionalInformation.nomsNumber)
+          defendantMatchingService.matchDocumentsForPrisoner(event.additionalInformation.nomsNumber)
         } else if (event.eventType == "prisoner-offender-search.prisoner.updated") {
           if (event.additionalInformation.categoriesChanged.contains("PERSONAL_DETAILS")) {
             log.debug("Received prisoner updated event message {}", rawMessage)
-            courtDataIngestionService.attemptToMatchForNewPrisoner(event.additionalInformation.nomsNumber)
+            defendantMatchingService.matchDocumentsForPrisoner(event.additionalInformation.nomsNumber)
+          } else {
+            log.debug(
+              "Ignoring prisoner updated event, no PERSONAL_DETAILS change: categories {}",
+              event.additionalInformation.categoriesChanged,
+            )
           }
         } else {
           log.debug("Received unknown message {}", rawMessage)

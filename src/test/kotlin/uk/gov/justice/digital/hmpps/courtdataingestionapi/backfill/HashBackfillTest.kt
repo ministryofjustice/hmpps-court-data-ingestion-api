@@ -30,7 +30,7 @@ class HashBackfillTest {
   private val pdfTextExtractor: PdfTextExtractor = mock()
   private val normaliser: ExtractedTextNormaliser = mock()
 
-  private val backfill = HashBackfill(repository, documentManagementApi, fileService, pdfTextExtractor, normaliser)
+  private val backfill = HashBackfill(repository, documentManagementApi, fileService, pdfTextExtractor, normaliser, METADATA_VERSION)
 
   @Test
   fun `selectBatch delegates to findUnhashedAfter and advances the cursor`() {
@@ -57,6 +57,7 @@ class HashBackfillTest {
 
     assertThat(item.downloadedFileSha256).isEqualTo(Sha256.hex(bytes))
     assertThat(item.extractedTextSha256).isEqualTo("normalised-hash")
+    assertThat(item.metadataVersion).isEqualTo(METADATA_VERSION)
     verify(documentManagementApi, org.mockito.kotlin.times(1)).downloadFile(item.prisonDocumentId)
     verify(repository, org.mockito.kotlin.times(2)).save(item)
   }
@@ -64,6 +65,7 @@ class HashBackfillTest {
   @Test
   fun `process does not download when both hashes are already present`() {
     val item = sampleWarrant(downloadedFileSha = "already-set", extractedTextSha = "already-set-too")
+    val initialMetadataVersion = item.metadataVersion
     whenever(fileService.mirrorEnrichmentToDocumentStore(item))
       .thenReturn(FileService.MirrorOutcome(contentHashPushed = true, metadataPushed = true))
 
@@ -72,11 +74,14 @@ class HashBackfillTest {
     verify(documentManagementApi, never()).downloadFile(any())
     assertThat(item.downloadedFileSha256).isEqualTo("already-set")
     assertThat(item.extractedTextSha256).isEqualTo("already-set-too")
+    assertThat(initialMetadataVersion).isLessThan(METADATA_VERSION)
+    assertThat(item.metadataVersion).isEqualTo(METADATA_VERSION)
   }
 
   @Test
   fun `process leaves content hash unset when extraction yields no text, but still sets file hash`() {
     val item = sampleWarrant(downloadedFileSha = null, extractedTextSha = null)
+    val initialMetadataVersion = item.metadataVersion
     val bytes = "not-really-a-pdf".toByteArray()
     whenever(documentManagementApi.downloadFile(item.prisonDocumentId)).thenReturn(bytes)
     whenever(pdfTextExtractor.extractText(bytes)).thenReturn(null)
@@ -87,30 +92,38 @@ class HashBackfillTest {
 
     assertThat(item.downloadedFileSha256).isEqualTo(Sha256.hex(bytes))
     assertThat(item.extractedTextSha256).isNull()
+    assertThat(initialMetadataVersion).isLessThan(METADATA_VERSION)
+    assertThat(item.metadataVersion).isEqualTo(METADATA_VERSION)
     verify(normaliser, never()).getNormalisedHash(any())
   }
 
   @Test
-  fun `process throws and does not mark mirrored on mirror failure`() {
+  fun `process throws and does not update metadata version or as mark mirrored on mirror failure`() {
     val item = sampleWarrant(downloadedFileSha = "set", extractedTextSha = "set")
+    val initialMetadataVersion = item.metadataVersion
     val failure = RuntimeException("doc store 503")
     whenever(fileService.mirrorEnrichmentToDocumentStore(item)).thenReturn(
       FileService.MirrorOutcome(contentHashPushed = false, metadataPushed = true, contentHashError = failure),
     )
 
     assertThatThrownBy { backfill.process(item) }.isEqualTo(failure)
-    assertThat(item.mirroredToDocStoreAt).isNull()
+    assertThat(item.metadataVersion).isLessThan(METADATA_VERSION)
+    assertThat(item.metadataVersion).isEqualTo(initialMetadataVersion)
+    assertThat(item.metadataUpdatedAt).isNull()
   }
 
   @Test
-  fun `process marks mirroredToDocStoreAt on full success`() {
+  fun `process updates metadata version and marks metadataUpdatedAt on full success`() {
     val item = sampleWarrant(downloadedFileSha = "set", extractedTextSha = "set")
+    val initialMetadataVersion = item.metadataVersion
     whenever(fileService.mirrorEnrichmentToDocumentStore(item))
       .thenReturn(FileService.MirrorOutcome(contentHashPushed = true, metadataPushed = true))
 
     backfill.process(item)
 
-    assertThat(item.mirroredToDocStoreAt).isNotNull
+    assertThat(initialMetadataVersion).isLessThan(METADATA_VERSION)
+    assertThat(item.metadataVersion).isEqualTo(METADATA_VERSION)
+    assertThat(item.metadataUpdatedAt).isNotNull
   }
 
   @Test
@@ -119,9 +132,10 @@ class HashBackfillTest {
     val realNormaliser = ExtractedTextNormaliser(
       ContentNormalisationProperties(patterns = listOf("Register generated on: \\d{2}/\\d{2}/\\d{4}")),
     )
-    val backfillWithRealComponents = HashBackfill(repository, documentManagementApi, fileService, realExtractor, realNormaliser)
+    val backfillWithRealComponents = HashBackfill(repository, documentManagementApi, fileService, realExtractor, realNormaliser, METADATA_VERSION)
 
     val item = sampleWarrant(downloadedFileSha = null, extractedTextSha = null)
+    val initialMetadataVersion = item.metadataVersion
     val bytes = readFixtureBytes("example-register.pdf")
     whenever(documentManagementApi.downloadFile(item.prisonDocumentId)).thenReturn(bytes)
     whenever(fileService.mirrorEnrichmentToDocumentStore(item))
@@ -132,10 +146,12 @@ class HashBackfillTest {
     val expectedText = checkNotNull(realExtractor.extractText(bytes))
     assertThat(item.downloadedFileSha256).isEqualTo(Sha256.hex(bytes))
     assertThat(item.extractedTextSha256).isEqualTo(realNormaliser.getNormalisedHash(expectedText))
+    assertThat(initialMetadataVersion).isLessThan(METADATA_VERSION)
+    assertThat(item.metadataVersion).isEqualTo(METADATA_VERSION)
   }
 
   private fun sampleWarrant(downloadedFileSha: String?, extractedTextSha: String?): CourtDocumentEntity = CourtDocumentEntity(
-    defendantId = UUID.randomUUID(),
+    masterDefendantId = UUID.randomUUID(),
     hmctsCourtDocumentId = UUID.randomUUID(),
     prisonDocumentId = UUID.randomUUID(),
     hmctsCourtHearingId = UUID.fromString("509b295e-22d1-4cc0-9925-d5690503ce3c"),
@@ -154,5 +170,9 @@ class HashBackfillTest {
       "Test fixture PDF not found on classpath at /test-fixtures/$name"
     }
     return stream.use { it.readBytes() }
+  }
+
+  companion object {
+    const val METADATA_VERSION: Int = 1
   }
 }

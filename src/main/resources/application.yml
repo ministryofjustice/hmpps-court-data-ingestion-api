@@ -94,6 +94,13 @@ spring:
             client-id: ${client.creds.client.id}
             client-secret: ${client.creds.client.secret}
             authorization-grant-type: client_credentials
+          hmcts-court-defendant-api:
+            provider: hmcts-auth
+            client-id: ${hmcts.client.creds.client.id}
+            client-secret: ${hmcts.client.creds.client.secret}
+            authorization-grant-type: client_credentials
+            scope:
+              - ${hmcts.client.creds.client.court.defendant.scope:defendant.read}
   http:
     codecs:
       max-in-memory-size: 10MB
@@ -144,6 +151,7 @@ hmcts-api-config:
   update-subscription-on-startup: ${HMCTS_UPDATE_SUBSCRIPTION_ON_STARTUP}
   courthouse-key: ${HMCTS_COURTHOUSE_KEY}
   court-schedule-key: ${HMCTS_COURT_SCHEDULE_KEY}
+  court-defendant-key: ${HMCTS_COURT_DEFENDANT_KEY:}
 
 extraction:
   backfill:
@@ -159,6 +167,9 @@ document:
   content-normalisation:
     patterns:
       - "Register generated on: \\d{2}/\\d{2}/\\d{4}"
+
+feature-toggles:
+  defendant-resolution: ${DEFENDANT_RESOLUTION_ENABLED:true}
 
 core:
   person:

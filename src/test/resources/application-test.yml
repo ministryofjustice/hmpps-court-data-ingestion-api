@@ -35,6 +35,9 @@ hmcts:
     schedule:
       api:
         url: http://localhost:8337
+    defendant:
+      api:
+        url: http://localhost:8339
 
 hmpps.document:
   management:
@@ -87,3 +90,6 @@ hmcts-api-config:
 
 environment:
   name: test
+
+feature-toggles:
+  defendant-resolution: true
