@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEn
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Document
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentApiType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.SubscriptionRepository
+import java.io.Serializable
 import java.util.UUID
 import kotlin.emptyArray
 
@@ -60,13 +61,7 @@ class FileService(
           }
       }
 
-    val metadata = buildMap {
-      document.deliverySource?.let { put("deliverySource", it.name) }
-      put("documentSubType", document.courtDocumentType.name)
-      // TODO (CDIA-173): Update courtCode mapping, using courtId for now as a place holder
-      document.courtHearing?.courtId.let { put("courtCode", it.toString()) }
-      put("caseReferences", document.courtHearing?.toCourtHearing()?.caseReferences?.toTypedArray() ?: emptyArray<String>())
-    }
+    val metadata = buildMirrorEnrichmentMetadata(document)
     val metadataOutcome = if (metadata.isNotEmpty()) {
       runCatching { hmppsDocumentManagementApi.mergeMetadata(document.prisonDocumentId, metadata) }
         .onFailure {
@@ -87,6 +82,14 @@ class FileService(
       contentHashError = contentHashOutcome?.exceptionOrNull(),
       metadataError = metadataOutcome?.exceptionOrNull(),
     )
+  }
+
+  fun buildMirrorEnrichmentMetadata(document: CourtDocumentEntity): Map<String, Serializable> = buildMap {
+    document.deliverySource?.let { put("deliverySource", it.name) }
+    put("documentSubType", document.courtDocumentType.name)
+    // TODO (CDIA-173): Update courtCode mapping, using courtId for now as a place holder
+    document.courtHearing?.let { put("courtCode", it.courtId.toString()) }
+    put("caseReferences", document.courtHearing?.toCourtHearing()?.caseReferences?.toTypedArray() ?: emptyArray<String>())
   }
 
   data class MirrorOutcome(
