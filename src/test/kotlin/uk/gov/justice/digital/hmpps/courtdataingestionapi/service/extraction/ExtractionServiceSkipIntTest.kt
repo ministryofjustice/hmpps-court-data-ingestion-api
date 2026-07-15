@@ -3,11 +3,13 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.service.extraction
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.test.context.TestPropertySource
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsDocumentManagementApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.ExtractionResultRepository
 import java.util.UUID
 
+@TestPropertySource(properties = ["feature-toggles.structured-extraction=true"])
 class ExtractionServiceSkipIntTest : IntegrationTestBase() {
 
   @Autowired
