@@ -4,7 +4,6 @@ import org.springframework.boot.actuate.endpoint.annotation.Endpoint
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation
 import org.springframework.boot.actuate.endpoint.annotation.Selector
 import org.springframework.boot.actuate.endpoint.annotation.WriteOperation
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.lang.Nullable
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.backfill.BackfillRegistry
@@ -99,12 +98,6 @@ class HashBackfillCompatEndpoint(private val endpoint: BackfillEndpoint) {
 
 @Component
 @Endpoint(id = "extractionbackfill")
-@ConditionalOnProperty(
-  prefix = "extraction.structured",
-  name = ["enabled"],
-  havingValue = "true",
-  matchIfMissing = false,
-)
 class ExtractionBackfillCompatEndpoint(private val endpoint: BackfillEndpoint) {
   @WriteOperation
   fun trigger(@Nullable triggeredBy: String?): BackfillEndpoint.TriggerResponse = endpoint.trigger("extraction", triggeredBy)

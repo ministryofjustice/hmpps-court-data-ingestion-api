@@ -10,12 +10,6 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.extraction.Ext
 
 @Component
 @Order(700)
-@ConditionalOnProperty(
-  prefix = "extraction.structured",
-  name = ["enabled"],
-  havingValue = "true",
-  matchIfMissing = false,
-)
 class ExtractStructuredData(
   private val extractionService: ExtractionService,
 ) : IngestionEnricher {
