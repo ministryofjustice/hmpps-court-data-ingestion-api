@@ -4,6 +4,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.test.context.TestPropertySource
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.ExtractionResultEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
@@ -15,6 +16,7 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.util.UUID
 
+@TestPropertySource(properties = ["feature-toggles.structured-extraction=true"])
 class ExtractionThresholdIntTest : IntegrationTestBase() {
 
   @Autowired

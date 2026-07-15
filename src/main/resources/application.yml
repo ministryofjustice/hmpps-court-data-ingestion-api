@@ -172,6 +172,7 @@ document:
 
 feature-toggles:
   defendant-resolution: ${DEFENDANT_RESOLUTION_ENABLED:true}
+  structured-extraction: ${STRUCTURED_EXTRACTION_ENABLED:false}
 
 core:
   person:
