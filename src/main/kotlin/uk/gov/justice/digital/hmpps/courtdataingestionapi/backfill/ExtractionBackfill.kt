@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.backfill
 
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.extraction.format.FormatModelRegistry
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.ExtractionResultRepository
@@ -11,12 +10,6 @@ import java.time.Instant
 import java.util.UUID
 
 @Component
-@ConditionalOnProperty(
-  prefix = "extraction.structured",
-  name = ["enabled"],
-  havingValue = "true",
-  matchIfMissing = false,
-)
 class ExtractionBackfill(
   private val repository: ExtractionResultRepository,
   private val extractionService: ExtractionService,
