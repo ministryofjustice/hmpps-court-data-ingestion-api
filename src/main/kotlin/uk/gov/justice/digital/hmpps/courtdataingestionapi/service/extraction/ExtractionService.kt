@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsDocumentManagementApi
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.config.FeatureToggles
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.ExtractionResultEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.extraction.format.FormatModel
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.extraction.format.FormatModelRegistry
@@ -23,10 +24,12 @@ class ExtractionService(
   private val formatModels: FormatModelRegistry,
   private val pipeline: ExtractionPipeline,
   private val objectMapper: ObjectMapper,
+  private val featureToggles: FeatureToggles,
   @Value("\${extraction.extractor-version:dev}") private val extractorVersion: String,
 ) {
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  fun extractAndStore(documentId: UUID): ExtractionResultEntity {
+  fun extractAndStore(documentId: UUID): ExtractionResultEntity? {
+    if (!featureToggles.structuredExtraction) return null
     val model = formatModels.active()
 
     val existing = repository.findByDocumentIdAndFormatIdAndFormatVersionAndExtractorVersion(
@@ -72,7 +75,8 @@ class ExtractionService(
     documentId: UUID,
     extractedText: String,
     downloadedFileSha256: String?,
-  ): ExtractionResultEntity {
+  ): ExtractionResultEntity? {
+    if (!featureToggles.structuredExtraction) return null
     val model = formatModels.active()
 
     val existing = repository.findByDocumentIdAndFormatIdAndFormatVersionAndExtractorVersion(
