@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import software.amazon.awssdk.services.sns.model.MessageAttributeValue
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmctsCourtDefendantApiClient
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.config.FeatureToggles
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.MatchOutcome
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
@@ -25,6 +26,7 @@ class DefendantMatchingService(
   private val fileService: FileService,
   private val hmppsQueueService: HmppsQueueService,
   private val objectMapper: ObjectMapper,
+  private val featureToggles: FeatureToggles,
 ) {
   private val eventTopic by lazy { hmppsQueueService.findByTopicId("domainevents") as HmppsTopic }
 
@@ -81,8 +83,13 @@ class DefendantMatchingService(
     val defendantIds = corePersonRecordService.findDefendantIdsByPrisonerNumber(prisonerNumber)
     if (defendantIds.isEmpty()) return
 
-    val masterDefendantIds = courtCaseDefendantService.findMasterDefendantIds(defendantIds)
-    courtDocumentRepository.findByMasterDefendantIdIn((masterDefendantIds + defendantIds).distinct())
+    val lookupIds = if (featureToggles.defendantResolution) {
+      (courtCaseDefendantService.findMasterDefendantIds(defendantIds) + defendantIds).distinct()
+    } else {
+      defendantIds
+    }
+
+    courtDocumentRepository.findByMasterDefendantIdIn(lookupIds)
       .forEach { createPrisonerMatch(it, prisonerNumber, MatchOutcome.MATCHED_ON_DEFENDANT_ID) }
   }
 
@@ -112,8 +119,12 @@ class DefendantMatchingService(
     masterDefendantId: UUID,
     caseReferences: List<String>,
     populateOnMiss: Boolean,
-  ): UUID? = caseReferences.firstNotNullOfOrNull {
-    matchDefendantId(masterDefendantId, it, populateOnMiss)
+  ): UUID? {
+    if (!featureToggles.defendantResolution) return null
+
+    return caseReferences.firstNotNullOfOrNull {
+      matchDefendantId(masterDefendantId, it, populateOnMiss)
+    }
   }
 
   private fun matchDefendantId(

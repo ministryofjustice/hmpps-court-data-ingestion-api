@@ -90,3 +90,6 @@ hmcts-api-config:
 
 environment:
   name: test
+
+feature-toggles:
+  defendant-resolution: true
