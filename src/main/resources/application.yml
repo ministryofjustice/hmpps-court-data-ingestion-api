@@ -154,6 +154,8 @@ hmcts-api-config:
   court-defendant-key: ${HMCTS_COURT_DEFENDANT_KEY:}
 
 extraction:
+  structured:
+    enabled: false
   backfill:
     batch-size: 200
     ingested-from: "2026-05-18T16:38:15Z"
