@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.TestUtil
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentViewEventType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsCourtCasesReleaseDatesApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocument
@@ -104,6 +105,62 @@ class CourtDocumentControllerIntTest : IntegrationTestBase() {
       webTestClient
         .post()
         .uri("/court-document/${UUID.randomUUID()}/view")
+        .headers {
+          it.contentType = MediaType.APPLICATION_JSON
+        }
+        .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RW")))
+        .bodyValue(
+          TestUtil.objectMapper().writeValueAsString(
+            CourtDocumentView(
+              username = TEST_USERNAME,
+            ),
+          ),
+        )
+        .exchange()
+        .expectStatus()
+        .isNotFound
+    }
+  }
+
+  @Nested
+  @DisplayName("Mark court document as new tests")
+  inner class MarkAsNewDocumentTests {
+    @Test
+    fun `Mark document as new`() {
+      sendSubscriptionNotification(MATCHING_CORE_PERSON)
+
+      var courtDocument = courtDocumentRepository.findAll()[0]
+      webTestClient
+        .post()
+        .uri("/court-document/${courtDocument.prisonDocumentId}/mark-as-new")
+        .headers {
+          it.contentType = MediaType.APPLICATION_JSON
+        }
+        .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RW")))
+        .bodyValue(
+          TestUtil.objectMapper().writeValueAsString(
+            CourtDocumentView(
+              username = TEST_USERNAME,
+            ),
+          ),
+        )
+        .exchange()
+        .expectStatus()
+        .isOk
+
+      courtDocument = courtDocumentRepository.findAll()[0]
+
+      assertThat(courtDocument.courtDocumentViews).hasSize(1)
+      assertThat(courtDocument.courtDocumentViews[0].username).isEqualTo(TEST_USERNAME)
+      assertThat(courtDocument.courtDocumentViews[0].eventType).isEqualTo(CourtDocumentViewEventType.MARKED_NEW)
+      HmppsCourtCasesReleaseDatesApiExtension.hmppsCourtCasesReleaseDatesApi.verifyEvictCache()
+    }
+
+    @Test
+    fun `Mark document as new not found`() {
+      webTestClient
+        .post()
+        .uri("/court-document/${UUID.randomUUID()}/mark-as-new")
         .headers {
           it.contentType = MediaType.APPLICATION_JSON
         }

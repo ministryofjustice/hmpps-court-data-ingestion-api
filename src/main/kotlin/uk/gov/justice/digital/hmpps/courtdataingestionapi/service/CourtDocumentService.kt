@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsCourtCasesReleaseDatesApiClient
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentViewEntity
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentViewEventType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocument
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentHearing
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentView
@@ -22,14 +23,20 @@ class CourtDocumentService(
 ) {
 
   @Transactional
-  fun recordDocumentView(prisonDocumentId: UUID, courtDocumentView: CourtDocumentView) {
+  fun recordDocumentView(prisonDocumentId: UUID, courtDocumentView: CourtDocumentView) = recordEvent(prisonDocumentId, courtDocumentView, CourtDocumentViewEventType.VIEWED)
+
+  @Transactional
+  fun recordMarkAsNew(prisonDocumentId: UUID, courtDocumentView: CourtDocumentView) = recordEvent(prisonDocumentId, courtDocumentView, CourtDocumentViewEventType.MARKED_NEW)
+
+  private fun recordEvent(prisonDocumentId: UUID, courtDocumentView: CourtDocumentView, eventType: CourtDocumentViewEventType) {
     val courtDocument = courtDocumentRepository.findFirstByPrisonDocumentId(prisonDocumentId).getOrElse { throw EntityNotFoundException("Court document not found $prisonDocumentId") }
 
     courtDocument.courtDocumentViews.add(
       CourtDocumentViewEntity(
         username = courtDocumentView.username,
         courtDocument = courtDocument,
-        viewedAt = LocalDateTime.now(),
+        occurredAt = LocalDateTime.now(),
+        eventType = eventType,
       ),
     )
     courtDocument.prisonerNumber?.let {

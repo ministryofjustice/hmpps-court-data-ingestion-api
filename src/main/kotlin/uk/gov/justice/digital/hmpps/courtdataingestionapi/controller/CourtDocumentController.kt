@@ -56,4 +56,22 @@ class CourtDocumentController(
     courtDocumentService.recordDocumentView(prisonDocumentId, courtDocumentView)
     return ResponseEntity.ok(courtDocumentView)
   }
+
+  @PostMapping("/{prisonDocumentId}/mark-as-new")
+  @PreAuthorize("hasRole('COURT_DATA_INGESTION__COURT_DATA_RW')")
+  @Operation(
+    summary = "Reset a court document to appear as new",
+    description = "Records that a given user has reset a court document so it is surfaced as new again.",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Successfully reset the court document to new."),
+      ApiResponse(responseCode = "401", description = "Unauthorized - valid Oauth2 token required"),
+      ApiResponse(responseCode = "403", description = "Forbidden - requires appropriate role"),
+    ],
+  )
+  fun markAsNew(@PathVariable prisonDocumentId: UUID, @RequestBody courtDocumentView: CourtDocumentView): ResponseEntity<CourtDocumentView> {
+    courtDocumentService.recordMarkAsNew(prisonDocumentId, courtDocumentView)
+    return ResponseEntity.ok(courtDocumentView)
+  }
 }

@@ -4,6 +4,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentViewEventType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.PrisonDocNotificationConfigRepository
 import java.time.LocalDateTime
 import kotlin.jvm.optionals.getOrElse
@@ -15,7 +16,11 @@ class PrisonDocumentNotificationService(
   private val notificationConfigRepository: PrisonDocNotificationConfigRepository,
 ) {
   fun isUnread(document: CourtDocumentEntity, unreadDocumentDateFrom: LocalDateTime): Boolean {
-    if (document.courtDocumentViews.isNotEmpty()) return false
+    when (document.courtDocumentViews.maxByOrNull { it.occurredAt }?.eventType) {
+      CourtDocumentViewEventType.VIEWED -> return false
+      CourtDocumentViewEventType.MARKED_NEW -> return true
+      null -> {}
+    }
 
     val prisonerNumber = document.prisonerNumber
 

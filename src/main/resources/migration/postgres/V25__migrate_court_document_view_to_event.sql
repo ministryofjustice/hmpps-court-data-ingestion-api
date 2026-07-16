@@ -6,6 +6,10 @@ alter table public.court_document_view_event
     rename column viewed_at to occurred_at;
 
 alter table public.court_document_view_event
+    alter column occurred_at type timestamp
+        using occurred_at at time zone 'Europe/London';
+
+alter table public.court_document_view_event
     rename constraint court_document_view_pk
         to court_document_view_event_pk;
 
@@ -26,9 +30,5 @@ alter table public.court_document_view_event
     add constraint ck_court_document_view_event_type
         check (event_type in ('VIEWED', 'MARKED_NEW'));
 
-create index idx_court_document_view_event_latest
-    on public.court_document_view_event (
-                                         court_document_id,
-                                         occurred_at desc,
-                                         id desc
-        );
+create index idx_court_document_view_event_document
+    on public.court_document_view_event (court_document_id);
