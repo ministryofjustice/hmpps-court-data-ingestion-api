@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsDocumentManagementApi
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Document
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentApiType
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentMetadataStatus
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentSearchRequest
 
 /**
@@ -41,22 +42,22 @@ class RemandAndSentencingDocumentStatusBackfill(
     val status = metadata["status"]
 
     val documentIsFromCdia = source == HmppsDocumentManagementApi.COURT_DATA_DOCUMENT_SOURCE
-    val documentHasCorrectStatus = statusMap.values.contains(status)
+    val documentHasCorrectStatus = statusMap.values.map { it.name }.contains(status)
 
     if (!documentIsFromCdia && !documentHasCorrectStatus) {
       log.info("Backfilling document ${item.documentUuid}")
 
-      val newStatus = statusMap[status ?: "Active"] ?: "ACTIVE"
-      documentManagementApi.mergeMetadata(item.documentUuid, metadata = mapOf("status" to newStatus))
+      val newStatus = statusMap[status ?: "Active"] ?: DocumentMetadataStatus.ACTIVE
+      documentManagementApi.mergeMetadata(item.documentUuid, metadata = mapOf("status" to newStatus.name))
     }
   }
 
   companion object {
     private val log: Logger = LoggerFactory.getLogger(RemandAndSentencingDocumentStatusBackfill::class.java)
     private val statusMap = mapOf(
-      "Active" to "ACTIVE",
-      "Awaiting" to "AWAITING",
-      "Deleted" to "DELETED",
+      "Active" to DocumentMetadataStatus.ACTIVE,
+      "Awaiting" to DocumentMetadataStatus.AWAITING,
+      "Deleted" to DocumentMetadataStatus.DELETED,
     )
   }
 }

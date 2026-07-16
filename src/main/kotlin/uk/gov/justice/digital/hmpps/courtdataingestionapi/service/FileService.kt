@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsDocumentMa
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Document
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentApiType
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentMetadataStatus
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.SubscriptionRepository
 import java.util.UUID
 
@@ -33,7 +34,7 @@ class FileService(
       file,
       mapOf(
         "source" to HmppsDocumentManagementApi.COURT_DATA_DOCUMENT_SOURCE,
-        "status" to DOCUMENT_STATUS_ACTIVE,
+        "status" to DocumentMetadataStatus.ACTIVE.name,
       ),
     )
   }
@@ -95,7 +96,5 @@ class FileService(
 
   companion object {
     private val log = LoggerFactory.getLogger(FileService::class.java)
-
-    const val DOCUMENT_STATUS_ACTIVE = "ACTIVE"
   }
 }
