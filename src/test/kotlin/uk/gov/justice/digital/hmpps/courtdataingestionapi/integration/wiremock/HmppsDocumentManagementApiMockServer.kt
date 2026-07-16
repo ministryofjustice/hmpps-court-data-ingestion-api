@@ -7,7 +7,10 @@ import com.github.tomakehurst.wiremock.client.WireMock.binaryEqualTo
 import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.equalToJson
 import com.github.tomakehurst.wiremock.client.WireMock.get
+import com.github.tomakehurst.wiremock.client.WireMock.matchingJsonPath
 import com.github.tomakehurst.wiremock.client.WireMock.notContaining
+import com.github.tomakehurst.wiremock.client.WireMock.patch
+import com.github.tomakehurst.wiremock.client.WireMock.patchRequestedFor
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor
 import com.github.tomakehurst.wiremock.client.WireMock.put
@@ -23,6 +26,7 @@ import org.junit.jupiter.api.extension.ExtensionContext
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.TestUtil
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentApiType
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentSearchResult
 import java.util.UUID
 
 class HmppsDocumentManagementApiExtension :
@@ -39,6 +43,7 @@ class HmppsDocumentManagementApiExtension :
     hmppsDocumentManagementApi.stubUploadDocument()
     hmppsDocumentManagementApi.stubGetDocument()
     hmppsDocumentManagementApi.stubUpdateMetadata()
+    hmppsDocumentManagementApi.stubMergeMetadata(IntegrationTestBase.PRISON_DOCUMENT_ID)
     hmppsDocumentManagementApi.stubSetFileContentHash()
     hmppsDocumentManagementApi.stubDownloadFile()
     hmppsDocumentManagementApi.stubDocumentFindByUuids()
@@ -102,9 +107,9 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
     )
   }
 
-  fun stubUpdateMetadataError() {
+  fun stubMergeMetadataError() {
     stubFor(
-      put(urlEqualTo("/documents/${IntegrationTestBase.PRISON_DOCUMENT_ID}/metadata"))
+      patch(urlEqualTo("/documents/${IntegrationTestBase.PRISON_DOCUMENT_ID}/metadata"))
         .withHeader("Service-Name", equalTo(SERVICE_NAME))
         .withHeader("Username", equalTo(USERNAME))
         .withRequestBody(notContaining("prisonerId"))
@@ -175,6 +180,53 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
             .withStatus(200),
         ),
     )
+  }
+
+  fun stubSearch(page: Int, response: DocumentSearchResult) {
+    stubFor(
+      post(urlPathMatching("/documents/search"))
+        .withHeader("Service-Name", equalTo(SERVICE_NAME))
+        .withHeader("Username", equalTo(USERNAME))
+        .withRequestBody(matchingJsonPath("$.page", equalTo(page.toString())))
+        .willReturn(
+          aResponse()
+            .withHeader(CONTENT_TYPE, APPLICATION_JSON)
+            .withBody(TestUtil.objectMapper().writeValueAsString(response))
+            .withStatus(200),
+        ),
+    )
+  }
+
+  fun stubMergeMetadata(documentId: UUID) {
+    stubFor(
+      patch(urlEqualTo("/documents/$documentId/metadata"))
+        .withHeader("Service-Name", equalTo(SERVICE_NAME))
+        .withHeader("Username", equalTo(USERNAME))
+        .willReturn(
+          aResponse()
+            .withHeader("Content-Type", "application/json")
+            .withBody(happyResponse)
+            .withStatus(200),
+        ),
+    )
+  }
+
+  fun verifyMergeMetadata(
+    didHappenXTimes: Int = 1,
+    withUuid: String = "[a-z0-9A-Z|-]{36}",
+    withMetadata: Map<String, String>? = null,
+  ) {
+    var request = patchRequestedFor(urlMatching("/documents/$withUuid/metadata"))
+
+    if (withMetadata != null) {
+      request = request.withRequestBody(
+        equalToJson(
+          TestUtil.objectMapper().writeValueAsString(withMetadata),
+        ),
+      )
+    }
+
+    verify(didHappenXTimes, request)
   }
 
   fun verifyUploadedDocument(

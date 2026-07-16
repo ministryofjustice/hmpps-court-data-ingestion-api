@@ -19,7 +19,7 @@ class MirrorBackfill(
   override val concurrency = 8
 
   override fun selectBatch(cursor: String, batchSize: Int): BackfillBatch<CourtDocumentEntity> {
-    val afterId = parseCursor(cursor)
+    val afterId = parseCursorUUID(cursor)
     val items = courtDocumentRepository.findUnmirroredAfter(afterId, metadataVersion, batchSize)
     val nextCursor = items.lastOrNull()?.id?.toString() ?: cursor
     return BackfillBatch(items, nextCursor)
