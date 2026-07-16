@@ -11,7 +11,8 @@ interface Backfill<T> {
 
   fun process(item: T)
 
-  fun parseCursor(cursor: String): UUID = if (cursor.isEmpty()) ZERO_UUID else UUID.fromString(cursor)
+  fun parseCursorUUID(cursor: String): UUID = if (cursor.isEmpty()) ZERO_UUID else UUID.fromString(cursor)
+  fun parseCursorInt(cursor: String): Int = cursor.toIntOrNull() ?: 0
 
   companion object {
     private val ZERO_UUID = UUID(0L, 0L)
