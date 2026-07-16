@@ -32,7 +32,7 @@ class FileService(
       documentType,
       file,
       mapOf(
-        "source" to "court-data-ingestion-api",
+        "source" to HmppsDocumentManagementApi.COURT_DATA_DOCUMENT_SOURCE,
         "status" to DOCUMENT_STATUS_ACTIVE,
       ),
     )
