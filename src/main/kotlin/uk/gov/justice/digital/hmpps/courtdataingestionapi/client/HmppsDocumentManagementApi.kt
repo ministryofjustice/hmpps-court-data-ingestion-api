@@ -58,7 +58,7 @@ class HmppsDocumentManagementApi(
     log.info("Uploaded document: ${prisonDocument.filename}")
     return prisonDocument
   }
-  fun mergeMetadata(documentId: UUID, metadata: Map<String, String> = mapOf()): Document = webClient
+  fun mergeMetadata(documentId: UUID, metadata: Map<String, Serializable> = mapOf()): Document = webClient
     .patch()
     .uri("/documents/$documentId/metadata")
     .header("Service-Name", appName)

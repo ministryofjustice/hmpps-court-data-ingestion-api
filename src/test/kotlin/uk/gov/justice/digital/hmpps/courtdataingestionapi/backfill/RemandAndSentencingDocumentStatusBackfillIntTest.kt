@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.Integratio
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsDocumentManagementApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Document
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentApiType
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentMetadataStatus
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentSearchResult
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtCaseDefendantService
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.DefendantMatchingService
@@ -30,7 +31,7 @@ class RemandAndSentencingDocumentStatusBackfillIntTest : IntegrationTestBase() {
     val aRasDocumentWithCorrectStatuses = aDocument().copy(
       metadata = mapOf(
         "source" to "RemandSentencingUser",
-        "status" to "AWAITING",
+        "status" to DocumentMetadataStatus.AWAITING.name,
       ),
     )
     val aRasDocumentWithOldStatuses = aDocument().copy(
