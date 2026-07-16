@@ -88,7 +88,7 @@ class FileService(
     document.deliverySource?.let { put("deliverySource", it.name) }
     put("documentSubType", document.courtDocumentType.name)
     // TODO (CDIA-173): Update courtCode mapping, using courtId for now as a place holder
-    document.courtHearing?.let { put("courtCode", it.courtId.toString()) }
+//    document.courtHearing?.let { put("courtCode", it.courtId.toString()) }
     put("caseReferences", document.courtHearing?.toCourtHearing()?.caseReferences?.toTypedArray() ?: emptyArray<String>())
   }
 

@@ -1,24 +1,49 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.service
 
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import org.springframework.beans.factory.annotation.Autowired
+import org.mockito.Mock
+import org.mockito.junit.jupiter.MockitoExtension
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmctsSubscriptionApiClient
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsDocumentManagementApi
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentCaseEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtHearingEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.DestinationType
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase.Companion.CASE_REFERENCE
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.SubscriptionRepository
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.emptyArray
 
-class FileServiceTest : IntegrationTestBase() {
-  @Autowired
+@ExtendWith(MockitoExtension::class)
+class FileServiceTest {
+  @Mock
+  lateinit var hmctsSubscriptionApiClient: HmctsSubscriptionApiClient
+
+  @Mock
+  lateinit var subscriptionRepository: SubscriptionRepository
+
+  @Mock
+  lateinit var hmppsDocumentManagementApi: HmppsDocumentManagementApi
+
   lateinit var fileService: FileService
+
+  @BeforeEach
+  fun setUp() {
+    fileService = FileService(
+      hmctsSubscriptionApiClient,
+      subscriptionRepository,
+      hmppsDocumentManagementApi,
+      ENV_NAME,
+    )
+  }
 
   @ParameterizedTest
   @MethodSource("getBuildMirrorEnrichmentMetadataTestParameters")
@@ -29,7 +54,7 @@ class FileServiceTest : IntegrationTestBase() {
     caseReference: String?,
     expectedSource: String,
     expectedSubType: String,
-    expecterCourtCode: String,
+    expectedCourtCode: String,
     expectedCaseReferences: Array<String>,
   ) {
     val document = sampleWarrant(deliverySource, courtDocumentType, courtId, caseReference)
@@ -39,7 +64,7 @@ class FileServiceTest : IntegrationTestBase() {
     assertThat(result).isNotEmpty()
     assertThat(result.getOrDefault("deliverySource", "NOT FOUND")).isEqualTo(expectedSource)
     assertThat(result["documentSubType"]).isEqualTo(expectedSubType)
-    assertThat(result.getOrDefault("courtCode", "NOT FOUND")).isEqualTo(expecterCourtCode)
+    assertThat(result.getOrDefault("courtCode", "NOT FOUND")).isEqualTo(expectedCourtCode)
 
     assertThat(result["caseReferences"]).hasSameClassAs(expectedCaseReferences)
     val resultCaseReferences = result["caseReferences"] as Array<String>
@@ -48,6 +73,7 @@ class FileServiceTest : IntegrationTestBase() {
   }
 
   companion object {
+    const val ENV_NAME = "test"
     val COURT_HEARING_ID: UUID = UUID.fromString("509b295e-22d1-4cc0-9925-d5690503ce3c")
     val COURT_ID: UUID = UUID.fromString("d569ce3c-4cc0-9925-22d1-509b295e0503")
     const val CASE_REFERENCE_2 = "CASE789012"
@@ -88,15 +114,16 @@ class FileServiceTest : IntegrationTestBase() {
 
     @JvmStatic
     fun getBuildMirrorEnrichmentMetadataTestParameters() = listOf(
-      Arguments.of(DestinationType.PRISON, CourtDocumentType.REMAND_WARRANT, COURT_ID, CASE_REFERENCE, "PRISON", "REMAND_WARRANT", COURT_ID.toString(), arrayOf(CASE_REFERENCE)),
+      // TODO (CDIA-173): Update courtCode expected values once the mapping is done
+      Arguments.of(DestinationType.PRISON, CourtDocumentType.REMAND_WARRANT, COURT_ID, CASE_REFERENCE, "PRISON", "REMAND_WARRANT", "NOT FOUND", arrayOf(CASE_REFERENCE)),
       Arguments.of(DestinationType.PRISON, CourtDocumentType.PRISON_COURT_REGISTER, null, CASE_REFERENCE, "PRISON", "PRISON_COURT_REGISTER", "NOT FOUND", emptyArray<String>()),
-      Arguments.of(null, CourtDocumentType.PRISON_COURT_REGISTER, COURT_ID, CASE_REFERENCE, "NOT FOUND", "PRISON_COURT_REGISTER", COURT_ID.toString(), arrayOf(CASE_REFERENCE)),
+      Arguments.of(null, CourtDocumentType.PRISON_COURT_REGISTER, COURT_ID, CASE_REFERENCE, "NOT FOUND", "PRISON_COURT_REGISTER", "NOT FOUND", arrayOf(CASE_REFERENCE)),
       Arguments.of(null, CourtDocumentType.REMAND_WARRANT, null, CASE_REFERENCE, "NOT FOUND", "REMAND_WARRANT", "NOT FOUND", emptyArray<String>()),
-      Arguments.of(DestinationType.PRISON, CourtDocumentType.REMAND_WARRANT, COURT_ID, null, "PRISON", "REMAND_WARRANT", COURT_ID.toString(), emptyArray<String>()),
+      Arguments.of(DestinationType.PRISON, CourtDocumentType.REMAND_WARRANT, COURT_ID, null, "PRISON", "REMAND_WARRANT", "NOT FOUND", emptyArray<String>()),
       Arguments.of(DestinationType.PRISON, CourtDocumentType.PRISON_COURT_REGISTER, null, null, "PRISON", "PRISON_COURT_REGISTER", "NOT FOUND", emptyArray<String>()),
-      Arguments.of(null, CourtDocumentType.PRISON_COURT_REGISTER, COURT_ID, null, "NOT FOUND", "PRISON_COURT_REGISTER", COURT_ID.toString(), emptyArray<String>()),
+      Arguments.of(null, CourtDocumentType.PRISON_COURT_REGISTER, COURT_ID, null, "NOT FOUND", "PRISON_COURT_REGISTER", "NOT FOUND", emptyArray<String>()),
       Arguments.of(null, CourtDocumentType.REMAND_WARRANT, null, null, "NOT FOUND", "REMAND_WARRANT", "NOT FOUND", emptyArray<String>()),
-      Arguments.of(DestinationType.PRISON, CourtDocumentType.REMAND_WARRANT, COURT_ID, "${CASE_REFERENCE},${CASE_REFERENCE_2}", "PRISON", "REMAND_WARRANT", COURT_ID.toString(), arrayOf(CASE_REFERENCE, CASE_REFERENCE_2)),
+      Arguments.of(DestinationType.PRISON, CourtDocumentType.REMAND_WARRANT, COURT_ID, "${CASE_REFERENCE},${CASE_REFERENCE_2}", "PRISON", "REMAND_WARRANT", "NOT FOUND", arrayOf(CASE_REFERENCE, CASE_REFERENCE_2)),
     )
   }
 }
