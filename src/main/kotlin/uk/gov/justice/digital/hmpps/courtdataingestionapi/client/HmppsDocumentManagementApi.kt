@@ -148,16 +148,19 @@ class HmppsDocumentManagementApi(
     .block()
     ?: error("No documents returned")
 
-  fun search(searchRequest: DocumentSearchRequest): DocumentSearchResult = webClient.post()
-    .uri("/documents/search")
-    .header("Service-Name", appName)
-    .header("Username", SYSTEM_USERNAME)
-    .accept(MediaType.APPLICATION_JSON)
-    .bodyValue(searchRequest)
-    .retrieve()
-    .bodyToMono(DocumentSearchResult::class.java)
-    .block()
-    ?: error("Error in search")
+  fun search(searchRequest: DocumentSearchRequest): DocumentSearchResult {
+    log.info("Searching for documents {}", searchRequest)
+    return webClient.post()
+      .uri("/documents/search")
+      .header("Service-Name", appName)
+      .header("Username", SYSTEM_USERNAME)
+      .accept(MediaType.APPLICATION_JSON)
+      .bodyValue(searchRequest)
+      .retrieve()
+      .bodyToMono(DocumentSearchResult::class.java)
+      .block()
+      ?: error("Error in search")
+  }
 
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)

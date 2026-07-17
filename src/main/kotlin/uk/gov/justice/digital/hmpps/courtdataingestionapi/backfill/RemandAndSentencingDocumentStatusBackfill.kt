@@ -38,8 +38,8 @@ class RemandAndSentencingDocumentStatusBackfill(
 
   override fun process(item: Document) {
     val metadata = item.metadata
-    val source = metadata["source"]
-    val status = metadata["status"]
+    val source = metadata.get("source")?.asString()
+    val status = metadata.get("status")?.asString()
 
     val documentIsFromCdia = source == HmppsDocumentManagementApi.COURT_DATA_DOCUMENT_SOURCE
     val documentHasCorrectStatus = statusMap.values.map { it.name }.contains(status)
