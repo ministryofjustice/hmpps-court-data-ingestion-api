@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.service
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -60,6 +61,32 @@ class PrisonDocumentNotificationServiceTest : IntegrationTestBase() {
     }
   }
 
+  @Test
+  fun `Given a viewed document is then marked as new, should be unread`() {
+    setupPrisonNewDocNotification(MATCHING_PRISON_ID, getNewDocNotificationDateFrom(1))
+    sendSubscriptionNotification(MATCHING_CORE_PERSON)
+    val document = courtDocumentRepository.findAll()[0]
+    sendCourtDocumentViewNotification(document)
+    sendCourtDocumentMarkAsNewNotification(document)
+
+    val refreshed = courtDocumentRepository.findAll()[0]
+
+    assertThat(prisonDocumentNotificationService.isUnread(refreshed, getNewDocNotificationDateFrom(1))).isTrue
+  }
+
+  @Test
+  fun `Given a marked as new document is then viewed, should be read`() {
+    setupPrisonNewDocNotification(MATCHING_PRISON_ID, getNewDocNotificationDateFrom(-1))
+    sendSubscriptionNotification(MATCHING_CORE_PERSON)
+    val document = courtDocumentRepository.findAll()[0]
+    sendCourtDocumentMarkAsNewNotification(document)
+    sendCourtDocumentViewNotification(document)
+
+    val refreshed = courtDocumentRepository.findAll()[0]
+
+    assertThat(prisonDocumentNotificationService.isUnread(refreshed, getNewDocNotificationDateFrom(-1))).isFalse
+  }
+
   private fun setupPrisonNewDocNotification(prisonId: String?, newDocDateFrom: LocalDateTime?) {
     if (prisonId == null) return
 
@@ -85,6 +112,26 @@ class PrisonDocumentNotificationServiceTest : IntegrationTestBase() {
     webTestClient
       .post()
       .uri("/court-document/${courtDocument.prisonDocumentId}/view")
+      .headers {
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RW")))
+      .bodyValue(
+        TestUtil.objectMapper().writeValueAsString(
+          CourtDocumentView(
+            username = TEST_USERNAME,
+          ),
+        ),
+      )
+      .exchange()
+      .expectStatus()
+      .isOk
+  }
+
+  private fun sendCourtDocumentMarkAsNewNotification(courtDocument: CourtDocumentEntity) {
+    webTestClient
+      .post()
+      .uri("/court-document/${courtDocument.prisonDocumentId}/mark-as-new")
       .headers {
         it.contentType = MediaType.APPLICATION_JSON
       }
