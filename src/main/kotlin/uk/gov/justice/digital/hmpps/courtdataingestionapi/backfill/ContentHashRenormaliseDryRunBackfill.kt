@@ -16,7 +16,7 @@ class ContentHashRenormaliseDryRunBackfill(
   override val concurrency = 4
 
   override fun selectBatch(cursor: String, batchSize: Int): BackfillBatch<CourtDocumentEntity> {
-    val afterId = parseCursor(cursor)
+    val afterId = parseCursorUUID(cursor)
     val items = courtDocumentRepository.findHashedAfter(afterId, batchSize)
     val nextCursor = items.lastOrNull()?.id?.toString() ?: cursor
     return BackfillBatch(items, nextCursor)
