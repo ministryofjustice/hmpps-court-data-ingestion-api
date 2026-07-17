@@ -6,6 +6,7 @@ import java.util.UUID
 data class HmtcsApiDataEnrichment(
   val courtName: String,
   val courtId: UUID,
+  val courtCode: String? = null,
   val hearingType: String,
   val hearingDate: LocalDateTime,
 )
