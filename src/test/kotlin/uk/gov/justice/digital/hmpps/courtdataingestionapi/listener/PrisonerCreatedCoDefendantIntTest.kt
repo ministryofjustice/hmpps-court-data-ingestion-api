@@ -45,6 +45,30 @@ class PrisonerCreatedCoDefendantIntTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `a co-defendant's document is found on a prisoner updated personal details event`() {
+    val master = UUID.randomUUID()
+    val defendantId = UUID.randomUUID()
+    val prisonerNumber = "CD0002"
+
+    CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePersonNotFound(master)
+    sendSubscriptionNotification(master)
+
+    courtCaseDefendantService.upsert(defendantId, CASE_REFERENCE, master, "Co Defendant", dob)
+
+    CorePersonApiExtension.corePersonApi.stubPrisonerCorePerson(prisonerNumber, listOf(defendantId))
+
+    sendPrisonerUpdatedMessage(prisonerNumber, listOf("PERSONAL_DETAILS"))
+
+    awaitAtMost30Secs untilCallTo {
+      courtWarrantTestQueue.sqsClient.countMessagesOnQueue(courtWarrantTestQueue.queueUrl).get()
+    } matches { it == 1 }
+
+    val file = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(master)!!
+    assertThat(file.prisonerNumber).isEqualTo(prisonerNumber)
+    assertThat(file.matchOutcome).isEqualTo(MatchOutcome.MATCHED_ON_DEFENDANT_ID)
+  }
+
+  @Test
   fun `a first-case defendant still matches from CPR's defendant id with nothing in the store`() {
     val sharedId = UUID.randomUUID()
     val prisonerNumber = "FB0001"
