@@ -49,7 +49,7 @@ class CourtDataIngestionServiceTest : IntegrationTestBase() {
     }
 
     if (!metadataPushed) {
-      HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.stubUpdateMetadataError()
+      HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.stubMergeMetadataError()
     }
   }
 

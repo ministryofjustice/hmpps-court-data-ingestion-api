@@ -17,7 +17,7 @@ class DefendantResolutionBackfill(
   override val concurrency = 4
 
   override fun selectBatch(cursor: String, batchSize: Int): BackfillBatch<UUID> {
-    val afterId = parseCursor(cursor)
+    val afterId = parseCursorUUID(cursor)
     val items = courtDocumentRepository.findUnmatchedMasterDefendantIdsAfter(afterId, batchSize)
     val nextCursor = items.lastOrNull()?.toString() ?: cursor
     return BackfillBatch(items, nextCursor)

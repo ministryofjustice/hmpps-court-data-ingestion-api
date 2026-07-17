@@ -13,7 +13,6 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.Integratio
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsDocumentManagementApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.FileService.Companion.DOCUMENT_STATUS_ACTIVE
 import uk.gov.justice.hmpps.sqs.countMessagesOnQueue
 import java.time.LocalDateTime
 
@@ -81,7 +80,7 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
       fileWasUploaded = ClassPathResource("test.txt").contentAsByteArray,
       withMetadata = mapOf(
         "source" to "court-data-ingestion-api",
-        "status" to DOCUMENT_STATUS_ACTIVE,
+        "status" to "ACTIVE",
       ),
       withFilename = "test.txt",
     )

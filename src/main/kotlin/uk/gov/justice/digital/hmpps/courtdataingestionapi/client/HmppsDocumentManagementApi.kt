@@ -11,8 +11,11 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.bodyToMono
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Document
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentApiType
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentSearchRequest
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentSearchResult
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsFile
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.ResponseUtils.rethrowAnyHttpErrorWithContext
+import java.io.Serializable
 import java.util.UUID
 
 @Component
@@ -55,15 +58,24 @@ class HmppsDocumentManagementApi(
     log.info("Uploaded document: ${prisonDocument.filename}")
     return prisonDocument
   }
-
-  fun updateMetadata(documentId: UUID, metadata: Map<String, String> = mapOf()): Document = webClient
-    .put()
+  fun mergeMetadata(documentId: UUID, metadata: Map<String, Serializable> = mapOf()): Document = webClient
+    .patch()
     .uri("/documents/$documentId/metadata")
     .header("Service-Name", appName)
     .header("Username", SYSTEM_USERNAME)
     .bodyValue(metadata)
     .retrieve()
     .bodyToMono(Document::class.java)
+    .block()!!
+
+  fun updateMetadata(documentId: UUID, metadata: Map<String, Serializable> = mapOf()): Document = webClient
+    .put()
+    .uri("/documents/$documentId/metadata")
+    .header("Service-Name", appName)
+    .header("Username", SYSTEM_USERNAME)
+    .bodyValue(metadata)
+    .retrieve()
+    .bodyToMono<Document>()
     .block()!!
 
   fun getDocument(documentId: UUID): Document = webClient
@@ -79,11 +91,6 @@ class HmppsDocumentManagementApi(
     .bodyToMono(Document::class.java)
     .block()
     ?: error("No document returned for $documentId")
-
-  fun mergeMetadata(documentId: UUID, updates: Map<String, String>): Document {
-    if (updates.isEmpty()) return getDocument(documentId)
-    return updateMetadata(documentId, getDocument(documentId).metadata + updates)
-  }
 
   fun setFileContentHash(documentId: UUID, fileContentHash: String) {
     webClient.put()
@@ -141,8 +148,20 @@ class HmppsDocumentManagementApi(
     .block()
     ?: error("No documents returned")
 
+  fun search(searchRequest: DocumentSearchRequest): DocumentSearchResult = webClient.post()
+    .uri("/documents/search")
+    .header("Service-Name", appName)
+    .header("Username", SYSTEM_USERNAME)
+    .accept(MediaType.APPLICATION_JSON)
+    .bodyValue(searchRequest)
+    .retrieve()
+    .bodyToMono(DocumentSearchResult::class.java)
+    .block()
+    ?: error("Error in search")
+
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
     private const val SYSTEM_USERNAME = "hmcts-getcourtdata"
+    const val COURT_DATA_DOCUMENT_SOURCE = "court-data-ingestion-api"
   }
 }

@@ -10,7 +10,7 @@ class ResourceServerConfiguration {
   @Bean
   fun resourceServerCustomizer() = ResourceServerConfigurationCustomizer {
     unauthorizedRequestPaths {
-      addPaths = setOf("/queue-admin/retry-all-dlqs", "/backfill")
+      addPaths = setOf("/queue-admin/retry-all-dlqs", "/backfill/**")
     }
   }
 }
