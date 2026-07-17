@@ -88,8 +88,7 @@ class FileService(
   fun buildMirrorEnrichmentMetadata(document: CourtDocumentEntity): Map<String, Serializable> = buildMap {
     document.deliverySource?.let { put("deliverySource", it.name) }
     put("documentSubType", document.courtDocumentType.name)
-    // TODO (CDIA-238): Update courtCode mapping, using courtId for now as a place holder
-//    document.courtHearing?.let { put("courtCode", it.courtId.toString()) }
+    document.courtHearing?.courtCode?.let { put("courtCode", it) }
     put("caseReferences", document.courtHearing?.toCourtHearing()?.caseReferences?.toTypedArray() ?: emptyArray<String>())
   }
 
