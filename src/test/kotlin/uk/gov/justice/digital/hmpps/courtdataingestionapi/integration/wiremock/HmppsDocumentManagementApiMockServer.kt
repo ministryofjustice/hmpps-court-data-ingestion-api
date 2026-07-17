@@ -26,7 +26,6 @@ import org.junit.jupiter.api.extension.ExtensionContext
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.TestUtil
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentApiType
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentSearchResult
 import java.util.UUID
 
 class HmppsDocumentManagementApiExtension :
@@ -182,7 +181,7 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
     )
   }
 
-  fun stubSearch(page: Int, response: DocumentSearchResult) {
+  fun stubSearch(page: Int, response: String) {
     stubFor(
       post(urlPathMatching("/documents/search"))
         .withHeader("Service-Name", equalTo(SERVICE_NAME))
@@ -191,7 +190,7 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
         .willReturn(
           aResponse()
             .withHeader(CONTENT_TYPE, APPLICATION_JSON)
-            .withBody(TestUtil.objectMapper().writeValueAsString(response))
+            .withBody(response)
             .withStatus(200),
         ),
     )

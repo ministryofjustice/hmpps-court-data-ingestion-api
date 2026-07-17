@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents
 
+import tools.jackson.databind.JsonNode
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -13,7 +14,7 @@ data class Document(
   val fileHash: String,
   val fileContentHash: String? = null,
   val mimeType: String,
-  val metadata: Map<String, String>,
+  val metadata: JsonNode,
   val createdTime: LocalDateTime,
   val createdByServiceName: String,
   val createdByUsername: String?,

@@ -5,6 +5,7 @@ import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsDocumentManagementApi
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.controller.BackfillEndpoint
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
@@ -29,20 +30,26 @@ class RemandAndSentencingDocumentStatusBackfillIntTest : IntegrationTestBase() {
   @Test
   fun `Remand and sentencing documents are backfilled`() {
     val aRasDocumentWithCorrectStatuses = aDocument().copy(
-      metadata = mapOf(
-        "source" to "RemandSentencingUser",
-        "status" to DocumentMetadataStatus.AWAITING.name,
+      metadata = objectMapper.valueToTree(
+        mapOf(
+          "source" to "RemandSentencingUser",
+          "status" to DocumentMetadataStatus.AWAITING.name,
+        ),
       ),
     )
     val aRasDocumentWithOldStatuses = aDocument().copy(
-      metadata = mapOf(
-        "source" to "RemandSentencingUser",
-        "status" to "Deleted",
+      metadata = objectMapper.valueToTree(
+        mapOf(
+          "source" to "RemandSentencingUser",
+          "status" to "Deleted",
+        ),
       ),
     )
     val aRasDocumentWithNoStatus = aDocument().copy(
-      metadata = mapOf(
-        "source" to "RemandSentencingUser",
+      metadata = objectMapper.valueToTree(
+        mapOf(
+          "source" to "RemandSentencingUser",
+        ),
       ),
     )
     val aCdiaDocument = aDocument()
@@ -56,24 +63,30 @@ class RemandAndSentencingDocumentStatusBackfillIntTest : IntegrationTestBase() {
     }
     HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.stubSearch(
       0,
-      DocumentSearchResult(
-        pageOneResults,
-        totalResultsCount = 201,
+      objectMapper.writeValueAsString(
+        DocumentSearchResult(
+          pageOneResults,
+          totalResultsCount = 201,
+        ),
       ),
     )
     val pageTwoResults = listOf(aDocument())
     HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.stubSearch(
       1,
-      DocumentSearchResult(
-        pageTwoResults,
-        totalResultsCount = 201,
+      objectMapper.writeValueAsString(
+        DocumentSearchResult(
+          pageTwoResults,
+          totalResultsCount = 201,
+        ),
       ),
     )
     HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.stubSearch(
       2,
-      DocumentSearchResult(
-        emptyList(),
-        totalResultsCount = 201,
+      objectMapper.writeValueAsString(
+        DocumentSearchResult(
+          emptyList(),
+          totalResultsCount = 201,
+        ),
       ),
     )
 
@@ -104,6 +117,7 @@ class RemandAndSentencingDocumentStatusBackfillIntTest : IntegrationTestBase() {
   }
 
   companion object {
+    private val objectMapper = jacksonObjectMapper()
     private fun aDocument(): Document = document.copy(documentUuid = UUID.randomUUID())
     private val document: Document = Document(
       documentUuid = UUID.randomUUID(),
@@ -115,7 +129,7 @@ class RemandAndSentencingDocumentStatusBackfillIntTest : IntegrationTestBase() {
       fileHash = "hash",
       fileContentHash = "content-hash",
       mimeType = "application/pdf",
-      metadata = mapOf("source" to HmppsDocumentManagementApi.COURT_DATA_DOCUMENT_SOURCE),
+      metadata = objectMapper.valueToTree(mapOf("source" to HmppsDocumentManagementApi.COURT_DATA_DOCUMENT_SOURCE)),
       createdTime = LocalDateTime.now(),
       createdByServiceName = "My Service",
       createdByUsername = "My user",
