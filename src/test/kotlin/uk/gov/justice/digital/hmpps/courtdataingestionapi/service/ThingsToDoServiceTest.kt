@@ -245,7 +245,7 @@ class ThingsToDoServiceTest {
     fileHash = "raw-$uuid",
     fileContentHash = "content-$uuid",
     mimeType = "application/pdf",
-    metadata = mapOf("prisonNumber" to PRISONER),
+    metadata = mapOf<String, String>("prisonNumber" to PRISONER),
     createdTime = LocalDateTime.now(),
     createdByServiceName = "court-data-ingestion-api",
     createdByUsername = "TEST",
