@@ -23,11 +23,12 @@ class CourtHearingService(
     hmtcsApiDataEnrichment: HmtcsApiDataEnrichment?,
   ) {
     if (hmtcsApiDataEnrichment != null) {
-      var hearing = courtHearingRepository.findFirstByHmctsCourtHearingId(courtDocumentEntity.hmctsCourtHearingId!!)
+      val hearing = courtHearingRepository.findFirstByHmctsCourtHearingId(courtDocumentEntity.hmctsCourtHearingId!!)
       if (hearing != null) {
         hearing.apply {
           courtId = hmtcsApiDataEnrichment.courtId
           courtName = hmtcsApiDataEnrichment.courtName
+          courtCode = hmtcsApiDataEnrichment.courtCode
           hearingType = hmtcsApiDataEnrichment.hearingType
           hearingDate = hmtcsApiDataEnrichment.hearingDate
           updatedAt = LocalDateTime.now()
@@ -39,6 +40,7 @@ class CourtHearingService(
           CourtHearingEntity(
             courtId = hmtcsApiDataEnrichment.courtId,
             courtName = hmtcsApiDataEnrichment.courtName,
+            courtCode = hmtcsApiDataEnrichment.courtCode,
             hearingType = hmtcsApiDataEnrichment.hearingType,
             hearingDate = hmtcsApiDataEnrichment.hearingDate,
             hmctsCourtHearingId = courtDocumentEntity.hmctsCourtHearingId!!,

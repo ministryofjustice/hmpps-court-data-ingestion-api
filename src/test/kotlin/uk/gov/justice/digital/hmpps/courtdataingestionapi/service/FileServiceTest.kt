@@ -114,7 +114,7 @@ class FileServiceTest {
 
     @JvmStatic
     fun getBuildMirrorEnrichmentMetadataTestParameters() = listOf(
-      // TODO (CDIA-173): Update courtCode expected values once the mapping is done
+      // TODO (CDIA-238): Update courtCode expected values once the mapping is done
       Arguments.of(DestinationType.PRISON, CourtDocumentType.REMAND_WARRANT, COURT_ID, CASE_REFERENCE, "PRISON", "REMAND_WARRANT", "NOT FOUND", arrayOf(CASE_REFERENCE)),
       Arguments.of(DestinationType.PRISON, CourtDocumentType.PRISON_COURT_REGISTER, null, CASE_REFERENCE, "PRISON", "PRISON_COURT_REGISTER", "NOT FOUND", emptyArray<String>()),
       Arguments.of(null, CourtDocumentType.PRISON_COURT_REGISTER, COURT_ID, CASE_REFERENCE, "NOT FOUND", "PRISON_COURT_REGISTER", "NOT FOUND", arrayOf(CASE_REFERENCE)),
