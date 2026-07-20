@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.service
 
+import tools.jackson.databind.node.JsonNodeFactory
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
@@ -245,7 +246,7 @@ class ThingsToDoServiceTest {
     fileHash = "raw-$uuid",
     fileContentHash = "content-$uuid",
     mimeType = "application/pdf",
-    metadata = mapOf<String, String>("prisonNumber" to PRISONER),
+    metadata = JsonNodeFactory.instance.objectNode().apply { put("prisonNumber", PRISONER) },
     createdTime = LocalDateTime.now(),
     createdByServiceName = "court-data-ingestion-api",
     createdByUsername = "TEST",
