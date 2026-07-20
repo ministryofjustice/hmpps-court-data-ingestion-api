@@ -1,0 +1,38 @@
+{
+  "name": "A3242ED todo over-count: status-blind dedup counts non-LIVE RaS canonicals",
+  "prisoner": "A3242ED",
+  "newDocCutoff": "2026-06-19T00:02:40",
+  "pending": "Blocked on the status-aware count fix. Current status-blind logic counts all 10 non-duplicate documents; correct is 8, excluding the 2 RaS-sourced non-LIVE (ACTIVE) canonicals ab647f10 and 3c8e325d. Un-pend once the todo count filters on active status.",
+  "documents": [
+    { "uuid": "3c8e325d-cf5f-4db7-8d56-e565d583b43a", "source": "RemandSentencingUser",     "status": "ACTIVE", "duplicateOf": null,                                     "ingestedAt": "2026-07-03T12:25:37", "contentHash": "96aa7374" },
+    { "uuid": "ab647f10-0924-4176-98d3-a5aea8ced828", "source": "RemandSentencingUser",     "status": "ACTIVE", "duplicateOf": null,                                     "ingestedAt": "2026-07-03T12:26:00", "contentHash": "879f3324" },
+    { "uuid": "e44477d2-5164-4f10-a959-cc6f9ab934dd", "source": "court-data-ingestion-api", "status": "LIVE",   "duplicateOf": "ab647f10-0924-4176-98d3-a5aea8ced828",   "ingestedAt": "2026-07-03T12:26:01", "contentHash": "879f3324" },
+    { "uuid": "dc50cbc7-6fb0-4b95-8bca-ffefadefa9f1", "source": "court-data-ingestion-api", "status": "LIVE",   "duplicateOf": null,                                     "ingestedAt": "2026-07-06T16:23:09" },
+    { "uuid": "827a0d47-66fa-42b3-844d-afecee61048f", "source": "court-data-ingestion-api", "status": "LIVE",   "duplicateOf": null,                                     "ingestedAt": "2026-07-06T16:23:20", "contentHash": "0638c5bb" },
+    { "uuid": "2a82a706-f8d1-46ac-a54c-ac47cea2ec3c", "source": "court-data-ingestion-api", "status": "LIVE",   "duplicateOf": "827a0d47-66fa-42b3-844d-afecee61048f",   "ingestedAt": "2026-07-06T16:23:21", "contentHash": "0638c5bb" },
+    { "uuid": "e7ac2931-dfff-41fb-8a97-ea45f6ec92bb", "source": "court-data-ingestion-api", "status": "LIVE",   "duplicateOf": null,                                     "ingestedAt": "2026-07-06T16:29:36" },
+    { "uuid": "32202e7f-1ac6-464b-a3ce-c1a3f26ef75b", "source": "court-data-ingestion-api", "status": "LIVE",   "duplicateOf": "ac2023b7-0e17-4fda-8ffd-ab73eaef0148",   "ingestedAt": "2026-07-06T16:29:57", "contentHash": "462a3e16" },
+    { "uuid": "90e0b783-5f2e-4daf-9719-bdc88d850030", "source": "court-data-ingestion-api", "status": "LIVE",   "duplicateOf": "4e3b0dc9-67f6-4bb6-aa69-dc01470a8ecf",   "ingestedAt": "2026-07-06T17:08:46", "contentHash": "df26a48e" },
+    { "uuid": "4ecec53e-4ee6-4f90-9a28-6b534a95d7fa", "source": "court-data-ingestion-api", "status": "LIVE",   "duplicateOf": null,                                     "ingestedAt": "2026-07-06T17:22:38" },
+    { "uuid": "f0811004-bc14-47d2-a1cd-092ef3f99f47", "source": "court-data-ingestion-api", "status": "LIVE",   "duplicateOf": null,                                     "ingestedAt": "2026-07-06T17:23:28", "contentHash": "fc834387" },
+    { "uuid": "62bb35a6-ad92-4c14-bc14-df1e8e2c32d6", "source": "court-data-ingestion-api", "status": "LIVE",   "duplicateOf": "f0811004-bc14-47d2-a1cd-092ef3f99f47",   "ingestedAt": "2026-07-06T17:23:29", "contentHash": "fc834387" },
+    { "uuid": "3f4c03cf-eace-4907-a0a3-c3ac248864dd", "source": "court-data-ingestion-api", "status": "LIVE",   "duplicateOf": null,                                     "ingestedAt": "2026-07-06T17:23:51" },
+    { "uuid": "b0c54fc6-fe1e-4c89-873e-c81fd8f8970a", "source": "court-data-ingestion-api", "status": "LIVE",   "duplicateOf": null,                                     "ingestedAt": "2026-07-06T17:24:20", "contentHash": "dbad2ada" },
+    { "uuid": "dba790f5-0cff-46a6-a45d-36dc5920a4a0", "source": "court-data-ingestion-api", "status": "LIVE",   "duplicateOf": "b0c54fc6-fe1e-4c89-873e-c81fd8f8970a",   "ingestedAt": "2026-07-06T17:24:21", "contentHash": "dbad2ada" },
+    { "uuid": "77102cef-2ff6-4dea-a07e-6c8af46fb089", "source": "court-data-ingestion-api", "status": "LIVE",   "duplicateOf": null,                                     "ingestedAt": "2026-07-06T17:26:44" },
+    { "uuid": "cc8bfd92-9ca2-4e39-b9a9-1fd02b8c9d83", "source": "court-data-ingestion-api", "status": "LIVE",   "duplicateOf": "89fc5d66-7cae-4c18-9b3e-6f672b760178",   "ingestedAt": "2026-07-06T17:27:08", "contentHash": "76c6ef7d" }
+  ],
+  "expected": {
+    "todoCount": 8,
+    "newUuids": [
+      "dc50cbc7-6fb0-4b95-8bca-ffefadefa9f1",
+      "827a0d47-66fa-42b3-844d-afecee61048f",
+      "e7ac2931-dfff-41fb-8a97-ea45f6ec92bb",
+      "4ecec53e-4ee6-4f90-9a28-6b534a95d7fa",
+      "f0811004-bc14-47d2-a1cd-092ef3f99f47",
+      "3f4c03cf-eace-4907-a0a3-c3ac248864dd",
+      "b0c54fc6-fe1e-4c89-873e-c81fd8f8970a",
+      "77102cef-2ff6-4dea-a07e-6c8af46fb089"
+    ]
+  }
+}
