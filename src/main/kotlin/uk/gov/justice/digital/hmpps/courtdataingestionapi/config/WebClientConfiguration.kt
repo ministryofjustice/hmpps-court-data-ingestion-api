@@ -119,7 +119,7 @@ class WebClientConfiguration(
     builder: WebClient.Builder,
   ): WebClient = builder.authorisedWebClient(
     authorizedClientManager,
-    "court-register-api",
+    "hmpps-court-register-api",
     courtRegisterApiUri,
   )
 

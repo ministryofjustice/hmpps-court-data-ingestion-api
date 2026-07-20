@@ -101,7 +101,7 @@ spring:
             authorization-grant-type: client_credentials
             scope:
               - ${hmcts.client.creds.client.court.defendant.scope:defendant.read}
-          court-register-api:
+          hmpps-court-register-api:
             provider: hmpps-auth
             client-id: ${client.creds.client.id}
             client-secret: ${client.creds.client.secret}
