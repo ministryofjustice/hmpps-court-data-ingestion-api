@@ -50,14 +50,14 @@ class FileServiceTest {
   fun buildMirrorEnrichmentMetadata(
     deliverySource: DestinationType?,
     courtDocumentType: CourtDocumentType,
-    courtId: UUID?,
+    courtCode: String?,
     caseReference: String?,
     expectedSource: String,
     expectedSubType: String,
     expectedCourtCode: String,
     expectedCaseReferences: Array<String>,
   ) {
-    val document = sampleWarrant(deliverySource, courtDocumentType, courtId, caseReference)
+    val document = sampleWarrant(deliverySource, courtDocumentType, courtCode, caseReference)
 
     val result = fileService.buildMirrorEnrichmentMetadata(document)
 
@@ -77,9 +77,10 @@ class FileServiceTest {
     val COURT_HEARING_ID: UUID = UUID.fromString("509b295e-22d1-4cc0-9925-d5690503ce3c")
     val COURT_ID: UUID = UUID.fromString("d569ce3c-4cc0-9925-22d1-509b295e0503")
     const val CASE_REFERENCE_2 = "CASE789012"
+    const val COURT_CODE = "LND001"
 
     @JvmStatic
-    private fun sampleWarrant(deliverySource: DestinationType?, courtDocumentType: CourtDocumentType, courtId: UUID?, caseReference: String?): CourtDocumentEntity {
+    private fun sampleWarrant(deliverySource: DestinationType?, courtDocumentType: CourtDocumentType, courtCode: String?, caseReference: String?): CourtDocumentEntity {
       val document = CourtDocumentEntity(
         deliverySource = deliverySource,
         courtDocumentType = courtDocumentType,
@@ -99,9 +100,10 @@ class FileServiceTest {
         document.courtDocumentCases.add(CourtDocumentCaseEntity(UUID.randomUUID(), reference, document))
       }
 
-      if (courtId != null) {
+      if (courtCode != null) {
         document.courtHearing = CourtHearingEntity(
-          courtId = courtId,
+          courtId = COURT_ID,
+          courtCode = courtCode,
           courtName = "Central London County Court",
           hearingType = "First hearing",
           hearingDate = LocalDateTime.of(2026, 6, 4, 11, 0),
@@ -114,16 +116,15 @@ class FileServiceTest {
 
     @JvmStatic
     fun getBuildMirrorEnrichmentMetadataTestParameters() = listOf(
-      // TODO (CDIA-238): Update courtCode expected values once the mapping is done
-      Arguments.of(DestinationType.PRISON, CourtDocumentType.REMAND_WARRANT, COURT_ID, CASE_REFERENCE, "PRISON", "REMAND_WARRANT", "NOT FOUND", arrayOf(CASE_REFERENCE)),
+      Arguments.of(DestinationType.PRISON, CourtDocumentType.REMAND_WARRANT, COURT_CODE, CASE_REFERENCE, "PRISON", "REMAND_WARRANT", COURT_CODE, arrayOf(CASE_REFERENCE)),
       Arguments.of(DestinationType.PRISON, CourtDocumentType.PRISON_COURT_REGISTER, null, CASE_REFERENCE, "PRISON", "PRISON_COURT_REGISTER", "NOT FOUND", emptyArray<String>()),
-      Arguments.of(null, CourtDocumentType.PRISON_COURT_REGISTER, COURT_ID, CASE_REFERENCE, "NOT FOUND", "PRISON_COURT_REGISTER", "NOT FOUND", arrayOf(CASE_REFERENCE)),
+      Arguments.of(null, CourtDocumentType.PRISON_COURT_REGISTER, COURT_CODE, CASE_REFERENCE, "NOT FOUND", "PRISON_COURT_REGISTER", COURT_CODE, arrayOf(CASE_REFERENCE)),
       Arguments.of(null, CourtDocumentType.REMAND_WARRANT, null, CASE_REFERENCE, "NOT FOUND", "REMAND_WARRANT", "NOT FOUND", emptyArray<String>()),
-      Arguments.of(DestinationType.PRISON, CourtDocumentType.REMAND_WARRANT, COURT_ID, null, "PRISON", "REMAND_WARRANT", "NOT FOUND", emptyArray<String>()),
+      Arguments.of(DestinationType.PRISON, CourtDocumentType.REMAND_WARRANT, COURT_CODE, null, "PRISON", "REMAND_WARRANT", COURT_CODE, emptyArray<String>()),
       Arguments.of(DestinationType.PRISON, CourtDocumentType.PRISON_COURT_REGISTER, null, null, "PRISON", "PRISON_COURT_REGISTER", "NOT FOUND", emptyArray<String>()),
-      Arguments.of(null, CourtDocumentType.PRISON_COURT_REGISTER, COURT_ID, null, "NOT FOUND", "PRISON_COURT_REGISTER", "NOT FOUND", emptyArray<String>()),
+      Arguments.of(null, CourtDocumentType.PRISON_COURT_REGISTER, COURT_CODE, null, "NOT FOUND", "PRISON_COURT_REGISTER", COURT_CODE, emptyArray<String>()),
       Arguments.of(null, CourtDocumentType.REMAND_WARRANT, null, null, "NOT FOUND", "REMAND_WARRANT", "NOT FOUND", emptyArray<String>()),
-      Arguments.of(DestinationType.PRISON, CourtDocumentType.REMAND_WARRANT, COURT_ID, "${CASE_REFERENCE},${CASE_REFERENCE_2}", "PRISON", "REMAND_WARRANT", "NOT FOUND", arrayOf(CASE_REFERENCE, CASE_REFERENCE_2)),
+      Arguments.of(DestinationType.PRISON, CourtDocumentType.REMAND_WARRANT, COURT_CODE, "${CASE_REFERENCE},${CASE_REFERENCE_2}", "PRISON", "REMAND_WARRANT", COURT_CODE, arrayOf(CASE_REFERENCE, CASE_REFERENCE_2)),
     )
   }
 }
