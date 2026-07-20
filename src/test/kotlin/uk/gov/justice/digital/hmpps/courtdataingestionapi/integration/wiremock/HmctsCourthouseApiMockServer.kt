@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.CourtRegisterApiMockServer.Companion.TEST_HMCTS_COURTHOUSE_ID_NO_REGISTER
 
 class HmctsCourthouseApiExtension :
   BeforeAllCallback,
@@ -41,6 +42,31 @@ class HmctsCourthouseApiMockServer : WireMockServer(WIREMOCK_PORT) {
   fun stubCourthouse() {
     stubFor(
       get(urlEqualTo("/courthouses/$TEST_HMCTS_COURTHOUSE_ID"))
+        .willReturn(
+          aResponse()
+            .withHeader("Content-Type", "application/json")
+            .withStatus(200)
+            .withBody(
+              """
+              {
+                "courtHouseType": "crown",
+                "courtHouseCode": "LND001",
+                "courtHouseName": "Central London County Court",
+                "address": {
+                  "address1": "Thomas More Building",
+                  "address2": "Royal Courts of Justice",
+                  "address3": "Strand",
+                  "address4": "London",
+                  "postalCode": "WC2A 2LL",
+                  "country": "UK"
+                }
+              }
+              """.trimIndent(),
+            ),
+        ),
+    )
+    stubFor(
+      get(urlEqualTo("/courthouses/$TEST_HMCTS_COURTHOUSE_ID_NO_REGISTER"))
         .willReturn(
           aResponse()
             .withHeader("Content-Type", "application/json")

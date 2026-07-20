@@ -6,7 +6,9 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsSubcriptionApiMockServer
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.CourtRegisterApiMockServer.Companion.TEST_HMCTS_COURTHOUSE_ID_NO_REGISTER
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsCourtScheduleApiExtension.Companion.hmctsCourtScheduleApi
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsSubcriptionApiMockServer.Companion.TEST_HMCTS_COURTHOUSE_ID
 
 @Transactional(readOnly = true)
 class HmctsStructuredDataApiEnricherIntTest : IntegrationTestBase() {
@@ -21,9 +23,24 @@ class HmctsStructuredDataApiEnricherIntTest : IntegrationTestBase() {
     val file = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
 
     assertThat(file.courtHearing).isNotNull
-    assertThat(file.courtHearing!!.courtId.toString()).isEqualTo(HmctsSubcriptionApiMockServer.TEST_HMCTS_COURTHOUSE_ID)
+    assertThat(file.courtHearing!!.courtId.toString()).isEqualTo(TEST_HMCTS_COURTHOUSE_ID)
     assertThat(file.courtHearing!!.hearingType).isEqualTo("First hearing")
     assertThat(file.courtHearing!!.courtName).isEqualTo("Central London County Court")
+    assertThat(file.courtHearing!!.courtCode).isEqualTo("LND001")
+  }
+
+  @Test
+  fun `Test when receiving a message from the queue with a hearing with no matching court on court register, then will lookup data and courtCode will be left empty`() {
+    hmctsCourtScheduleApi.stubCourtScheduleWithoutCourtRegistry()
+    sendSubscriptionNotification(MATCHING_CORE_PERSON)
+
+    val file = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
+
+    assertThat(file.courtHearing).isNotNull
+    assertThat(file.courtHearing!!.courtId.toString()).isEqualTo(TEST_HMCTS_COURTHOUSE_ID_NO_REGISTER)
+    assertThat(file.courtHearing!!.hearingType).isEqualTo("First hearing")
+    assertThat(file.courtHearing!!.courtName).isEqualTo("Central London County Court")
+    assertThat(file.courtHearing!!.courtCode).isNull()
   }
 
   @Test

@@ -48,6 +48,9 @@ hmpps:
   court-cases-release-dates:
     api:
       url: http://localhost:8335
+  court-register:
+    api:
+      url: http://localhost:8340
 
 # Wiremock prisoner-search-api
 prisoner:
