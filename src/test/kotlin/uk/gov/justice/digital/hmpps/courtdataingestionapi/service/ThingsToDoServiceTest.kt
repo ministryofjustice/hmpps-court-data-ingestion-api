@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.service
 
-import tools.jackson.databind.node.JsonNodeFactory
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
@@ -9,6 +8,7 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import tools.jackson.databind.node.JsonNodeFactory
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsDocumentManagementApi
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
