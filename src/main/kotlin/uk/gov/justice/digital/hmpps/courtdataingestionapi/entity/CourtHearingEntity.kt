@@ -30,6 +30,7 @@ data class CourtHearingEntity(
     hearingId = hmctsCourtHearingId,
     courtName = courtName,
     courtId = courtId,
+    courtCode = courtCode,
     hearingDate = hearingDate,
     caseReferences = courtDocuments.flatMap { it.courtDocumentCases.map { case -> case.caseReference } }.distinct(),
     hearingType = hearingType,
