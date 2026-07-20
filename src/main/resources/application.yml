@@ -161,7 +161,7 @@ extraction:
   corpus-sampler:
     enabled: false
   mirror:
-    metadata-version: 1 # TODO (CDIA-173): Raise value to 2 once all mappings are confirmed
+    metadata-version: 1 # TODO (CDIA-238): Raise value to 2 once all mappings are confirmed
 
 document:
   content-normalisation:

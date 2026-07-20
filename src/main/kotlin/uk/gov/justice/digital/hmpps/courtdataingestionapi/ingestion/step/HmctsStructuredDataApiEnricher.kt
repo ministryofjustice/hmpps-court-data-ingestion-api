@@ -55,7 +55,6 @@ class HmctsStructuredDataApiEnricher(
         courtName = courthouse.courtHouseName,
         hearingType = hearing.hearingType,
         hearingDate = hearingDate,
-
       )
     }.onFailure {
       log.warn("Unable to get structured API data from HMCTS", it)

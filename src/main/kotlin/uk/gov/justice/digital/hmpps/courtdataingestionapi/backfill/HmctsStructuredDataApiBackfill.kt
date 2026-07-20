@@ -20,7 +20,7 @@ class HmctsStructuredDataApiBackfill(
     cursor: String,
     batchSize: Int,
   ): BackfillBatch<UUID> {
-    val afterId = parseCursor(cursor)
+    val afterId = parseCursorUUID(cursor)
     val items = courtDocumentRepository.findUnpopulatedCourtHearingData(afterId, batchSize).map { it.id }
     val nextCursor = items.lastOrNull()?.toString() ?: cursor
     return BackfillBatch(items, nextCursor)
