@@ -42,7 +42,7 @@ class CdiaDocumentStatusBackfill(
   }
 
   override fun process(item: Document) {
-    log.info("Backfilling document ${item.documentUuid}")
+    log.info("Backfilling document ${item.documentUuid} status to ${DocumentMetadataStatus.ACTIVE.name}, was LIVE")
     documentManagementApi.mergeMetadata(item.documentUuid, metadata = mapOf("status" to DocumentMetadataStatus.ACTIVE.name))
   }
 
