@@ -1,0 +1,21 @@
+{
+  "name": "Baseline: dedup, a viewed doc, mark-as-new after view, and the cutoff",
+  "prisoner": "A0000AA",
+  "newDocCutoff": "2026-06-01T00:00:00",
+  "documents": [
+    { "uuid": "aaaaaaaa-0000-0000-0000-000000000001", "source": "court-data-ingestion-api", "status": "LIVE", "duplicateOf": null, "ingestedAt": "2026-07-01T09:00:00", "contentHash": "grp-a" },
+    { "uuid": "bbbbbbbb-0000-0000-0000-000000000002", "source": "court-data-ingestion-api", "status": "LIVE", "duplicateOf": "aaaaaaaa-0000-0000-0000-000000000001", "ingestedAt": "2026-07-01T09:00:05", "contentHash": "grp-a" },
+    { "uuid": "cccccccc-0000-0000-0000-000000000003", "source": "court-data-ingestion-api", "status": "LIVE", "duplicateOf": null, "ingestedAt": "2026-07-02T10:00:00",
+      "viewEvents": [ { "type": "VIEWED", "at": "2026-07-03T08:00:00" } ] },
+    { "uuid": "dddddddd-0000-0000-0000-000000000004", "source": "court-data-ingestion-api", "status": "LIVE", "duplicateOf": null, "ingestedAt": "2026-07-02T11:00:00",
+      "viewEvents": [ { "type": "VIEWED", "at": "2026-07-03T08:00:00" }, { "type": "MARKED_NEW", "at": "2026-07-04T14:00:00" } ] },
+    { "uuid": "eeeeeeee-0000-0000-0000-000000000005", "source": "court-data-ingestion-api", "status": "LIVE", "duplicateOf": null, "ingestedAt": "2026-05-15T12:00:00" }
+  ],
+  "expected": {
+    "todoCount": 2,
+    "newUuids": [
+      "aaaaaaaa-0000-0000-0000-000000000001",
+      "dddddddd-0000-0000-0000-000000000004"
+    ]
+  }
+}
