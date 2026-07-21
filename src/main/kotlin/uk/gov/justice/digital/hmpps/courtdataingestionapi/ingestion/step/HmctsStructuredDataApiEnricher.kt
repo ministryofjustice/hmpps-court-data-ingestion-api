@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.CourtRegisterApiClient
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmctsCourtScheduleApiClient
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmctsCourthouseApiClient
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtHearingEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.HmtcsApiDataEnrichment
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionContext
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionEnricher
@@ -63,6 +64,24 @@ class HmctsStructuredDataApiEnricher(
       )
     }.onFailure {
       log.warn("Unable to get structured API data from HMCTS", it)
+    }
+
+    return null
+  }
+
+  fun lookupCourtRegisterData(hearing: CourtHearingEntity): HmtcsApiDataEnrichment? {
+    runCatching {
+      val courtRegister = getCourtRegister(hearing.courtId)
+
+      return HmtcsApiDataEnrichment(
+        courtId = hearing.courtId,
+        courtName = getCourtName(hearing.courtId, courtRegister),
+        courtCode = courtRegister?.courtId,
+        hearingType = hearing.hearingType,
+        hearingDate = hearing.hearingDate,
+      )
+    }.onFailure {
+      log.warn("Unable to get court data from Court Register API", it)
     }
 
     return null
