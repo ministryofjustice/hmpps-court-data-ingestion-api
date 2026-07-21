@@ -12,7 +12,7 @@ data class CourtDocument(
 )
 
 data class CourtDocumentHearing(
-  val courtName: String,
+  val courtName: String? = null,
   val hearingType: String,
   val hearingDate: LocalDateTime,
 )

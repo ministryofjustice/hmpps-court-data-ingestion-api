@@ -57,7 +57,7 @@ class HmctsStructuredDataApiEnricher(
       return HmtcsApiDataEnrichment(
         courtId = courtId,
         courtCode = courtRegister?.courtId,
-        courtName = getCourtName(courtId, courtRegister),
+        courtName = courtRegister?.courtName,
         hearingType = hearing.hearingType,
         hearingDate = hearingDate,
       )
@@ -75,14 +75,5 @@ class HmctsStructuredDataApiEnricher(
       log.warn("Unable to get court register API data from HMCTS courtId", it)
     }
     return null
-  }
-
-  private fun getCourtName(hmctsCourtId: UUID, courtRegister: CourtRegister?): String {
-    if (courtRegister != null) {
-      return courtRegister.courtName
-    }
-
-    val courthouse = hmctsCourthouseApiClient.getCourthouse(hmctsCourtId)
-    return courthouse.courtHouseName
   }
 }

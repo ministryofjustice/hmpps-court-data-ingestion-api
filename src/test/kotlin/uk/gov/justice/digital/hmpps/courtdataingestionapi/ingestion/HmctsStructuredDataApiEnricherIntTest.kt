@@ -39,7 +39,8 @@ class HmctsStructuredDataApiEnricherIntTest : IntegrationTestBase() {
     assertThat(file.courtHearing).isNotNull
     assertThat(file.courtHearing!!.courtId.toString()).isEqualTo(TEST_HMCTS_COURTHOUSE_ID_NO_REGISTER)
     assertThat(file.courtHearing!!.hearingType).isEqualTo("First hearing")
-    assertThat(file.courtHearing!!.courtName).isEqualTo("Central London County Court")
+//    assertThat(file.courtHearing!!.courtName).isEqualTo("Central London County Court")
+    assertThat(file.courtHearing!!.courtName).isNull()
     assertThat(file.courtHearing!!.courtCode).isNull()
   }
 

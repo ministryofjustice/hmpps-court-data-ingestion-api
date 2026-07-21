@@ -15,7 +15,7 @@ data class CourtHearingEntity(
   @Id
   val id: UUID = UUID.randomUUID(),
   var courtId: UUID,
-  var courtName: String,
+  var courtName: String? = null,
   var courtCode: String? = null,
   var hearingType: String,
   var hearingDate: LocalDateTime,

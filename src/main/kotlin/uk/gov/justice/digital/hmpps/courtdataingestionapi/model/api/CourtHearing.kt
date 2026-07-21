@@ -5,7 +5,7 @@ import java.util.UUID
 
 data class CourtHearing(
   val hearingId: UUID,
-  val courtName: String,
+  val courtName: String? = null,
   val courtId: UUID,
   val courtCode: String? = null,
   val hearingDate: LocalDateTime,

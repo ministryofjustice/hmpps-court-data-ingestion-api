@@ -4,7 +4,7 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 data class HmtcsApiDataEnrichment(
-  val courtName: String,
+  val courtName: String? = null,
   val courtId: UUID,
   val courtCode: String? = null,
   val hearingType: String,
