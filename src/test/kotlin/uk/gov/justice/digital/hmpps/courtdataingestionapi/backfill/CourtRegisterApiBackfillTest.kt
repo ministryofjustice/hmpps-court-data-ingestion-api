@@ -61,13 +61,13 @@ class CourtRegisterApiBackfillTest : IntegrationTestBase() {
     courtRegisterApi.stubHmctsCourt(TEST_HMCTS_COURTHOUSE_ID_NO_REGISTER)
 
     val batch = backfill.selectBatch(cursor = "", batchSize = 200)
-    val documentId = batch.items[0]
+    val document = batch.items[0]
 
     // Run test
-    backfill.process(documentId)
+    backfill.process(document)
 
     // Check results
-    val fileAfter = courtDocumentRepository.findById(documentId).get()
+    val fileAfter = courtDocumentRepository.findById(document.id).get()
 
     assertThat(fileAfter.courtHearing).isNotNull
     assertThat(fileAfter.courtHearing!!.courtCode).isEqualTo("LND001")
