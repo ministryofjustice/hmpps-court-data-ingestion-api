@@ -64,4 +64,24 @@ class CourtRegisterApiMockServer : WireMockServer(WIREMOCK_PORT) {
         ),
     )
   }
+
+  fun stubHmctsCourt(hmctsCourtId: String) {
+    stubFor(
+      get(urlEqualTo("/courts/cp/$hmctsCourtId"))
+        .willReturn(
+          aResponse()
+            .withHeader("Content-Type", "application/json")
+            .withStatus(200)
+            .withBody(
+              """
+              {
+                "courtId": "LND001",
+                "courtName": "Central London County Court",
+                "courtDescription": "Central London County Court"
+              }
+              """.trimIndent(),
+            ),
+        ),
+    )
+  }
 }
