@@ -17,6 +17,7 @@ import java.util.UUID
 class HmctsCourtDefendantApiClient(
   @Qualifier("hmctsCourtDefendantApiWebClient") private val webClient: WebClient,
   private val hmctsApiConfiguration: HmctsApiConfiguration,
+  private val rateLimiter: HmctsRateLimiter,
 ) {
 
   fun getDefendants(
@@ -24,6 +25,7 @@ class HmctsCourtDefendantApiClient(
     masterDefendantId: UUID? = null,
     defendantId: UUID? = null,
   ): List<DefendantDetails> = try {
+    rateLimiter.acquire()
     webClient.get()
       .uri { builder: UriBuilder ->
         builder.path("/defendants/cases/{caseURN}")

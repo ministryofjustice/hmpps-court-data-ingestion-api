@@ -28,6 +28,7 @@ generic-service:
     CORE_PERSON_STUB_ENABLED: true
     CORE_PERSON_STUB_PRISONERNUMBERS: "A3457ED,A3458ED"
     ENVIRONMENT_NAME: dev
+    HMCTS_RATE_LIMIT: 0.8
 
   scheduledDowntime:
     enabled: true
