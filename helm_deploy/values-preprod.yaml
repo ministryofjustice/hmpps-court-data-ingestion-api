@@ -14,6 +14,7 @@ generic-service:
     PRISONER_SEARCH_API_URL: "https://prisoner-search-preprod.prison.service.justice.gov.uk"
     HMPPS_DOCUMENT_MANAGEMENT_API_URL: "https://document-api-preprod.hmpps.service.justice.gov.uk"
     HMPPS_COURT-CASES-RELEASE-DATES_API_URL: "https://court-cases-release-dates-api-preprod.hmpps.service.justice.gov.uk"
+    HMPPS_COURT-REGISTER_API_URL: "https://court-register-api-preprod.hmpps.service.justice.gov.uk"
     HMCTS_SUBSCRIPTION_CALLBACK_URL: "https://hxpwmnx4ef.execute-api.eu-west-2.amazonaws.com/preproduction/ingest"
     HMCTS_SUBSCRIPTION_API_URL: "https://amp.cjscp.org.uk/hrds"
     HMCTS_COURTHOUSE_API_URL: "https://amp.cjscp.org.uk/rcc"

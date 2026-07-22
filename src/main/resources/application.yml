@@ -101,6 +101,11 @@ spring:
             authorization-grant-type: client_credentials
             scope:
               - ${hmcts.client.creds.client.court.defendant.scope:defendant.read}
+          hmpps-court-register-api:
+            provider: hmpps-auth
+            client-id: ${client.creds.client.id}
+            client-secret: ${client.creds.client.secret}
+            authorization-grant-type: client_credentials
   http:
     codecs:
       max-in-memory-size: 10MB
@@ -161,7 +166,7 @@ extraction:
   corpus-sampler:
     enabled: false
   mirror:
-    metadata-version: 1 # TODO (CDIA-238): Raise value to 2 once all mappings are confirmed
+    metadata-version: 2
 
 document:
   content-normalisation:
