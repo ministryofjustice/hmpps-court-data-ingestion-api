@@ -16,7 +16,6 @@ class CourtDataIngestionListener(
   private val objectMapper: ObjectMapper,
   private val courtDataIngestionService: CourtDataIngestionService,
 ) {
-
   companion object {
     val log: Logger = LoggerFactory.getLogger(this::class.java)
   }

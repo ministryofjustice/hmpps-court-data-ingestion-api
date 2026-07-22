@@ -157,6 +157,7 @@ hmcts-api-config:
   courthouse-key: ${HMCTS_COURTHOUSE_KEY}
   court-schedule-key: ${HMCTS_COURT_SCHEDULE_KEY}
   court-defendant-key: ${HMCTS_COURT_DEFENDANT_KEY:}
+  rate-limit:  ${HMCTS_RATE_LIMIT:0.4}
 
 extraction:
   backfill:
