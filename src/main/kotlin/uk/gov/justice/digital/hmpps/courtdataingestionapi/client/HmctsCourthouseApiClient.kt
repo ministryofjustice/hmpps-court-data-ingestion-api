@@ -11,16 +11,23 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.subscription.HmctsApiC
 import java.util.UUID
 
 @Component
-class HmctsCourthouseApiClient(@Qualifier("hmctsCourthouseApiWebClient") private val webClient: WebClient, private val hmctsApiConfiguration: HmctsApiConfiguration) {
+class HmctsCourthouseApiClient(
+  @Qualifier("hmctsCourthouseApiWebClient") private val webClient: WebClient,
+  private val hmctsApiConfiguration: HmctsApiConfiguration,
+  private val rateLimiter: HmctsRateLimiter,
+) {
   fun getCourthouse(
     courthouseId: UUID,
-  ): CourthouseResponse = webClient.get()
-    .uri("/courthouses/$courthouseId")
-    .header(SUBSCRIPTION_KEY_HEADER, hmctsApiConfiguration.courthouseKey)
-    .header(X_CORRELATION_ID_HEADER, WebClientConfiguration.getCorrelationId().toString())
-    .retrieve()
-    .bodyToMono<CourthouseResponse>()
-    .block()!!
+  ): CourthouseResponse {
+    rateLimiter.acquire()
+    return webClient.get()
+      .uri("/courthouses/$courthouseId")
+      .header(SUBSCRIPTION_KEY_HEADER, hmctsApiConfiguration.courthouseKey)
+      .header(X_CORRELATION_ID_HEADER, WebClientConfiguration.getCorrelationId().toString())
+      .retrieve()
+      .bodyToMono<CourthouseResponse>()
+      .block()!!
+  }
 
   companion object {
     const val SUBSCRIPTION_KEY_HEADER = "Ocp-Apim-Subscription-Key"

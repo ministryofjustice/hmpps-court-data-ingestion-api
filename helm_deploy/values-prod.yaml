@@ -23,6 +23,7 @@ generic-service:
     HMCTS_EVENT_TYPES: "PRISON_COURT_REGISTER_GENERATED, WEE_CustodialSentence, OXE_DetentionAndTraining, WEE_Remand, WEE_RemandAfterBailAppealByProsecutor, WEE_CommittalToCrownCourtForSentence, WEE_CommittalToCrownCourtForConsiderationOfTheQuestionOfBailOnAChargeOfMurder, WEE_CommittalToCrownCourtAuthorityToHoldInYouthDetentionAccommodation, WEE_SendingToCrownCourtForTrial"
     HMCTS_SUBSCRIPTION_ENABLED: true
     ENVIRONMENT_NAME: prod
+    HMCTS_RATE_LIMIT: 0.4
 
   postgresDatabaseRestore:
     enabled: true

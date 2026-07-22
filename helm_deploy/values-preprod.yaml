@@ -27,6 +27,7 @@ generic-service:
     HMCTS_SUBSCRIPTION_ENABLED: true
     EXTRACTION_CORPUSSAMPLER_ENABLED: "true"
     ENVIRONMENT_NAME: preprod
+    HMCTS_RATE_LIMIT: 0.4
 
   scheduledDowntime:
     enabled: true
