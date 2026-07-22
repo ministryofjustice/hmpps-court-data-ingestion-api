@@ -2,12 +2,17 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.backfill
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions.assertThat
+import org.awaitility.kotlin.await
+import org.awaitility.kotlin.matches
+import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.test.web.reactive.server.expectBody
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.controller.BackfillEndpoint
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.CourtRegisterApiExtension.Companion.courtRegisterApi
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.CourtRegisterApiMockServer.Companion.TEST_HMCTS_COURTHOUSE_ID_NO_REGISTER
@@ -64,7 +69,23 @@ class CourtRegisterApiBackfillTest : IntegrationTestBase() {
     val document = batch.items[0]
 
     // Run test
-    backfill.process(document)
+//    backfill.process(document)
+    webTestClient.post()
+      .uri("/backfill")
+      .bodyValue(BackfillBody("court-register-api"))
+      .exchange()
+      .expectStatus()
+      .isOk
+
+    await untilCallTo {
+      webTestClient.get()
+        .uri("/backfill/court-register-api")
+        .exchange()
+        .expectStatus()
+        .isOk
+        .expectBody<BackfillEndpoint.StatusResponse>()
+        .returnResult().responseBody!!
+    } matches { it?.status == "COMPLETED" }
 
     // Check results
     val fileAfter = courtDocumentRepository.findById(document.id).get()
