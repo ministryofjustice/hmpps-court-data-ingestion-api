@@ -2,19 +2,14 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.backfill
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions.assertThat
-import org.awaitility.kotlin.await
-import org.awaitility.kotlin.matches
-import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.test.web.reactive.server.expectBody
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.controller.BackfillEndpoint
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.CourtRegisterApiExtension.Companion.courtRegisterApi
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.CourtRegisterApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.CourtRegisterApiMockServer.Companion.TEST_HMCTS_COURTHOUSE_ID_NO_REGISTER
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsCourtScheduleApiExtension.Companion.hmctsCourtScheduleApi
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtHearingRepository
@@ -63,7 +58,7 @@ class CourtRegisterApiBackfillTest : IntegrationTestBase() {
     hmctsCourtScheduleApi.stubCourtScheduleWithoutCourtRegistry()
     sendSubscriptionNotification(MATCHING_CORE_PERSON)
     // Mock the missing Court Register, will return 200 now instead
-    courtRegisterApi.stubHmctsCourt(TEST_HMCTS_COURTHOUSE_ID_NO_REGISTER)
+    CourtRegisterApiExtension.courtRegisterApi.stubHmctsCourt(TEST_HMCTS_COURTHOUSE_ID_NO_REGISTER)
 
     val batch = backfill.selectBatch(cursor = "", batchSize = 200)
     val documentId = batch.items[0]
