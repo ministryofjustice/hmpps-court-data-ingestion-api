@@ -23,6 +23,8 @@ class CourtDataIngestionListener(
   @SqsListener(
     "courtdataingestion",
     factory = "hmppsQueueContainerFactoryProxy",
+    maxConcurrentMessages = "2",
+    maxMessagesPerPoll = "2"
   )
   fun onMessage(
     rawMessage: String,

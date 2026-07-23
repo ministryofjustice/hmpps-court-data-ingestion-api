@@ -20,7 +20,11 @@ class PrisonerSearchEventListener(
     val log: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
-  @SqsListener("prisonercreated", factory = "hmppsQueueContainerFactoryProxy")
+  @SqsListener(
+    "prisonercreated",
+    factory = "hmppsQueueContainerFactoryProxy",
+    maxConcurrentMessages = "2",
+    maxMessagesPerPoll = "2")
   fun onDomainEvent(
     rawMessage: String,
   ) {
