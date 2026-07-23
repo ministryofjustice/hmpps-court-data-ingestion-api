@@ -28,7 +28,7 @@ class CourtDataIngestionServiceTest : IntegrationTestBase() {
 
   @ParameterizedTest
   @CsvSource(
-    "true, true, 1",
+    "true, true, 2",
     "true, false, 0",
     "false, true, 0",
     "false, false, 0",
