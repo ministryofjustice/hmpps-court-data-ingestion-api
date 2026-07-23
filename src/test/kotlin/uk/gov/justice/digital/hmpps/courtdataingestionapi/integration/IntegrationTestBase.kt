@@ -207,7 +207,12 @@ abstract class IntegrationTestBase {
     )
   }
 
-  protected fun startBackfill(backfillId: String) {
+  protected fun runBackfill(backfillId: String) {
+    startBackfill(backfillId)
+    backfillCallBack(backfillId)
+  }
+
+  private fun startBackfill(backfillId: String) {
     webTestClient.post()
       .uri("/backfill")
       .bodyValue(BackfillBody(backfillId))
@@ -216,7 +221,7 @@ abstract class IntegrationTestBase {
       .isOk
   }
 
-  protected fun backfillCallBack(backfillId: String) {
+  private fun backfillCallBack(backfillId: String) {
     await untilCallTo {
       webTestClient.get()
         .uri("/backfill/$backfillId")
@@ -226,11 +231,6 @@ abstract class IntegrationTestBase {
         .expectBody<BackfillEndpoint.StatusResponse>()
         .returnResult().responseBody!!
     } matches { it?.status == "COMPLETED" }
-  }
-
-  protected fun runBackfill(backfillId: String) {
-    startBackfill(backfillId)
-    backfillCallBack(backfillId)
   }
 
   companion object {
