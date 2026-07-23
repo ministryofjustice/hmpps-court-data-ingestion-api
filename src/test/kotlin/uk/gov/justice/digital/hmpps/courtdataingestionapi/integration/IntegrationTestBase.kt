@@ -17,6 +17,7 @@ import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.test.web.reactive.server.WebTestClient
+import org.springframework.test.web.reactive.server.expectBody
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.containers.localstack.LocalStackContainer
 import org.testcontainers.containers.localstack.LocalStackContainer.Service
@@ -26,6 +27,8 @@ import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.TestUtil
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.backfill.BackfillBody
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.controller.BackfillEndpoint
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.CorePersonApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.CourtRegisterApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsAuthApiExtension
@@ -202,6 +205,32 @@ abstract class IntegrationTestBase {
         .messageBody(TestUtil.objectMapper().writeValueAsString(event))
         .build(),
     )
+  }
+
+  protected fun startBackfill(backfillId: String) {
+    webTestClient.post()
+      .uri("/backfill")
+      .bodyValue(BackfillBody(backfillId))
+      .exchange()
+      .expectStatus()
+      .isOk
+  }
+
+  protected fun backfillCallBack(backfillId: String) {
+    await untilCallTo {
+      webTestClient.get()
+        .uri("/backfill/$backfillId")
+        .exchange()
+        .expectStatus()
+        .isOk
+        .expectBody<BackfillEndpoint.StatusResponse>()
+        .returnResult().responseBody!!
+    } matches { it?.status == "COMPLETED" }
+  }
+
+  protected fun runBackfill(backfillId: String) {
+    startBackfill(backfillId)
+    backfillCallBack(backfillId)
   }
 
   companion object {

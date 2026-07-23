@@ -57,12 +57,12 @@ class CourtRegisterApiMockServer : WireMockServer(WIREMOCK_PORT) {
             ),
         ),
     )
-    stubFor(
-      get(urlEqualTo("/courts/cp/$TEST_HMCTS_COURTHOUSE_ID_NO_REGISTER"))
-        .willReturn(
-          aResponse().withStatus(404),
-        ),
-    )
+//    stubFor(
+//      get(urlEqualTo("/courts/cp/$TEST_HMCTS_COURTHOUSE_ID_NO_REGISTER"))
+//        .willReturn(
+//          aResponse().withStatus(404),
+//        ),
+//    )
   }
 
   fun stubHmctsCourt(hmctsCourtId: String) {
