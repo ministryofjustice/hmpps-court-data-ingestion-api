@@ -1,14 +1,9 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.backfill
 
-import org.awaitility.kotlin.await
-import org.awaitility.kotlin.matches
-import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.test.web.reactive.server.expectBody
 import tools.jackson.module.kotlin.jacksonObjectMapper
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsDocumentManagementApi
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.controller.BackfillEndpoint
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsDocumentManagementApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Document
@@ -44,8 +39,7 @@ class CdiaDocumentStatusBackfillIntTest : IntegrationTestBase() {
     HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.stubMergeMetadata(documentWithLiveStatus.documentUuid)
 
     // Run
-    startBackfill()
-    backfillCallBack()
+    runBackfill("cdia-document-status")
 
     // Check results
     HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.verifyMergeMetadata(1, documentWithLiveStatus.documentUuid.toString(), mapOf("status" to "ACTIVE"))
@@ -68,32 +62,10 @@ class CdiaDocumentStatusBackfillIntTest : IntegrationTestBase() {
     HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.stubMergeMetadata(documentWithLiveStatus.documentUuid)
 
     // Run
-    startBackfill()
-    backfillCallBack()
+    runBackfill("cdia-document-status")
 
     // Check results
     HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.verifyMergeMetadata(0, documentWithLiveStatus.documentUuid.toString())
-  }
-
-  private fun startBackfill() {
-    webTestClient.post()
-      .uri("/backfill")
-      .bodyValue(BackfillBody("cdia-document-status"))
-      .exchange()
-      .expectStatus()
-      .isOk
-  }
-
-  private fun backfillCallBack() {
-    await untilCallTo {
-      webTestClient.get()
-        .uri("/backfill/cdia-document-status")
-        .exchange()
-        .expectStatus()
-        .isOk
-        .expectBody<BackfillEndpoint.StatusResponse>()
-        .returnResult().responseBody!!
-    } matches { it?.status == "COMPLETED" }
   }
 
   companion object {

@@ -20,8 +20,8 @@ class CourtRegisterApiExtension :
   }
 
   override fun beforeAll(context: ExtensionContext) {
-    courtRegisterApi.stubCourt()
     courtRegisterApi.start()
+    courtRegisterApi.stubCourt()
   }
 
   override fun beforeEach(context: ExtensionContext) {
@@ -37,6 +37,13 @@ class CourtRegisterApiMockServer : WireMockServer(WIREMOCK_PORT) {
   companion object {
     private const val WIREMOCK_PORT = 8340
     const val TEST_HMCTS_COURTHOUSE_ID_NO_REGISTER = "f2d1bad6-0333-485b-a6ca-7d01a8804dc7"
+    const val COURT_REGISTER_BODY: String = """
+              {
+                "courtId": "LND001",
+                "courtName": "Central London County Court",
+                "courtDescription": "Central London County Court"
+              }
+              """
   }
 
   fun stubCourt() {
@@ -46,15 +53,7 @@ class CourtRegisterApiMockServer : WireMockServer(WIREMOCK_PORT) {
           aResponse()
             .withHeader("Content-Type", "application/json")
             .withStatus(200)
-            .withBody(
-              """
-              {
-                "courtId": "LND001",
-                "courtName": "Central London County Court",
-                "courtDescription": "Central London County Court"
-              }
-              """.trimIndent(),
-            ),
+            .withBody(COURT_REGISTER_BODY.trimIndent()),
         ),
     )
     stubFor(
@@ -72,15 +71,7 @@ class CourtRegisterApiMockServer : WireMockServer(WIREMOCK_PORT) {
           aResponse()
             .withHeader("Content-Type", "application/json")
             .withStatus(200)
-            .withBody(
-              """
-              {
-                "courtId": "LND001",
-                "courtName": "Central London County Court",
-                "courtDescription": "Central London County Court"
-              }
-              """.trimIndent(),
-            ),
+            .withBody(COURT_REGISTER_BODY.trimIndent()),
         ),
     )
   }

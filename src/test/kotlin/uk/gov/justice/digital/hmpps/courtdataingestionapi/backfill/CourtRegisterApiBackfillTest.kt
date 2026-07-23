@@ -7,14 +7,12 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.CourtRegisterApiExtension.Companion.courtRegisterApi
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.CourtRegisterApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.CourtRegisterApiMockServer.Companion.TEST_HMCTS_COURTHOUSE_ID_NO_REGISTER
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsCourtScheduleApiExtension.Companion.hmctsCourtScheduleApi
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtHearingRepository
 
-@Transactional(readOnly = true)
 class CourtRegisterApiBackfillTest : IntegrationTestBase() {
 
   @Autowired
@@ -58,16 +56,20 @@ class CourtRegisterApiBackfillTest : IntegrationTestBase() {
     hmctsCourtScheduleApi.stubCourtScheduleWithoutCourtRegistry()
     sendSubscriptionNotification(MATCHING_CORE_PERSON)
     // Mock the missing Court Register, will return 200 now instead
-    courtRegisterApi.stubHmctsCourt(TEST_HMCTS_COURTHOUSE_ID_NO_REGISTER)
+    CourtRegisterApiExtension.courtRegisterApi.stubHmctsCourt(TEST_HMCTS_COURTHOUSE_ID_NO_REGISTER)
 
     val batch = backfill.selectBatch(cursor = "", batchSize = 200)
-    val document = batch.items[0]
+    val documentId = batch.items[0]
+    val fileBefore = courtDocumentRepository.findById(documentId).get()
 
     // Run test
-    backfill.process(document)
+    runBackfill("court-register-api")
 
     // Check results
-    val fileAfter = courtDocumentRepository.findById(document.id).get()
+    assertThat(fileBefore.courtHearing).isNotNull
+    assertThat(fileBefore.courtHearing!!.courtCode).isNull()
+
+    val fileAfter = courtDocumentRepository.findById(documentId).get()
 
     assertThat(fileAfter.courtHearing).isNotNull
     assertThat(fileAfter.courtHearing!!.courtCode).isEqualTo("LND001")
