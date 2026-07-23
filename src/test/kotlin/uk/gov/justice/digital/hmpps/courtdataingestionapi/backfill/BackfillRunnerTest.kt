@@ -3,21 +3,32 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.backfill
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
+import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.argumentCaptor
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.springframework.dao.DataIntegrityViolationException
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.BackfillRun
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.BackfillRunStatus
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.BackfillRunRepository
-import java.util.Optional
 import java.util.UUID
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 class BackfillRunnerTest {
 
   private val repository: BackfillRunRepository = mock()
-  private val runner = BackfillRunner(repository, staleThresholdIso = "PT5M")
+
+  private val store = BackfillRunStore(repository)
+  private val runner = BackfillRunner(
+    repository,
+    store,
+    staleThresholdIso = "PT5M",
+    heartbeatIntervalIso = "PT30S",
+  )
 
   @Test
   fun `acquireLock returns the saved run when no concurrent run exists`() {
@@ -52,22 +63,19 @@ class BackfillRunnerTest {
       ),
     )
     val runId = UUID.randomUUID()
-    val runRow = BackfillRun(
-      runId = runId,
-      backfillId = backfill.id,
-      status = BackfillRunStatus.RUNNING,
-    )
-    whenever(repository.findById(runId)).thenReturn(Optional.of(runRow))
-    whenever(repository.save(any<BackfillRun>())).thenAnswer { it.arguments[0] as BackfillRun }
+    whenever(repository.finishIfRunning(any(), any(), any(), any(), any(), anyOrNull())).thenReturn(1)
 
     runner.runAsync(runId, backfill)
 
     assertThat(backfill.processedItems).containsExactlyInAnyOrder("a", "b", "c", "d")
-    assertThat(runRow.status).isEqualTo(BackfillRunStatus.COMPLETED)
-    assertThat(runRow.processed).isEqualTo(4)
-    assertThat(runRow.failed).isEqualTo(0)
-    assertThat(runRow.cursor).isEqualTo("cursor-2")
-    assertThat(runRow.completedAt).isNotNull
+
+    val status = argumentCaptor<BackfillRunStatus>()
+    val processed = argumentCaptor<Long>()
+    val failed = argumentCaptor<Long>()
+    verify(repository).finishIfRunning(eq(runId), status.capture(), processed.capture(), failed.capture(), any(), anyOrNull())
+    assertThat(status.firstValue).isEqualTo(BackfillRunStatus.COMPLETED)
+    assertThat(processed.firstValue).isEqualTo(4)
+    assertThat(failed.firstValue).isEqualTo(0)
   }
 
   @Test
@@ -80,29 +88,55 @@ class BackfillRunnerTest {
       failOn = setOf("fail"),
     )
     val runId = UUID.randomUUID()
-    val runRow = BackfillRun(runId = runId, backfillId = backfill.id, status = BackfillRunStatus.RUNNING)
-    whenever(repository.findById(runId)).thenReturn(Optional.of(runRow))
-    whenever(repository.save(any<BackfillRun>())).thenAnswer { it.arguments[0] as BackfillRun }
+    whenever(repository.finishIfRunning(any(), any(), any(), any(), any(), anyOrNull())).thenReturn(1)
 
     runner.runAsync(runId, backfill)
 
-    assertThat(runRow.status).isEqualTo(BackfillRunStatus.COMPLETED)
-    assertThat(runRow.processed).isEqualTo(2)
-    assertThat(runRow.failed).isEqualTo(1)
+    val status = argumentCaptor<BackfillRunStatus>()
+    val processed = argumentCaptor<Long>()
+    val failed = argumentCaptor<Long>()
+    verify(repository).finishIfRunning(eq(runId), status.capture(), processed.capture(), failed.capture(), any(), anyOrNull())
+    assertThat(status.firstValue).isEqualTo(BackfillRunStatus.COMPLETED)
+    assertThat(processed.firstValue).isEqualTo(2)
+    assertThat(failed.firstValue).isEqualTo(1)
   }
 
   @Test
   fun `runAsync marks the run FAILED when selectBatch throws`() {
     val backfill = StubBackfill(batches = emptyList(), throwOnSelect = IllegalStateException("DB down"))
     val runId = UUID.randomUUID()
-    val runRow = BackfillRun(runId = runId, backfillId = backfill.id, status = BackfillRunStatus.RUNNING)
-    whenever(repository.findById(runId)).thenReturn(Optional.of(runRow))
-    whenever(repository.save(any<BackfillRun>())).thenAnswer { it.arguments[0] as BackfillRun }
+    whenever(repository.finishIfRunning(any(), any(), any(), any(), any(), anyOrNull())).thenReturn(1)
 
     runner.runAsync(runId, backfill)
 
-    assertThat(runRow.status).isEqualTo(BackfillRunStatus.FAILED)
-    assertThat(runRow.failureReason).contains("DB down")
+    val status = argumentCaptor<BackfillRunStatus>()
+    val reason = argumentCaptor<String>()
+    verify(repository).finishIfRunning(eq(runId), status.capture(), any(), any(), any(), reason.capture())
+    assertThat(status.firstValue).isEqualTo(BackfillRunStatus.FAILED)
+    assertThat(reason.firstValue).contains("DB down")
+  }
+
+  @Test
+  fun `runAsync aborts without overwriting when the run is reclaimed mid-flight`() {
+    val ownershipLost = CountDownLatch(1)
+    val backfill = StubBackfill(
+      batches = listOf(
+        BackfillBatch(listOf("a", "b"), "c1"),
+        BackfillBatch(listOf("c", "d"), "c2"),
+        BackfillBatch(emptyList(), "c2"),
+      ),
+      gate = ownershipLost,
+    )
+    val runId = UUID.randomUUID()
+    whenever(repository.touchHeartbeat(any(), any(), anyOrNull(), any(), any())).thenAnswer {
+      ownershipLost.countDown()
+      0
+    }
+
+    val fastRunner = BackfillRunner(repository, store, staleThresholdIso = "PT5M", heartbeatIntervalIso = "PT0.02S")
+    fastRunner.runAsync(runId, backfill)
+
+    verify(repository, never()).finishIfRunning(any(), any(), any(), any(), any(), anyOrNull())
   }
 
   @Test
@@ -125,6 +159,7 @@ class BackfillRunnerTest {
     private val batches: List<BackfillBatch<String>>,
     private val failOn: Set<String> = emptySet(),
     private val throwOnSelect: Throwable? = null,
+    private val gate: CountDownLatch? = null,
   ) : Backfill<String> {
     override val id = "stub"
     override val concurrency = 2
@@ -138,6 +173,7 @@ class BackfillRunnerTest {
     }
 
     override fun process(item: String) {
+      gate?.await(5, TimeUnit.SECONDS)
       if (item in failOn) throw RuntimeException("scripted failure for $item")
       synchronized(processedItems) { processedItems.add(item) }
     }
