@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEv
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.FileService
 import java.time.LocalDateTime
+import java.util.Optional
 import java.util.UUID
 
 class MirrorBackfillTest {
@@ -29,9 +30,9 @@ class MirrorBackfillTest {
 
     val batch = backfill.selectBatch(cursor = "", batchSize = 100)
 
-    assertThat(batch.items).containsExactly(first)
+    assertThat(first.metadataVersion).isLessThan(METADATA_VERSION)
+    assertThat(batch.items).containsExactly(first.id)
     assertThat(batch.nextCursor).isEqualTo(first.id.toString())
-    assertThat(batch.items[0].metadataVersion).isLessThan(METADATA_VERSION)
   }
 
   @Test
@@ -49,8 +50,9 @@ class MirrorBackfillTest {
     val initialMetadataVersion = item.metadataVersion
     whenever(fileService.mirrorEnrichmentToDocumentStore(item))
       .thenReturn(FileService.MirrorOutcome(contentHashPushed = true, metadataPushed = true))
+    setupCourtDocumentRepositoryMock(item)
 
-    backfill.process(item)
+    backfill.process(item.id)
 
     assertThat(initialMetadataVersion).isLessThan(METADATA_VERSION)
     assertThat(item.metadataVersion).isEqualTo(METADATA_VERSION)
@@ -70,8 +72,9 @@ class MirrorBackfillTest {
         contentHashError = failure,
       ),
     )
+    setupCourtDocumentRepositoryMock(item)
 
-    assertThatThrownBy { backfill.process(item) }.isEqualTo(failure)
+    assertThatThrownBy { backfill.process(item.id) }.isEqualTo(failure)
     assertThat(item.metadataVersion).isLessThan(METADATA_VERSION)
     assertThat(item.metadataVersion).isEqualTo(initialMetadataVersion)
     assertThat(item.metadataUpdatedAt).isNull()
@@ -94,8 +97,9 @@ class MirrorBackfillTest {
         metadataError = failure,
       ),
     )
+    setupCourtDocumentRepositoryMock(item)
 
-    assertThatThrownBy { backfill.process(item) }.isEqualTo(failure)
+    assertThatThrownBy { backfill.process(item.id) }.isEqualTo(failure)
     assertThat(item.metadataVersion).isLessThan(METADATA_VERSION)
     assertThat(item.metadataVersion).isEqualTo(initialMetadataVersion)
     assertThat(item.metadataUpdatedAt).isNull()
@@ -109,8 +113,9 @@ class MirrorBackfillTest {
     val initialMetadataVersion = item.metadataVersion
     whenever(fileService.mirrorEnrichmentToDocumentStore(item))
       .thenReturn(FileService.MirrorOutcome(contentHashPushed = true, metadataPushed = true))
+    setupCourtDocumentRepositoryMock(item)
 
-    backfill.process(item)
+    backfill.process(item.id)
 
     assertThat(initialMetadataVersion).isLessThan(METADATA_VERSION)
     assertThat(item.metadataVersion).isEqualTo(METADATA_VERSION)
@@ -131,6 +136,10 @@ class MirrorBackfillTest {
     extractedTextSha256 = extractedTextSha,
     deliverySource = DestinationType.PRISON,
   )
+
+  private fun setupCourtDocumentRepositoryMock(mockedDocument: CourtDocumentEntity) {
+    whenever(repository.findById(any())).thenReturn(Optional.of(mockedDocument))
+  }
 
   companion object {
     const val METADATA_VERSION: Int = 1

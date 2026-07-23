@@ -34,6 +34,6 @@ class CourtRegisterApiBackfill(
     val data = enricher.lookupCourtRegisterData(hearing)
     courtHearingService.createOrUpdateCourtHearingData(document, data)
     // Also mirror metadata with updated values
-    metadataBackfill.process(document)
+    metadataBackfill.process(item)
   }
 }

@@ -13,7 +13,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.C
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsCourtScheduleApiExtension.Companion.hmctsCourtScheduleApi
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtHearingRepository
 
-class CourtRegisterApiBackfillTest : IntegrationTestBase() {
+class CourtRegisterApiBackfillIntTest : IntegrationTestBase() {
 
   @Autowired
   private lateinit var mapper: ObjectMapper
