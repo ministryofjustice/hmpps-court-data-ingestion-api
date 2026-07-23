@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.backfill
 
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.step.HmctsStructuredDataApiEnricher
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtHearingService

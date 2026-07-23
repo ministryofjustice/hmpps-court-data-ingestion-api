@@ -53,16 +53,9 @@ class CourtRegisterApiMockServer : WireMockServer(WIREMOCK_PORT) {
           aResponse()
             .withHeader("Content-Type", "application/json")
             .withStatus(200)
-            .withBody(COURT_REGISTER_BODY.trimIndent(),
-            ),
+            .withBody(COURT_REGISTER_BODY.trimIndent()),
         ),
     )
-//    stubFor(
-//      get(urlEqualTo("/courts/cp/$TEST_HMCTS_COURTHOUSE_ID_NO_REGISTER"))
-//        .willReturn(
-//          aResponse().withStatus(404),
-//        ),
-//    )
   }
 
   fun stubHmctsCourt(hmctsCourtId: String) {
@@ -72,8 +65,7 @@ class CourtRegisterApiMockServer : WireMockServer(WIREMOCK_PORT) {
           aResponse()
             .withHeader("Content-Type", "application/json")
             .withStatus(200)
-            .withBody(COURT_REGISTER_BODY.trimIndent(),
-            ),
+            .withBody(COURT_REGISTER_BODY.trimIndent()),
         ),
     )
   }

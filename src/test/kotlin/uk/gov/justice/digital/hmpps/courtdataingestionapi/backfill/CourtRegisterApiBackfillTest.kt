@@ -7,14 +7,12 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.CourtRegisterApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.CourtRegisterApiMockServer.Companion.TEST_HMCTS_COURTHOUSE_ID_NO_REGISTER
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsCourtScheduleApiExtension.Companion.hmctsCourtScheduleApi
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtHearingRepository
 
-@Transactional(readOnly = true)
 class CourtRegisterApiBackfillTest : IntegrationTestBase() {
 
   @Autowired
@@ -62,11 +60,15 @@ class CourtRegisterApiBackfillTest : IntegrationTestBase() {
 
     val batch = backfill.selectBatch(cursor = "", batchSize = 200)
     val documentId = batch.items[0]
+    val fileBefore = courtDocumentRepository.findById(documentId).get()
 
     // Run test
     runBackfill("court-register-api")
 
     // Check results
+    assertThat(fileBefore.courtHearing).isNotNull
+    assertThat(fileBefore.courtHearing!!.courtCode).isNull()
+
     val fileAfter = courtDocumentRepository.findById(documentId).get()
 
     assertThat(fileAfter.courtHearing).isNotNull
