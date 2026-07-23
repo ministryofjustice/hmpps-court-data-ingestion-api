@@ -1,13 +1,9 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.backfill
 
-import org.awaitility.kotlin.await
-import org.awaitility.kotlin.matches
-import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import tools.jackson.module.kotlin.jacksonObjectMapper
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsDocumentManagementApi
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.controller.BackfillEndpoint
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsDocumentManagementApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Document
@@ -93,22 +89,7 @@ class RemandAndSentencingDocumentStatusBackfillIntTest : IntegrationTestBase() {
     HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.stubMergeMetadata(aRasDocumentWithOldStatuses.documentUuid)
     HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.stubMergeMetadata(aRasDocumentWithNoStatus.documentUuid)
 
-    webTestClient.post()
-      .uri("/backfill")
-      .bodyValue(BackfillBody("remand-and-sentencing-document-status"))
-      .exchange()
-      .expectStatus()
-      .isOk
-
-    await untilCallTo {
-      webTestClient.get()
-        .uri("/backfill/remand-and-sentencing-document-status")
-        .exchange()
-        .expectStatus()
-        .isOk
-        .expectBody(BackfillEndpoint.StatusResponse::class.java)
-        .returnResult().responseBody!!
-    } matches { it?.status == "COMPLETED" }
+    runBackfill("remand-and-sentencing-document-status")
 
     HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.verifyMergeMetadata(1, aRasDocumentWithOldStatuses.documentUuid.toString(), mapOf("status" to "DELETED"))
     HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.verifyMergeMetadata(1, aRasDocumentWithNoStatus.documentUuid.toString(), mapOf("status" to "ACTIVE"))
