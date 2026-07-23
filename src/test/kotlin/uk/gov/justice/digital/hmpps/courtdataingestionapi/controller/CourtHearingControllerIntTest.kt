@@ -5,7 +5,6 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.test.web.reactive.server.expectBody
-import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsCourtScheduleApiExtension.Companion.hmctsCourtScheduleApi
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsSubcriptionApiMockServer
@@ -14,7 +13,6 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.typeReference
 import java.time.LocalDateTime
 import java.util.UUID
 
-@Transactional
 class CourtHearingControllerIntTest : IntegrationTestBase() {
 
   @Nested
@@ -25,13 +23,8 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
     fun `Get court hearing for matching hearing`() {
       hmctsCourtScheduleApi.stubCourtSchedule()
       sendSubscriptionNotification(MATCHING_CORE_PERSON)
-      val hearing = webTestClient
-        .get()
-        .uri("/court-hearings/${HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID}")
-        .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RO")))
-        .exchange()
-        .expectBody<CourtHearing>()
-        .returnResult().responseBody!!
+
+      val hearing = requestCourtHearingBtHmctsHearingId()
 
       assertThat(hearing.hearingId).isEqualTo(UUID.fromString(HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID))
       assertThat(hearing.courtName).isEqualTo("Central London County Court")
@@ -47,13 +40,8 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
     fun `Get court hearing given a hearing with no matching court in register, then return matching hearing and null courtCode`() {
       hmctsCourtScheduleApi.stubCourtScheduleWithoutCourtRegistry()
       sendSubscriptionNotification(MATCHING_CORE_PERSON)
-      val hearing = webTestClient
-        .get()
-        .uri("/court-hearings/${HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID}")
-        .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RO")))
-        .exchange()
-        .expectBody<CourtHearing>()
-        .returnResult().responseBody!!
+
+      val hearing = requestCourtHearingBtHmctsHearingId()
 
       assertThat(hearing.hearingId).isEqualTo(UUID.fromString(HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID))
       assertThat(hearing.courtName).isEqualTo("Central London County Court")
@@ -75,6 +63,14 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
         .expectStatus()
         .isNotFound
     }
+
+    private fun requestCourtHearingBtHmctsHearingId(): CourtHearing = webTestClient
+      .get()
+      .uri("/court-hearings/${HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID}")
+      .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RO")))
+      .exchange()
+      .expectBody<CourtHearing>()
+      .returnResult().responseBody!!
   }
 
   @Nested
