@@ -15,16 +15,21 @@ import java.time.LocalDateTime
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 
 @Service
 class BackfillRunner(
   private val repository: BackfillRunRepository,
+  private val store: BackfillRunStore,
   @Value("\${extraction.backfill.stale-heartbeat-threshold:PT5M}") staleThresholdIso: String,
+  @Value("\${extraction.backfill.heartbeat-interval:PT30S}") heartbeatIntervalIso: String,
 ) {
 
   private val staleThreshold: Duration = Duration.parse(staleThresholdIso)
+  private val heartbeatInterval: Duration = Duration.parse(heartbeatIntervalIso)
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   fun acquireLock(backfillId: String, triggeredBy: String?): BackfillRun? = try {
@@ -49,24 +54,39 @@ class BackfillRunner(
     if (batchSize <= 0) {
       val msg = "batch size must be positive but was $batchSize (check extraction.backfill.batch-size / BACKFILL env)"
       log.error("Backfill {} run {} not started: {}", backfill.id, runId, msg)
-      complete(runId, BackfillRunStatus.FAILED, 0, 0, msg)
+      store.finish(runId, BackfillRunStatus.FAILED, 0, 0, msg)
       return
     }
     val pool = Executors.newFixedThreadPool(backfill.concurrency.coerceAtLeast(1))
+    val heartbeatPool = Executors.newSingleThreadScheduledExecutor { r ->
+      Thread(r, "backfill-heartbeat-$runId").apply { isDaemon = true }
+    }
     val processed = AtomicLong()
     val failed = AtomicLong()
-    var cursor = ""
+    val cursor = AtomicReference("")
     val lastFailure = AtomicReference<Throwable?>(null)
+    val reclaimed = AtomicBoolean(false)
+    val beat = heartbeatPool.scheduleAtFixedRate(
+      {
+        runCatching { store.heartbeat(runId, cursor.get(), processed.get(), failed.get()) }
+          .onSuccess { stillOwned -> if (!stillOwned) reclaimed.set(true) }
+          .onFailure { ex -> log.warn("Backfill {} run {} heartbeat write failed", backfill.id, runId, ex) }
+      },
+      heartbeatInterval.toMillis(),
+      heartbeatInterval.toMillis(),
+      TimeUnit.MILLISECONDS,
+    )
 
     try {
       log.info("Backfill {} run {} starting", backfill.id, runId)
-      while (true) {
-        val batch = backfill.selectBatch(cursor, batchSize)
+      while (!reclaimed.get()) {
+        val batch = backfill.selectBatch(cursor.get(), batchSize)
         if (batch.items.isEmpty()) break
 
         val futures = batch.items.map { item ->
           CompletableFuture.runAsync(
             {
+              if (reclaimed.get()) return@runAsync
               runCatching { backfill.process(item) }
                 .onSuccess { processed.incrementAndGet() }
                 .onFailure { ex ->
@@ -79,47 +99,38 @@ class BackfillRunner(
           )
         }
         CompletableFuture.allOf(*futures.toTypedArray()).join()
-
-        cursor = batch.nextCursor
-        heartbeat(runId, cursor, processed.get(), failed.get())
+        cursor.set(batch.nextCursor)
       }
+
+      if (reclaimed.get()) {
+        log.warn(
+          "Backfill {} run {} aborting: lock reclaimed as stale; {} processed, {} failed before abort",
+          backfill.id,
+          runId,
+          processed.get(),
+          failed.get(),
+        )
+        return
+      }
+
       val failedCount = failed.get()
       val reason = if (failedCount > 0) {
         lastFailure.get()?.let { "$failedCount item(s) failed; sample: ${it.message ?: it.javaClass.simpleName}" }
       } else {
         null
       }
-      complete(runId, BackfillRunStatus.COMPLETED, processed.get(), failedCount, reason)
-      log.info("Backfill {} run {} complete: {} processed, {} failed", backfill.id, runId, processed.get(), failedCount)
+      if (store.finish(runId, BackfillRunStatus.COMPLETED, processed.get(), failedCount, reason)) {
+        log.info("Backfill {} run {} complete: {} processed, {} failed", backfill.id, runId, processed.get(), failedCount)
+      } else {
+        log.warn("Backfill {} run {} finished but row was no longer RUNNING; not overwriting", backfill.id, runId)
+      }
     } catch (ex: Throwable) {
       log.error("Backfill {} run {} aborted", backfill.id, runId, ex)
-      complete(runId, BackfillRunStatus.FAILED, processed.get(), failed.get(), ex.message ?: ex.javaClass.simpleName)
+      store.finish(runId, BackfillRunStatus.FAILED, processed.get(), failed.get(), ex.message ?: ex.javaClass.simpleName)
     } finally {
+      beat.cancel(true)
+      heartbeatPool.shutdownNow()
       pool.shutdown()
-    }
-  }
-
-  @Transactional
-  fun heartbeat(runId: UUID, cursor: String, processed: Long, failed: Long) {
-    repository.findById(runId).ifPresent { run ->
-      run.cursor = cursor
-      run.processed = processed
-      run.failed = failed
-      run.heartbeatAt = LocalDateTime.now()
-      repository.save(run)
-    }
-  }
-
-  @Transactional
-  fun complete(runId: UUID, status: BackfillRunStatus, processed: Long, failed: Long, reason: String?) {
-    repository.findById(runId).ifPresent { run ->
-      run.status = status
-      run.processed = processed
-      run.failed = failed
-      run.completedAt = LocalDateTime.now()
-      run.heartbeatAt = run.completedAt!!
-      run.failureReason = reason
-      repository.save(run)
     }
   }
 
