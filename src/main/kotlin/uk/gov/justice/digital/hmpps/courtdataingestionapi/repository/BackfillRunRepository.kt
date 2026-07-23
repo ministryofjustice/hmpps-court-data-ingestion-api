@@ -35,4 +35,47 @@ interface BackfillRunRepository : JpaRepository<BackfillRun, UUID> {
     @Param("threshold") threshold: LocalDateTime,
     @Param("now") now: LocalDateTime,
   ): Int
+
+  @Modifying
+  @Query(
+    """
+      UPDATE BackfillRun b
+         SET b.heartbeatAt = :now,
+             b.cursor = :cursor,
+             b.processed = :processed,
+             b.failed = :failed
+       WHERE b.runId = :runId
+         AND b.status = uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.BackfillRunStatus.RUNNING
+    """,
+  )
+  fun touchHeartbeat(
+    @Param("runId") runId: UUID,
+    @Param("now") now: LocalDateTime,
+    @Param("cursor") cursor: String?,
+    @Param("processed") processed: Long,
+    @Param("failed") failed: Long,
+  ): Int
+
+  @Modifying
+  @Query(
+    """
+      UPDATE BackfillRun b
+         SET b.status = :status,
+             b.processed = :processed,
+             b.failed = :failed,
+             b.completedAt = :now,
+             b.heartbeatAt = :now,
+             b.failureReason = :reason
+       WHERE b.runId = :runId
+         AND b.status = uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.BackfillRunStatus.RUNNING
+    """,
+  )
+  fun finishIfRunning(
+    @Param("runId") runId: UUID,
+    @Param("status") status: BackfillRunStatus,
+    @Param("processed") processed: Long,
+    @Param("failed") failed: Long,
+    @Param("now") now: LocalDateTime,
+    @Param("reason") reason: String?,
+  ): Int
 }
