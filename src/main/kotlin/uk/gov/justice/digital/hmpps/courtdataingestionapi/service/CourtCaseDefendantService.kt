@@ -14,7 +14,25 @@ class CourtCaseDefendantService(
   private val courtCaseDefendantRepository: CourtCaseDefendantRepository,
 ) {
 
-  fun findDefendantId(masterDefendantId: UUID, caseReference: String): UUID? = courtCaseDefendantRepository.findByMasterDefendantIdAndCaseReference(masterDefendantId, caseReference)?.defendantId
+  fun findDefendantId(masterDefendantId: UUID, caseReference: String): UUID? {
+    val matches = courtCaseDefendantRepository
+      .findAllByMasterDefendantIdAndCaseReference(masterDefendantId, caseReference)
+
+    if (matches.size > 1) {
+      log.warn(
+        "Master defendant {} resolves to {} rows on case {} ({}); using most recently retrieved",
+        masterDefendantId,
+        matches.size,
+        caseReference,
+        matches.map { it.defendantId },
+      )
+    }
+
+    return matches
+      .sortedWith(compareByDescending<CourtCaseDefendantEntity> { it.retrievedAt }.thenBy { it.defendantId })
+      .firstOrNull()
+      ?.defendantId
+  }
 
   fun findMasterDefendantIds(defendantIds: List<UUID>): List<UUID> = courtCaseDefendantRepository.findAllById(defendantIds).map { it.masterDefendantId }
 

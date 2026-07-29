@@ -60,9 +60,9 @@ class CourtCaseDefendantServiceTest : IntegrationTestBase() {
     courtCaseDefendantService.upsert(defendantOnCaseA, "20GD1234567", master, "John Doe", dob())
     courtCaseDefendantService.upsert(defendantOnCaseB, "20GD7654321", master, "John Doe", dob())
 
-    val found = courtCaseDefendantRepository.findByMasterDefendantIdAndCaseReference(master, "20GD7654321")
+    val found = courtCaseDefendantRepository.findAllByMasterDefendantIdAndCaseReference(master, "20GD7654321")
 
-    assertThat(found?.defendantId).isEqualTo(defendantOnCaseB)
+    assertThat(found.first().defendantId).isEqualTo(defendantOnCaseB)
   }
 
   @Test
