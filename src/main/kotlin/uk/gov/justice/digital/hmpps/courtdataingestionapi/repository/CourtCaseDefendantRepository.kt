@@ -10,8 +10,8 @@ interface CourtCaseDefendantRepository : JpaRepository<CourtCaseDefendantEntity,
 
   fun findAllByMasterDefendantId(masterDefendantId: UUID): List<CourtCaseDefendantEntity>
 
-  fun findByMasterDefendantIdAndCaseReference(
+  fun findAllByMasterDefendantIdAndCaseReference(
     masterDefendantId: UUID,
     caseReference: String,
-  ): CourtCaseDefendantEntity?
+  ): List<CourtCaseDefendantEntity>
 }

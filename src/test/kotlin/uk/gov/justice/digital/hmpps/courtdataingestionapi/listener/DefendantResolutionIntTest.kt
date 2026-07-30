@@ -41,8 +41,8 @@ class DefendantResolutionIntTest : IntegrationTestBase() {
     assertThat(file.prisonerNumber).isEqualTo("RES001")
     assertThat(file.matchOutcome).isEqualTo(MatchOutcome.MATCHED_ON_DEFENDANT_ID)
 
-    val stored = courtCaseDefendantRepository.findByMasterDefendantIdAndCaseReference(masterDefendantId, CASE_REFERENCE)
-    assertThat(stored?.defendantId).isEqualTo(defendantId)
+    val stored = courtCaseDefendantRepository.findAllByMasterDefendantIdAndCaseReference(masterDefendantId, CASE_REFERENCE)
+    assertThat(stored.first().defendantId).isEqualTo(defendantId)
   }
 
   @Test
