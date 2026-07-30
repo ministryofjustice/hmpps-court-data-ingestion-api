@@ -29,6 +29,11 @@ class PrisonDocumentNotificationService(
     return (document.ingestionAt.isAfter(unreadDocumentDateFrom))
   }
 
+  fun isUnread(document: CourtDocumentEntity): Boolean {
+    val prisonerId = document.prisonerNumber ?: ""
+    return isUnread(document, getUnreadDocumentDateFrom(prisonerId))
+  }
+
   fun getUnreadDocumentDateFrom(prisonerId: String): LocalDateTime {
     if (prisonerId.isBlank()) return LocalDateTime.MIN
 

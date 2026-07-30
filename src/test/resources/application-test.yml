@@ -97,3 +97,7 @@ environment:
 
 feature-toggles:
   defendant-resolution: true
+
+extraction:
+  mirror:
+    metadata-version: 2

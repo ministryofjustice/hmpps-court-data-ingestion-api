@@ -33,6 +33,9 @@ class FileServiceTest {
   @Mock
   lateinit var hmppsDocumentManagementApi: HmppsDocumentManagementApi
 
+  @Mock
+  lateinit var documentNotificationService: PrisonDocumentNotificationService
+
   lateinit var fileService: FileService
 
   @BeforeEach
@@ -41,6 +44,7 @@ class FileServiceTest {
       hmctsSubscriptionApiClient,
       subscriptionRepository,
       hmppsDocumentManagementApi,
+      documentNotificationService,
       ENV_NAME,
     )
   }

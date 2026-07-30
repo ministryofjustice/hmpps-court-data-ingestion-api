@@ -22,6 +22,7 @@ class FileService(
   private val hmctsSubscriptionApiClient: HmctsSubscriptionApiClient,
   private val subscriptionRepository: SubscriptionRepository,
   private val hmppsDocumentManagementApi: HmppsDocumentManagementApi,
+  private val documentNotificationService: PrisonDocumentNotificationService,
   @Value("\${environment.name}")
   private val environmentName: String,
 ) {
@@ -90,6 +91,7 @@ class FileService(
     put("documentSubType", document.courtDocumentType.name)
     document.courtHearing?.courtCode?.let { put("courtCode", it) }
     put("caseReferences", document.courtHearing?.toCourtHearing()?.caseReferences?.toTypedArray() ?: emptyArray<String>())
+    put("isUnread", documentNotificationService.isUnread(document))
   }
 
   data class MirrorOutcome(
