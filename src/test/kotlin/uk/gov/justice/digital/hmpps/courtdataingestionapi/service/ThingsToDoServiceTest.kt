@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEn
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Document
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentApiType
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentMetadataStatus
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import java.time.LocalDateTime
@@ -236,9 +237,83 @@ class ThingsToDoServiceTest {
     documentGeneratedTimestamp = LocalDateTime.now(),
   )
 
-  private fun dmsDoc(uuid: UUID, duplicateOf: UUID? = null) = Document(
+  @Nested
+  @DisplayName("Only documents the Documents tab would show are counted")
+  inner class OnlyDisplayableDocuments {
+
+    @Test
+    fun `a legacy LIVE document is not counted because the tab does not show it`() {
+      val a = uuid()
+      scenario(courtDocs = listOf(courtDoc(a)), unread = setOf(a), apiReturns = listOf(dmsDoc(a, status = "LIVE")))
+      assertThat(count()).isEqualTo(0)
+    }
+
+    @Test
+    fun `an AWAITING document is not counted`() {
+      val a = uuid()
+      scenario(
+        courtDocs = listOf(courtDoc(a)),
+        unread = setOf(a),
+        apiReturns = listOf(dmsDoc(a, status = DocumentMetadataStatus.AWAITING.name)),
+      )
+      assertThat(count()).isEqualTo(0)
+    }
+
+    @Test
+    fun `a DELETED document is not counted even when not soft deleted`() {
+      val a = uuid()
+      scenario(
+        courtDocs = listOf(courtDoc(a)),
+        unread = setOf(a),
+        apiReturns = listOf(dmsDoc(a, status = DocumentMetadataStatus.DELETED.name)),
+      )
+      assertThat(count()).isEqualTo(0)
+    }
+
+    @Test
+    fun `a document with no status metadata at all is not counted`() {
+      val a = uuid()
+      scenario(courtDocs = listOf(courtDoc(a)), unread = setOf(a), apiReturns = listOf(dmsDoc(a, status = null)))
+      assertThat(count()).isEqualTo(0)
+    }
+
+    @Test
+    fun `a type the Documents tab does not request is not counted`() {
+      val a = uuid()
+      scenario(
+        courtDocs = listOf(courtDoc(a)),
+        unread = setOf(a),
+        apiReturns = listOf(dmsDoc(a, documentType = DocumentApiType.APPEAL_ORDER)),
+      )
+      assertThat(count()).isEqualTo(0)
+    }
+
+    @Test
+    fun `a mixed set counts only the displayable documents`() {
+      val active = uuid()
+      val legacy = uuid()
+      val hiddenType = uuid()
+      scenario(
+        courtDocs = listOf(courtDoc(active), courtDoc(legacy), courtDoc(hiddenType)),
+        unread = setOf(active, legacy, hiddenType),
+        apiReturns = listOf(
+          dmsDoc(active),
+          dmsDoc(legacy, status = "LIVE"),
+          dmsDoc(hiddenType, documentType = DocumentApiType.BREACH_ORDER),
+        ),
+      )
+      assertThat(count()).isEqualTo(1)
+    }
+  }
+
+  private fun dmsDoc(
+    uuid: UUID,
+    duplicateOf: UUID? = null,
+    status: String? = DocumentMetadataStatus.ACTIVE.name,
+    documentType: DocumentApiType = DocumentApiType.PRISON_COURT_REGISTER,
+  ) = Document(
     documentUuid = uuid,
-    documentType = DocumentApiType.PRISON_COURT_REGISTER,
+    documentType = documentType,
     documentFilename = "doc",
     filename = "doc",
     fileExtension = "pdf",
@@ -246,7 +321,10 @@ class ThingsToDoServiceTest {
     fileHash = "raw-$uuid",
     fileContentHash = "content-$uuid",
     mimeType = "application/pdf",
-    metadata = JsonNodeFactory.instance.objectNode().apply { put("prisonNumber", PRISONER) },
+    metadata = JsonNodeFactory.instance.objectNode().apply {
+      put("prisonNumber", PRISONER)
+      status?.let { put("status", it) }
+    },
     createdTime = LocalDateTime.now(),
     createdByServiceName = "court-data-ingestion-api",
     createdByUsername = "TEST",
