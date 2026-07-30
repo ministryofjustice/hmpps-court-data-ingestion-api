@@ -7,6 +7,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEn
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.ThingsToDo
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.ToDoType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Document
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.isDisplayable
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import java.time.LocalDateTime
 import java.util.UUID
@@ -24,21 +25,21 @@ class ThingsToDoService(
     val unreadCourtDocuments: List<CourtDocumentEntity> = courtDocumentRepository.findByPrisonerNumber(prisonerId)
       .filter { documentNotificationService.isUnread(it, unreadDocumentDateFrom) }
 
-    val unreadNonDuplicateDocuments: List<Document> = getNonDuplicateDocuments(unreadCourtDocuments)
+    val unreadDisplayableDocuments: List<Document> = getDisplayableDocuments(unreadCourtDocuments)
 
     return ThingsToDo(
       prisonerId = prisonerId,
-      thingsToDo = unreadNonDuplicateDocuments.map {
+      thingsToDo = unreadDisplayableDocuments.map {
         ToDoType.HMCTS_API_DOCUMENT_RECEIVED
       },
     )
   }
 
-  private fun getNonDuplicateDocuments(courtDocuments: List<CourtDocumentEntity>): List<Document> {
+  private fun getDisplayableDocuments(courtDocuments: List<CourtDocumentEntity>): List<Document> {
     if (courtDocuments.isEmpty()) return emptyList()
 
     val courtDocumentUuids: List<UUID> = courtDocuments.map { it.prisonDocumentId }
     val documents = documentManagementApiClient.findByDocumentUuids(courtDocumentUuids)
-    return documents.filter { it.duplicateOf == null && courtDocumentUuids.contains(it.documentUuid) }
+    return documents.filter { courtDocumentUuids.contains(it.documentUuid) && it.isDisplayable() }
   }
 }

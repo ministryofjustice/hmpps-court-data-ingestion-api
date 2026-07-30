@@ -20,3 +20,7 @@ data class Document(
   val createdByUsername: String?,
   val duplicateOf: UUID? = null,
 )
+
+fun Document.isDisplayable(): Boolean = duplicateOf == null &&
+  documentType.visibleInDocumentList &&
+  metadata.get("status")?.asString() == DocumentMetadataStatus.ACTIVE.name
