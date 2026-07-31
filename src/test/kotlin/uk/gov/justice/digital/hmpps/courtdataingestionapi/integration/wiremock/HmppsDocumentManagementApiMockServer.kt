@@ -263,6 +263,7 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
       "metadata": {
         "prisonCode": "KMI",
         "prisonNumber": "C3456DE",
+        "status": "ACTIVE",
         "court": "Birmingham Magistrates",
         "warrantDate": "2023-11-14"
       },
