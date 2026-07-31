@@ -65,9 +65,11 @@ class HmppsDocumentManagementApi(
     .header("Username", SYSTEM_USERNAME)
     .bodyValue(metadata)
     .retrieve()
-    .bodyToMono(Document::class.java)
+    .bodyToMono<Document>()
     .block()!!
 
+  // TODO (CDIA-???): consider removing this function, looks unused and has been deprecated by mergeMetadata
+  @Deprecated("Use mergeMetadata instead")
   fun updateMetadata(documentId: UUID, metadata: Map<String, Serializable> = mapOf()): Document = webClient
     .put()
     .uri("/documents/$documentId/metadata")
