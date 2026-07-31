@@ -93,6 +93,6 @@ class CourtDocumentService(
   companion object {
     private val log = LoggerFactory.getLogger(FileService::class.java)
 
-    private fun convertIsUnread(eventType: CourtDocumentViewEventType): Boolean = (eventType != CourtDocumentViewEventType.MARKED_NEW)
+    private fun convertIsUnread(eventType: CourtDocumentViewEventType): Boolean = (eventType == CourtDocumentViewEventType.MARKED_NEW)
   }
 }
