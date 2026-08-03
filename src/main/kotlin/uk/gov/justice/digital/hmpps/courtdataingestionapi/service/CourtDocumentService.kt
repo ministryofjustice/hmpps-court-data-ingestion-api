@@ -1,14 +1,18 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.service
 
 import jakarta.persistence.EntityNotFoundException
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsCourtCasesReleaseDatesApiClient
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsDocumentManagementApi
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentViewEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentViewEventType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocument
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentHearing
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentView
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Document
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import java.time.LocalDateTime
 import java.util.UUID
@@ -20,6 +24,7 @@ class CourtDocumentService(
   private val courtDocumentRepository: CourtDocumentRepository,
   private val courtCasesReleaseDatesApiClient: HmppsCourtCasesReleaseDatesApiClient,
   private val documentNotificationService: PrisonDocumentNotificationService,
+  private val hmppsDocumentManagementApi: HmppsDocumentManagementApi,
 ) {
 
   @Transactional
@@ -42,6 +47,8 @@ class CourtDocumentService(
     courtDocument.prisonerNumber?.let {
       courtCasesReleaseDatesApiClient.deleteThingsToDoCache(it)
     }
+
+    updateDocumentMetadataIsUnread(courtDocument, eventType)
   }
 
   fun getCourtDocumentsByPersonIdAndPrisonDocumentIds(
@@ -64,5 +71,28 @@ class CourtDocumentService(
         },
       )
     }
+  }
+
+  private fun updateDocumentMetadataIsUnread(courtDocument: CourtDocumentEntity, eventType: CourtDocumentViewEventType): () -> Result<Document> {
+    val metadata = buildMap {
+      put("isUnread", convertIsUnread(eventType))
+    }
+
+    return {
+      runCatching { hmppsDocumentManagementApi.mergeMetadata(courtDocument.prisonDocumentId, metadata) }
+        .onFailure {
+          log.warn(
+            "Record event: updating metadata document status failed for {} ",
+            courtDocument.prisonDocumentId,
+            it,
+          )
+        }
+    }
+  }
+
+  companion object {
+    private val log = LoggerFactory.getLogger(FileService::class.java)
+
+    fun convertIsUnread(eventType: CourtDocumentViewEventType): Boolean = (eventType == CourtDocumentViewEventType.MARKED_NEW)
   }
 }

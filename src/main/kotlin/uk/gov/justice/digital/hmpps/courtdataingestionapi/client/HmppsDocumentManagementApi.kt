@@ -65,16 +65,6 @@ class HmppsDocumentManagementApi(
     .header("Username", SYSTEM_USERNAME)
     .bodyValue(metadata)
     .retrieve()
-    .bodyToMono(Document::class.java)
-    .block()!!
-
-  fun updateMetadata(documentId: UUID, metadata: Map<String, Serializable> = mapOf()): Document = webClient
-    .put()
-    .uri("/documents/$documentId/metadata")
-    .header("Service-Name", appName)
-    .header("Username", SYSTEM_USERNAME)
-    .bodyValue(metadata)
-    .retrieve()
     .bodyToMono<Document>()
     .block()!!
 
