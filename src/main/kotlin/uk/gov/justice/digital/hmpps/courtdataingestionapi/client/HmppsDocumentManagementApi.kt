@@ -68,18 +68,6 @@ class HmppsDocumentManagementApi(
     .bodyToMono<Document>()
     .block()!!
 
-  // TODO (CDIA-???): consider removing this function, looks unused and has been deprecated by mergeMetadata
-  @Deprecated("Use mergeMetadata instead")
-  fun updateMetadata(documentId: UUID, metadata: Map<String, Serializable> = mapOf()): Document = webClient
-    .put()
-    .uri("/documents/$documentId/metadata")
-    .header("Service-Name", appName)
-    .header("Username", SYSTEM_USERNAME)
-    .bodyValue(metadata)
-    .retrieve()
-    .bodyToMono<Document>()
-    .block()!!
-
   fun getDocument(documentId: UUID): Document = webClient
     .get()
     .uri("/documents/$documentId")

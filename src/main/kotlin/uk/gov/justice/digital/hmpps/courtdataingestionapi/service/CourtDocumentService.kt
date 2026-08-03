@@ -48,7 +48,7 @@ class CourtDocumentService(
       courtCasesReleaseDatesApiClient.deleteThingsToDoCache(it)
     }
 
-    updateDocumentIsUnread(courtDocument, eventType)
+    updateDocumentMetadataIsUnread(courtDocument, eventType)
   }
 
   fun getCourtDocumentsByPersonIdAndPrisonDocumentIds(
@@ -73,7 +73,7 @@ class CourtDocumentService(
     }
   }
 
-  private fun updateDocumentIsUnread(courtDocument: CourtDocumentEntity, eventType: CourtDocumentViewEventType): () -> Result<Document> {
+  private fun updateDocumentMetadataIsUnread(courtDocument: CourtDocumentEntity, eventType: CourtDocumentViewEventType): () -> Result<Document> {
     val metadata = buildMap {
       put("isUnread", convertIsUnread(eventType))
     }
