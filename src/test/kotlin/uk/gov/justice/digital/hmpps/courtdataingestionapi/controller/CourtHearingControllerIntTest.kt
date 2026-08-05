@@ -24,7 +24,7 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
       hmctsCourtScheduleApi.stubCourtSchedule()
       sendSubscriptionNotification(MATCHING_CORE_PERSON)
 
-      val hearing = requestCourtHearingBtHmctsHearingId()
+      val hearing = getCourtHearing(MATCHING_PRISONER_NUMBER, HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID)
 
       assertThat(hearing.hearingId).isEqualTo(UUID.fromString(HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID))
       assertThat(hearing.courtName).isEqualTo("Central London County Court")
@@ -41,7 +41,7 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
       hmctsCourtScheduleApi.stubCourtScheduleWithoutCourtRegistry()
       sendSubscriptionNotification(MATCHING_CORE_PERSON)
 
-      val hearing = requestCourtHearingBtHmctsHearingId()
+      val hearing = getCourtHearing(MATCHING_PRISONER_NUMBER, HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID)
 
       assertThat(hearing.hearingId).isEqualTo(UUID.fromString(HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID))
       assertThat(hearing.courtName).isEqualTo("Central London County Court")
@@ -57,16 +57,27 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
     fun `Get court hearing for not found hearing`() {
       webTestClient
         .get()
-        .uri("/court-hearings/${UUID.randomUUID()}")
+        .uri("/court-hearings/prisoner/$MATCHING_PRISONER_NUMBER/hearing/${UUID.randomUUID()}")
         .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RO")))
         .exchange()
         .expectStatus()
         .isNotFound
     }
 
-    private fun requestCourtHearingBtHmctsHearingId(): CourtHearing = webTestClient
+    @Test
+    fun `Get court hearing where prisoner number does not match hearing documents`() {
+      webTestClient
+        .get()
+        .uri("/court-hearings/prisoner/ANOTHERPRISONER/hearing/${HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID}")
+        .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RO")))
+        .exchange()
+        .expectStatus()
+        .isNotFound
+    }
+
+    private fun getCourtHearing(prisonerNumber: String, hearingId: String): CourtHearing = webTestClient
       .get()
-      .uri("/court-hearings/${HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID}")
+      .uri("/court-hearings/prisoner/$prisonerNumber/hearing/$hearingId")
       .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RO")))
       .exchange()
       .expectBody<CourtHearing>()

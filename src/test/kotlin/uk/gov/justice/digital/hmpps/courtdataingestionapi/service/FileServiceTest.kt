@@ -121,9 +121,9 @@ class FileServiceTest {
     @JvmStatic
     fun getBuildMirrorEnrichmentMetadataTestParameters() = listOf(
       Arguments.of(DestinationType.PRISON, CourtDocumentType.REMAND_WARRANT, COURT_CODE, CASE_REFERENCE, "PRISON", "REMAND_WARRANT", COURT_CODE, arrayOf(CASE_REFERENCE)),
-      Arguments.of(DestinationType.PRISON, CourtDocumentType.PRISON_COURT_REGISTER, null, CASE_REFERENCE, "PRISON", "PRISON_COURT_REGISTER", "NOT FOUND", emptyArray<String>()),
+      Arguments.of(DestinationType.PRISON, CourtDocumentType.PRISON_COURT_REGISTER, null, CASE_REFERENCE, "PRISON", "PRISON_COURT_REGISTER", "NOT FOUND", arrayOf(CASE_REFERENCE)),
       Arguments.of(null, CourtDocumentType.PRISON_COURT_REGISTER, COURT_CODE, CASE_REFERENCE, "NOT FOUND", "PRISON_COURT_REGISTER", COURT_CODE, arrayOf(CASE_REFERENCE)),
-      Arguments.of(null, CourtDocumentType.REMAND_WARRANT, null, CASE_REFERENCE, "NOT FOUND", "REMAND_WARRANT", "NOT FOUND", emptyArray<String>()),
+      Arguments.of(null, CourtDocumentType.REMAND_WARRANT, null, CASE_REFERENCE, "NOT FOUND", "REMAND_WARRANT", "NOT FOUND", arrayOf(CASE_REFERENCE)),
       Arguments.of(DestinationType.PRISON, CourtDocumentType.REMAND_WARRANT, COURT_CODE, null, "PRISON", "REMAND_WARRANT", COURT_CODE, emptyArray<String>()),
       Arguments.of(DestinationType.PRISON, CourtDocumentType.PRISON_COURT_REGISTER, null, null, "PRISON", "PRISON_COURT_REGISTER", "NOT FOUND", emptyArray<String>()),
       Arguments.of(null, CourtDocumentType.PRISON_COURT_REGISTER, COURT_CODE, null, "NOT FOUND", "PRISON_COURT_REGISTER", COURT_CODE, emptyArray<String>()),
