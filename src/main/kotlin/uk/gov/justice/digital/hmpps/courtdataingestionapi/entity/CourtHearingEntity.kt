@@ -27,12 +27,9 @@ data class CourtHearingEntity(
   var updatedAt: LocalDateTime = LocalDateTime.now(),
 ) {
 
-  // TODO make not nullable string once old endpoint is removed.
-  fun toCourtHearing(prisonerNumber: String?): CourtHearing {
+  fun toCourtHearing(prisonerNumber: String): CourtHearing {
     val documents = courtDocuments
-      .filter {
-        prisonerNumber == null || it.prisonerNumber == prisonerNumber
-      }
+      .filter { it.prisonerNumber == prisonerNumber }
     if (documents.isEmpty()) {
       throw EntityNotFoundException("No hearing document found for $prisonerNumber hearing $hmctsCourtHearingId")
     }

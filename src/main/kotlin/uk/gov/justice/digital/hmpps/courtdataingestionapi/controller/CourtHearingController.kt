@@ -19,23 +19,6 @@ class CourtHearingController(
   private val courtHearingService: CourtHearingService,
 ) {
 
-  @GetMapping("/{courtHearingId}")
-  @PreAuthorize("hasAnyRole('COURT_DATA_INGESTION__COURT_DATA_RO', 'COURT_DATA_INGESTION__COURT_DATA_RW')")
-  @Operation(
-    summary = "Get court hearing info",
-    description = "Gets court hearing data ingested from CP.",
-  )
-  @ApiResponses(
-    value = [
-      ApiResponse(responseCode = "200", description = "Successfully gets court hearing."),
-      ApiResponse(responseCode = "401", description = "Unauthorized - valid Oauth2 token required"),
-      ApiResponse(responseCode = "403", description = "Forbidden - requires appropriate role"),
-    ],
-  )
-  fun getCourtHearings(
-    @PathVariable("courtHearingId") courtHearingId: UUID,
-  ): CourtHearing = courtHearingService.getCourtHearing(courtHearingId)
-
   @GetMapping("/prisoner/{prisonerNumber}/hearing/{courtHearingId}")
   @PreAuthorize("hasAnyRole('COURT_DATA_INGESTION__COURT_DATA_RO', 'COURT_DATA_INGESTION__COURT_DATA_RW')")
   @Operation(
