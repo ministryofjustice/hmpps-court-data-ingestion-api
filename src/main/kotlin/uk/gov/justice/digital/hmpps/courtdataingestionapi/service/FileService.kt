@@ -14,7 +14,6 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Docume
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.SubscriptionRepository
 import java.io.Serializable
 import java.util.UUID
-import kotlin.emptyArray
 
 @Service
 @Transactional
@@ -90,7 +89,7 @@ class FileService(
     document.deliverySource?.let { put("deliverySource", it.name) }
     put("documentSubType", document.courtDocumentType.name)
     document.courtHearing?.courtCode?.let { put("courtCode", it) }
-    put("caseReferences", document.courtHearing?.toCourtHearing()?.caseReferences?.toTypedArray() ?: emptyArray<String>())
+    put("caseReferences", document.courtDocumentCases.map { it.caseReference }.toTypedArray())
     put("isUnread", documentNotificationService.isUnread(document))
   }
 
