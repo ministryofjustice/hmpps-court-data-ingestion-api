@@ -51,12 +51,6 @@ class CourtHearingService(
     }
   }
 
-  @Deprecated("CDIA-273 Get court hearing requires a prisoner number to filter documents for a person.")
-  fun getCourtHearing(courtHearingId: UUID): CourtHearing {
-    val courtHearing = courtHearingRepository.findFirstByHmctsCourtHearingId(courtHearingId) ?: throw EntityNotFoundException("Hearing not found $courtHearingId")
-    return courtHearing.toCourtHearing(null)
-  }
-
   fun getCourtHearing(courtHearingId: UUID, prisonerNumber: String): CourtHearing {
     val courtHearing = courtHearingRepository.findFirstByHmctsCourtHearingId(courtHearingId) ?: throw EntityNotFoundException("Hearing not found $courtHearingId")
     return courtHearing.toCourtHearing(prisonerNumber)
