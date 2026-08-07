@@ -59,6 +59,7 @@ class HmppsDocumentManagementApiExtension :
 
 class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
   companion object {
+    private const val DOCUMENT_UUID_FORMAT: String = "[a-z0-9A-Z|-]{36}"
     private const val WIREMOCK_PORT = 8334
     private const val SERVICE_NAME = "hmpps-court-data-ingestion-api"
     private const val USERNAME = "hmcts-getcourtdata"
@@ -212,8 +213,8 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
 
   fun verifyMergeMetadata(
     didHappenXTimes: Int = 1,
-    withUuid: String = "[a-z0-9A-Z|-]{36}",
-    withMetadata: Map<String, String>? = null,
+    withUuid: String = DOCUMENT_UUID_FORMAT,
+    withMetadata: Map<String, Any>? = null,
   ) {
     var request = patchRequestedFor(urlMatching("/documents/$withUuid/metadata"))
 
@@ -230,7 +231,7 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
 
   fun verifyUploadedDocument(
     didHappenXTimes: Int = 1,
-    withUuid: String = "[a-z0-9A-Z|-]{36}",
+    withUuid: String = DOCUMENT_UUID_FORMAT,
     withType: DocumentApiType = DocumentApiType.PRISON_COURT_REGISTER,
     fileWasUploaded: ByteArray = ByteArray(0),
     withMetadata: Map<String, String> = mapOf(),

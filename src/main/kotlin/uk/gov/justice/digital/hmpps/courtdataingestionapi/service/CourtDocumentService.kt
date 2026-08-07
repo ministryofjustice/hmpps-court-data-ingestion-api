@@ -73,21 +73,19 @@ class CourtDocumentService(
     }
   }
 
-  private fun updateDocumentMetadataIsUnread(courtDocument: CourtDocumentEntity, eventType: CourtDocumentViewEventType): () -> Result<Document> {
+  private fun updateDocumentMetadataIsUnread(courtDocument: CourtDocumentEntity, eventType: CourtDocumentViewEventType): Result<Document> {
     val metadata = buildMap {
       put("isUnread", convertIsUnread(eventType))
     }
 
-    return {
-      runCatching { hmppsDocumentManagementApi.mergeMetadata(courtDocument.prisonDocumentId, metadata) }
-        .onFailure {
-          log.warn(
-            "Record event: updating metadata document status failed for {} ",
-            courtDocument.prisonDocumentId,
-            it,
-          )
-        }
-    }
+    return runCatching { hmppsDocumentManagementApi.mergeMetadata(courtDocument.prisonDocumentId, metadata) }
+      .onFailure {
+        log.warn(
+          "Record event: updating metadata document status failed for {} ",
+          courtDocument.prisonDocumentId,
+          it,
+        )
+      }
   }
 
   companion object {

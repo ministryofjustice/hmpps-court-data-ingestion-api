@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.TestUtil
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentViewEventType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsCourtCasesReleaseDatesApiExtension
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsDocumentManagementApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocument
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentHearing
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
@@ -98,6 +99,8 @@ class CourtDocumentControllerIntTest : IntegrationTestBase() {
       assertThat(courtDocument.courtDocumentViews).hasSize(1)
       assertThat(courtDocument.courtDocumentViews[0].username).isEqualTo(TEST_USERNAME)
       HmppsCourtCasesReleaseDatesApiExtension.hmppsCourtCasesReleaseDatesApi.verifyEvictCache()
+
+      verifyUpdateMetadataIsUnread(courtDocument.prisonDocumentId, false)
     }
 
     @Test
@@ -154,6 +157,8 @@ class CourtDocumentControllerIntTest : IntegrationTestBase() {
       assertThat(courtDocument.courtDocumentViews[0].username).isEqualTo(TEST_USERNAME)
       assertThat(courtDocument.courtDocumentViews[0].eventType).isEqualTo(CourtDocumentViewEventType.MARKED_NEW)
       HmppsCourtCasesReleaseDatesApiExtension.hmppsCourtCasesReleaseDatesApi.verifyEvictCache()
+
+      verifyUpdateMetadataIsUnread(courtDocument.prisonDocumentId, true)
     }
 
     @Test
@@ -177,4 +182,11 @@ class CourtDocumentControllerIntTest : IntegrationTestBase() {
         .isNotFound
     }
   }
+
+  private fun verifyUpdateMetadataIsUnread(prisonDocumentId: UUID, isUnread: Boolean) = HmppsDocumentManagementApiExtension
+    .hmppsDocumentManagementApi.verifyMergeMetadata(
+      1,
+      prisonDocumentId.toString(),
+      mapOf("isUnread" to isUnread),
+    )
 }
