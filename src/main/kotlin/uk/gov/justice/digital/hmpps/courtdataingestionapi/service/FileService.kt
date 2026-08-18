@@ -89,7 +89,7 @@ class FileService(
     document.deliverySource?.let { put("deliverySource", it.name) }
     put("documentSubType", document.courtDocumentType.name)
     document.courtHearing?.courtCode?.let { put("courtCode", it) }
-    put("caseReferences", document.courtDocumentCases.map { it.caseReference }.toTypedArray())
+    put("caseReferences", document.courtDocumentCases.map { it.caseReference }.toSet().toTypedArray())
     put("isUnread", documentNotificationService.isUnread(document))
   }
 
