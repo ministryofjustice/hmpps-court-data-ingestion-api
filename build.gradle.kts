@@ -36,7 +36,7 @@ dependencies {
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0")
   // Spatial PDF text extraction for the court-register engine.
   implementation("org.apache.pdfbox:pdfbox:3.0.8")
-  implementation("com.google.guava:guava:33.6.0-jre")
+  implementation("com.google.guava:guava:33.7.0-jre")
 
   testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:2.5.0")
   testImplementation("org.springframework.boot:spring-boot-webtestclient")
