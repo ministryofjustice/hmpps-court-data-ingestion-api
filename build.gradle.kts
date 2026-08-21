@@ -19,7 +19,7 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
   // Telem
-  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.30.0")
+  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.31.0")
 
   // DB
   // Spring Boot 4 no longer auto-configures Flyway from flyway-core alone; the starter is required or migrations silently won't run at startup.
