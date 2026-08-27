@@ -138,12 +138,13 @@ abstract class IntegrationTestBase {
   }
 
   protected fun sendSubscriptionNotification(
-    defendantId: UUID,
+    masterDefendantId: UUID,
     documentId: UUID = COURT_DOCUMENT_ID,
+    hearingId: UUID = UUID.fromString(HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID),
   ): HmctsSubscriptionNotificationRequestBody {
     val event =
       HmctsSubscriptionNotificationRequestBody(
-        masterDefendantId = defendantId,
+        masterDefendantId = masterDefendantId,
         documentId = documentId,
         cases = listOf(
           HmctsCase(CASE_REFERENCE),
@@ -151,7 +152,7 @@ abstract class IntegrationTestBase {
         prisonEmailAddress = PRISON_EMAIL,
         documentGeneratedTimestamp = ZonedDateTime.of(2026, 6, 12, 16, 0, 0, 0, ZoneOffset.UTC),
         eventType = HmctsEventType.PRISON_COURT_REGISTER_GENERATED,
-        hearingId = UUID.fromString(HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID),
+        hearingId = hearingId,
       )
     courtDataIngestionQueue.sqsClient.sendMessage(
       SendMessageRequest.builder()
@@ -161,7 +162,7 @@ abstract class IntegrationTestBase {
     )
 
     awaitAtMost30Secs untilCallTo {
-      courtDocumentRepository.countByMasterDefendantId(defendantId)
+      courtDocumentRepository.countByMasterDefendantId(masterDefendantId)
     } matches { it!! >= 1L }
     return event
   }

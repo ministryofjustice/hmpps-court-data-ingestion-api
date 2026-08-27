@@ -53,10 +53,11 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
     @Test
     fun `Get court hearing for matching hearing`() {
       val defendantId = UUID.randomUUID()
+      val prisonerNumber = "123ABC"
       HmctsCourtDefendantApiExtension.hmctsCourtDefendantApi.stubDefendants(
         CASE_REFERENCE,
         listOf(
-          DefendantDetails(defendantId, MATCHING_CORE_PERSON),
+          DefendantDetails(defendantId, HEARING_TEST_DEFENDANT_ID),
         ),
       )
       HmctsPcrApiExtension.hmctsPcrApiMockServer.stubGetPcr(
@@ -64,10 +65,10 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
         UUID.fromString(HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID),
         defendantId,
       )
-      CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantId, listOf(MATCHING_PRISONER_NUMBER))
-      sendSubscriptionNotification(MATCHING_CORE_PERSON)
+      CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantId, listOf(prisonerNumber))
+      sendSubscriptionNotification(HEARING_TEST_DEFENDANT_ID)
 
-      val hearing = getCourtHearing(MATCHING_PRISONER_NUMBER, HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID)
+      val hearing = getCourtHearing(prisonerNumber, HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID)
 
       assertThat(hearing.hearingId).isEqualTo(UUID.fromString(HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID))
       assertThat(hearing.courtName).isEqualTo("Central London County Court")
@@ -82,35 +83,38 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
     @Test
     @Transactional(readOnly = true)
     fun `Ingestion of updated court hearing`() {
+      val masterDefendantId = UUID.randomUUID()
       val defendantId = UUID.randomUUID()
+      val hearingId = UUID.randomUUID()
+      val prisonerNumber = "123ABC"
       HmctsCourtDefendantApiExtension.hmctsCourtDefendantApi.stubDefendants(
         CASE_REFERENCE,
         listOf(
-          DefendantDetails(defendantId, MATCHING_CORE_PERSON),
+          DefendantDetails(defendantId, masterDefendantId),
         ),
       )
-      CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantId, listOf(MATCHING_PRISONER_NUMBER))
+      CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantId, listOf(prisonerNumber))
       HmctsPcrApiExtension.hmctsPcrApiMockServer.stubGetPcr(
         CASE_REFERENCE,
-        UUID.fromString(HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID),
+        hearingId,
         defendantId,
       )
-      sendSubscriptionNotification(MATCHING_CORE_PERSON)
+      sendSubscriptionNotification(masterDefendantId, hearingId = hearingId)
 
-      var hearing = getCourtHearing(MATCHING_PRISONER_NUMBER, HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID)
+      var hearing = getCourtHearing(prisonerNumber, hearingId.toString())
       assertThat(hearing.hearingType).isEqualTo("First hearing")
 
       HmctsPcrApiExtension.hmctsPcrApiMockServer.stubGetPcr(
         CASE_REFERENCE,
-        UUID.fromString(TEST_HMCTS_HEARING_ID),
+        hearingId,
         defendantId,
         objectMapper.writeValueAsString(listOf(UPDATED_HEARING)),
       )
-      sendSubscriptionNotification(MATCHING_CORE_PERSON)
-      hearing = getCourtHearing(MATCHING_PRISONER_NUMBER, HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID)
+      sendSubscriptionNotification(masterDefendantId, hearingId = hearingId)
+      hearing = getCourtHearing(prisonerNumber, hearingId.toString())
       assertThat(hearing.hearingType).isEqualTo("Second hearing")
 
-      val dbHearing = courtHearingRepository.findFirstByHmctsCourtHearingId(UUID.fromString(TEST_HMCTS_HEARING_ID))
+      val dbHearing = courtHearingRepository.findFirstByHmctsCourtHearingId(hearingId)
       assertThat(dbHearing!!.courtCharges.size).isEqualTo(1)
       assertThat(dbHearing.nextCourtHearings.size).isEqualTo(1)
     }
@@ -118,10 +122,11 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
     @Test
     fun `Document still ingested if error in getting hearing data`() {
       val defendantId = UUID.randomUUID()
+      val prisonerNumber = "QRSER123"
       HmctsCourtDefendantApiExtension.hmctsCourtDefendantApi.stubDefendants(
         CASE_REFERENCE,
         listOf(
-          DefendantDetails(defendantId, MATCHING_CORE_PERSON),
+          DefendantDetails(defendantId, HEARING_TEST_DEFENDANT_ID),
         ),
       )
       HmctsPcrApiExtension.hmctsPcrApiMockServer.stubGetPcrError(
@@ -129,12 +134,12 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
         UUID.fromString(TEST_HMCTS_HEARING_ID),
         defendantId,
       )
-      CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantId, listOf(MATCHING_PRISONER_NUMBER))
-      sendSubscriptionNotification(MATCHING_CORE_PERSON)
+      CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantId, listOf(prisonerNumber))
+      sendSubscriptionNotification(HEARING_TEST_DEFENDANT_ID)
 
       webTestClient
         .get()
-        .uri("/court-hearings/prisoner/$MATCHING_PRISONER_NUMBER/hearing/$TEST_HMCTS_HEARING_ID")
+        .uri("/court-hearings/prisoner/$prisonerNumber/hearing/$TEST_HMCTS_HEARING_ID")
         .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RO")))
         .exchange()
         .expectStatus()
@@ -143,9 +148,10 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
 
     @Test
     fun `Get court hearing for not found hearing`() {
+      val prisonerNumber = "123ABC"
       webTestClient
         .get()
-        .uri("/court-hearings/prisoner/$MATCHING_PRISONER_NUMBER/hearing/${UUID.randomUUID()}")
+        .uri("/court-hearings/prisoner/$prisonerNumber/hearing/${UUID.randomUUID()}")
         .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RO")))
         .exchange()
         .expectStatus()
@@ -156,7 +162,7 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
     fun `Get court hearing where prisoner number does not match hearing documents`() {
       webTestClient
         .get()
-        .uri("/court-hearings/prisoner/ANOTHERPRISONER/hearing/${HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID}")
+        .uri("/court-hearings/prisoner/ANOTHERPRISONER/hearing/${TEST_HMCTS_HEARING_ID}")
         .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RO")))
         .exchange()
         .expectStatus()
@@ -180,10 +186,24 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
 
     @Test
     fun `Get court hearing by prisoner`() {
-      sendSubscriptionNotification(MATCHING_CORE_PERSON)
+      val defendantId = UUID.randomUUID()
+      val prisonerNumber = "123ABC"
+      HmctsCourtDefendantApiExtension.hmctsCourtDefendantApi.stubDefendants(
+        CASE_REFERENCE,
+        listOf(
+          DefendantDetails(defendantId, HEARING_TEST_DEFENDANT_ID),
+        ),
+      )
+      HmctsPcrApiExtension.hmctsPcrApiMockServer.stubGetPcr(
+        CASE_REFERENCE,
+        UUID.fromString(TEST_HMCTS_HEARING_ID),
+        defendantId,
+      )
+      CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantId, listOf(prisonerNumber))
+      sendSubscriptionNotification(HEARING_TEST_DEFENDANT_ID)
       val hearings = webTestClient
         .get()
-        .uri("/court-hearings/prisoner/$MATCHING_PRISONER_NUMBER")
+        .uri("/court-hearings/prisoner/$prisonerNumber")
         .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RO")))
         .exchange()
         .expectBody(typeReference<List<CourtHearing>>())
@@ -191,11 +211,11 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
 
       assertThat(hearings.size).isEqualTo(1)
       val hearing = hearings.first()
-      assertThat(hearing.hearingId).isEqualTo(UUID.fromString(HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID))
+      assertThat(hearing.hearingId).isEqualTo(UUID.fromString(TEST_HMCTS_HEARING_ID))
       assertThat(hearing.courtName).isEqualTo("Central London County Court")
       assertThat(hearing.courtId).isEqualTo(UUID.fromString("e2d1bad5-0222-485a-a6ca-6d01a8804db6"))
       assertThat(hearing.courtCode).isEqualTo("LND001")
-      assertThat(hearing.hearingDate).isEqualTo(LocalDate.of(2026, 6, 4))
+      assertThat(hearing.hearingDate).isEqualTo(LocalDate.of(2026, 8, 15))
       assertThat(hearing.caseReferences).isEqualTo(listOf("CASE123456"))
       assertThat(hearing.hearingType).isEqualTo("First hearing")
       assertThat(hearing.documents.size).isEqualTo(1)
@@ -214,6 +234,7 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
     }
   }
   companion object {
+    val HEARING_TEST_DEFENDANT_ID = UUID.randomUUID()
     val UPDATED_HEARING = HmctsPcr(
       hearing = HmctsHearing(
         id = UUID.randomUUID().toString(),
