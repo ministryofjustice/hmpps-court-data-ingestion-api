@@ -54,7 +54,5 @@ class DownloadFileTest {
   private fun context(documentId: UUID?) = IngestionContext(
     prisonEmailAddress = "omu.example@example.com",
     prisonDocumentId = documentId,
-    hearingId = null,
-    caseReferences = null,
   )
 }

@@ -17,7 +17,7 @@ class IngestionEnrichmentFlowTest {
       ctx.copy(addressedPrison = "${ctx.addressedPrison}B")
     }
     val flow = IngestionEnrichmentFlow(listOf(first, second))
-    val result = flow.run(IngestionContext(prisonEmailAddress = "omu.example@example.com", prisonDocumentId = null, hearingId = null, caseReferences = null))
+    val result = flow.run(IngestionContext(prisonEmailAddress = "omu.example@example.com", prisonDocumentId = null))
 
     assertThat(calls).containsExactly("first", "second")
     assertThat(result.addressedPrison).isEqualTo("AB")

@@ -1,12 +1,16 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.entity
 
+import jakarta.persistence.CascadeType
 import jakarta.persistence.Entity
 import jakarta.persistence.EntityNotFoundException
 import jakarta.persistence.Id
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtHearing
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtHearingDocument
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -15,17 +19,27 @@ import java.util.UUID
 data class CourtHearingEntity(
   @Id
   val id: UUID = UUID.randomUUID(),
-  var courtId: UUID,
+  var hmctsCourtId: UUID,
   var courtName: String,
-  var courtCode: String? = null,
+  var hmppsCourtId: String? = null,
   var hearingType: String,
-  var hearingDate: LocalDateTime,
+  var hearingDate: LocalDate,
   var hmctsCourtHearingId: UUID,
   @OneToMany(mappedBy = "courtHearing")
   var courtDocuments: MutableList<CourtDocumentEntity>,
+  @OneToMany(mappedBy = "courtHearing", cascade = [CascadeType.ALL], orphanRemoval = true)
+  var courtCharges: MutableList<CourtChargeEntity>,
+  @OneToMany(mappedBy = "courtHearing", cascade = [CascadeType.ALL], orphanRemoval = true)
+  var nextCourtHearings: MutableList<CourtNextHearingEntity>,
   var createdAt: LocalDateTime = LocalDateTime.now(),
   var updatedAt: LocalDateTime = LocalDateTime.now(),
+  @JdbcTypeCode(SqlTypes.JSON)
+  var apiResponse: String? = null,
 ) {
+  init {
+    courtCharges.forEach { charge -> charge.courtHearing = this }
+    nextCourtHearings.forEach { courtHearing -> courtHearing.courtHearing = this }
+  }
 
   fun toCourtHearing(prisonerNumber: String): CourtHearing {
     val documents = courtDocuments
@@ -36,8 +50,8 @@ data class CourtHearingEntity(
     return CourtHearing(
       hearingId = hmctsCourtHearingId,
       courtName = courtName,
-      courtId = courtId,
-      courtCode = courtCode,
+      courtId = hmctsCourtId,
+      courtCode = hmppsCourtId,
       hearingDate = hearingDate,
       caseReferences = documents.flatMap { it.courtDocumentCases.map { case -> case.caseReference } }.distinct(),
       hearingType = hearingType,

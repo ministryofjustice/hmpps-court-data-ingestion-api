@@ -17,14 +17,10 @@ class HmctsCourtScheduleApiClient(@Qualifier("hmctsCourtScheduleApiWebClient") p
     rateLimiter.acquire()
     return webClient.get()
       .uri("/case/$courtCaseRef/courtschedule")
-      .header(SUBSCRIPTION_KEY_HEADER, hmctsApiConfiguration.courtScheduleKey)
+      .header(HmctsApiConfiguration.SUBSCRIPTION_KEY_HEADER, hmctsApiConfiguration.courtScheduleKey)
       .header(X_CORRELATION_ID_HEADER, WebClientConfiguration.getCorrelationId().toString())
       .retrieve()
       .bodyToMono<CourtScheduleResponse>()
       .block()!!
-  }
-
-  companion object {
-    const val SUBSCRIPTION_KEY_HEADER = "Ocp-Apim-Subscription-Key"
   }
 }

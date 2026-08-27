@@ -22,14 +22,10 @@ class HmctsCourthouseApiClient(
     rateLimiter.acquire()
     return webClient.get()
       .uri("/courthouses/$courthouseId")
-      .header(SUBSCRIPTION_KEY_HEADER, hmctsApiConfiguration.courthouseKey)
+      .header(HmctsApiConfiguration.SUBSCRIPTION_KEY_HEADER, hmctsApiConfiguration.courthouseKey)
       .header(X_CORRELATION_ID_HEADER, WebClientConfiguration.getCorrelationId().toString())
       .retrieve()
       .bodyToMono<CourthouseResponse>()
       .block()!!
-  }
-
-  companion object {
-    const val SUBSCRIPTION_KEY_HEADER = "Ocp-Apim-Subscription-Key"
   }
 }

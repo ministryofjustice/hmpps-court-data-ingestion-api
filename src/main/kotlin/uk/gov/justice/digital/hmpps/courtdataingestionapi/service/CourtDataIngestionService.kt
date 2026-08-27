@@ -4,6 +4,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.config.TimezoneConfig
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentCaseEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionContext
@@ -12,7 +13,6 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.applyEnrichm
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsSubscriptionNotificationRequestBody
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import java.time.LocalDateTime
-import java.time.ZoneId
 
 @Service
 @Transactional
@@ -33,8 +33,6 @@ class CourtDataIngestionService(
       IngestionContext(
         prisonEmailAddress = message.prisonEmailAddress,
         prisonDocumentId = prisonDocument.documentUuid,
-        hearingId = message.hearingId,
-        caseReferences = message.cases.map { it.urn },
       ),
     )
 
@@ -43,7 +41,7 @@ class CourtDataIngestionService(
         masterDefendantId = message.masterDefendantId,
         hmctsCourtDocumentId = message.documentId,
         prisonEmailAddress = message.prisonEmailAddress,
-        documentGeneratedTimestamp = message.documentGeneratedTimestamp.withZoneSameInstant(ZoneId.of("Europe/London")).toLocalDateTime(),
+        documentGeneratedTimestamp = message.documentGeneratedTimestamp.withZoneSameInstant(TimezoneConfig.TIMEZONE).toLocalDateTime(),
         courtDocumentCases = message.cases.map { CourtDocumentCaseEntity(caseReference = it.urn) }.toMutableList(),
         prisonDocumentId = prisonDocument.documentUuid,
         eventType = message.eventType,
@@ -52,8 +50,9 @@ class CourtDataIngestionService(
       ).applyEnrichment(enriched),
     )
 
-    courtHearingService.createOrUpdateCourtHearingData(courtDocumentEntity, enriched.hmtcsApiDataEnrichment)
     defendantMatchingService.matchPrisonerForDocument(courtDocumentEntity)
+
+    courtHearingService.fetchAndCreateHearingData(courtDocumentEntity)
 
     mirrorEnrichmentToDocumentStore(courtDocumentEntity)
   }
