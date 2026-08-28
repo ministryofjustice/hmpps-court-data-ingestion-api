@@ -8,5 +8,6 @@ import java.util.UUID
 @Repository
 interface CourtHearingRepository : JpaRepository<CourtHearingEntity, UUID> {
   fun findFirstByHmctsCourtHearingId(hmctsCourtHearingId: UUID): CourtHearingEntity?
+  fun existsByHmctsCourtHearingId(hmctsCourtHearingId: UUID): CourtHearingEntity?
   fun findByCourtDocumentsPrisonerNumber(prisonerNumber: String): List<CourtHearingEntity>
 }

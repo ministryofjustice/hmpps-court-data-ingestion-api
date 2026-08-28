@@ -88,7 +88,7 @@ class FileService(
   fun buildMirrorEnrichmentMetadata(document: CourtDocumentEntity): Map<String, Serializable> = buildMap {
     document.deliverySource?.let { put("deliverySource", it.name) }
     put("documentSubType", document.courtDocumentType.name)
-    document.courtHearing?.courtCode?.let { put("courtCode", it) }
+    document.courtHearing?.hmppsCourtId?.let { put("courtCode", it) }
     put("caseReferences", document.courtDocumentCases.map { it.caseReference }.toSet().toTypedArray())
     put("isUnread", documentNotificationService.isUnread(document))
   }

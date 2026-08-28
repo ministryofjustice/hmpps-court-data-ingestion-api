@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.Integratio
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.SubscriptionRepository
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.emptyArray
@@ -106,13 +107,15 @@ class FileServiceTest {
 
       if (courtCode != null) {
         document.courtHearing = CourtHearingEntity(
-          courtId = COURT_ID,
-          courtCode = courtCode,
+          hmctsCourtId = COURT_ID,
+          hmppsCourtId = courtCode,
           courtName = "Central London County Court",
           hearingType = "First hearing",
-          hearingDate = LocalDateTime.of(2026, 6, 4, 11, 0),
+          hearingDate = LocalDate.of(2026, 6, 4),
           hmctsCourtHearingId = COURT_HEARING_ID,
           courtDocuments = mutableListOf(document),
+          nextCourtHearings = mutableListOf(),
+          courtCharges = mutableListOf(),
         )
       }
       return document

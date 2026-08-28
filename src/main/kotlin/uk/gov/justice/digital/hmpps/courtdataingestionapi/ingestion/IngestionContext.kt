@@ -5,8 +5,6 @@ import java.util.UUID
 data class IngestionContext(
   val prisonEmailAddress: String?,
   val prisonDocumentId: UUID?,
-  val hearingId: UUID?,
-  val caseReferences: List<String>?,
 
   // Step 1–2: raw file + hash
   val downloadedFileBytes: ByteArray? = null,
