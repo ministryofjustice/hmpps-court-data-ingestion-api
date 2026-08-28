@@ -7,16 +7,18 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.TestPropertySource
 import org.springframework.test.web.reactive.server.expectBody
-import org.springframework.transaction.annotation.Transactional
 import tools.jackson.databind.ObjectMapper
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.CorePersonApiExtension
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.CourtRegisterApiMockServer.Companion.TEST_HMCTS_COURTHOUSE_ID_NO_REGISTER
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsCourtDefendantApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsPcrApiExtension
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsSubcriptionApiMockServer
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsSubcriptionApiMockServer.Companion.TEST_HMCTS_COURTHOUSE_ID
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsSubcriptionApiMockServer.Companion.TEST_HMCTS_HEARING_ID
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtCharge
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtHearing
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtResult
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.NextCourtHearing
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.DefendantDetails
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsCourt
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsCourtDetails
@@ -26,9 +28,9 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsOf
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsPcr
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsResult
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsResultText
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtHearingRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.typeReference
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.ZonedDateTime
 import java.util.UUID
 
@@ -41,9 +43,6 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
 
   @Autowired
   private lateinit var objectMapper: ObjectMapper
-
-  @Autowired
-  private lateinit var courtHearingRepository: CourtHearingRepository
 
   @Nested
   @DisplayName("Get court hearing test")
@@ -62,15 +61,15 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
       )
       HmctsPcrApiExtension.hmctsPcrApiMockServer.stubGetPcr(
         CASE_REFERENCE,
-        UUID.fromString(HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID),
+        UUID.fromString(TEST_HMCTS_HEARING_ID),
         defendantId,
       )
       CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantId, listOf(prisonerNumber))
       sendSubscriptionNotification(HEARING_TEST_DEFENDANT_ID)
 
-      val hearing = getCourtHearing(prisonerNumber, HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID)
+      val hearing = getCourtHearing(prisonerNumber, TEST_HMCTS_HEARING_ID)
 
-      assertThat(hearing.hearingId).isEqualTo(UUID.fromString(HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID))
+      assertThat(hearing.hearingId).isEqualTo(UUID.fromString(TEST_HMCTS_HEARING_ID))
       assertThat(hearing.courtName).isEqualTo("Central London County Court")
       assertThat(hearing.courtId).isEqualTo(UUID.fromString("e2d1bad5-0222-485a-a6ca-6d01a8804db6"))
       assertThat(hearing.courtCode).isEqualTo("LND001")
@@ -78,10 +77,36 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
       assertThat(hearing.caseReferences).isEqualTo(listOf("CASE123456"))
       assertThat(hearing.hearingType).isEqualTo("First hearing")
       assertThat(hearing.documents.size).isEqualTo(1)
+      assertThat(hearing.charges).isEqualTo(
+        listOf(
+          CourtCharge(
+            listingNumber = 1,
+            offenceLegislation = "Contrary to section 1(1) and 7 of the Theft Act 1968.",
+            pleaDate = LocalDate.of(2026, 8, 15),
+            pleaValue = "NOT_GUILTY",
+            startDate = LocalDate.of(2026, 6, 15),
+            title = "Theft from the person of another",
+            wording = "Theft from the person of another",
+            results = listOf(
+              CourtResult(
+                code = "RIB",
+                description = "Remanded in custody with bail direction",
+              ),
+            ),
+          ),
+        ),
+      )
+      assertThat(hearing.nextHearing).isEqualTo(
+        NextCourtHearing(
+          courtName = "Central London County Court",
+          hmctsCourtId = UUID.fromString(TEST_HMCTS_COURTHOUSE_ID_NO_REGISTER),
+          hmppsCourtId = null,
+          hearingDate = LocalDateTime.of(2026, 8, 15, 10, 0),
+        ),
+      )
     }
 
     @Test
-    @Transactional(readOnly = true)
     fun `Ingestion of updated court hearing`() {
       val masterDefendantId = UUID.randomUUID()
       val defendantId = UUID.randomUUID()
@@ -114,9 +139,8 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
       hearing = getCourtHearing(prisonerNumber, hearingId.toString())
       assertThat(hearing.hearingType).isEqualTo("Second hearing")
 
-      val dbHearing = courtHearingRepository.findFirstByHmctsCourtHearingId(hearingId)
-      assertThat(dbHearing!!.courtCharges.size).isEqualTo(1)
-      assertThat(dbHearing.nextCourtHearings.size).isEqualTo(1)
+      assertThat(hearing.charges.size).isEqualTo(1)
+      assertThat(hearing.nextHearing).isNotNull
     }
 
     @Test
@@ -256,7 +280,7 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
             courtHouseId = UUID.fromString(TEST_HMCTS_COURTHOUSE_ID),
           ),
           dateTime = ZonedDateTime.now().plusDays(30),
-          hearingId = HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID,
+          hearingId = TEST_HMCTS_HEARING_ID,
         ),
       ),
       offences = listOf(

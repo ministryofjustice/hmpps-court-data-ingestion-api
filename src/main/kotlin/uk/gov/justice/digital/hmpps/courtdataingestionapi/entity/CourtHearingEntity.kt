@@ -8,8 +8,11 @@ import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtCharge
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtHearing
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtHearingDocument
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtResult
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.NextCourtHearing
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -47,6 +50,7 @@ data class CourtHearingEntity(
     if (documents.isEmpty()) {
       throw EntityNotFoundException("No hearing document found for $prisonerNumber hearing $hmctsCourtHearingId")
     }
+    val masterDefendantId = documents.first().masterDefendantId
     return CourtHearing(
       hearingId = hmctsCourtHearingId,
       courtName = courtName,
@@ -60,6 +64,35 @@ data class CourtHearingEntity(
           it.courtDocumentType,
           it.prisonDocumentId,
           it.ingestionAt,
+        )
+      },
+      charges = courtCharges.filter {
+        it.masterDefendantId == masterDefendantId
+      }.map {
+        CourtCharge(
+          listingNumber = it.listingNumber,
+          offenceLegislation = it.offenceLegislation,
+          pleaDate = it.pleaDate,
+          pleaValue = it.pleaValue,
+          startDate = it.startDate,
+          title = it.title,
+          wording = it.wording,
+          results = it.results.map { result ->
+            CourtResult(
+              code = result.resultCode,
+              description = result.resultDescription,
+            )
+          },
+        )
+      },
+      nextHearing = nextCourtHearings.find {
+        it.masterDefendantId == masterDefendantId
+      }?.let {
+        NextCourtHearing(
+          courtName = it.courtName,
+          hmctsCourtId = it.hmctsCourtId,
+          hmppsCourtId = it.hmppsCourtId,
+          hearingDate = it.dateTime,
         )
       },
     )
