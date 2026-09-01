@@ -26,8 +26,7 @@ data class HmctsCourtDetails(
 data class HmctsCourt(
   val courtHouseCode: String,
   val courtHouseName: String,
-  // TODO is CourthouseId nullable atm. HMCTS investigating.
-  val courtHouseId: UUID? = null,
+  val courtHouseId: UUID,
 )
 
 data class HmctsNextHearing(
@@ -44,6 +43,7 @@ data class HmctsOffence(
   val pleaValue: String,
   val results: List<HmctsResult>,
   val startDate: LocalDate,
+  val endDate: LocalDate?,
   val title: String,
   val wording: String,
 )
