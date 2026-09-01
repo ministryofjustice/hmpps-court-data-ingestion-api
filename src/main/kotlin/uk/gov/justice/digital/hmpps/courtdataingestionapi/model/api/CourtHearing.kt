@@ -13,10 +13,36 @@ data class CourtHearing(
   val caseReferences: List<String>,
   val hearingType: String,
   val documents: List<CourtHearingDocument>,
+  val charges: List<CourtCharge>,
+  val nextHearing: NextCourtHearing?,
 )
 
 data class CourtHearingDocument(
   val documentType: CourtDocumentType,
   val documentId: UUID,
   val ingestionAt: LocalDateTime,
+)
+
+data class CourtCharge(
+  val listingNumber: Int,
+  val offenceLegislation: String,
+  val pleaDate: LocalDate,
+  val pleaValue: String,
+  val startDate: LocalDate,
+  val title: String,
+  val wording: String,
+  val results: List<CourtResult>,
+)
+
+data class CourtResult(
+  val code: String,
+  val description: String,
+
+)
+
+data class NextCourtHearing(
+  val courtName: String,
+  val hmctsCourtId: UUID,
+  val hmppsCourtId: String? = null,
+  val hearingDate: LocalDateTime,
 )
