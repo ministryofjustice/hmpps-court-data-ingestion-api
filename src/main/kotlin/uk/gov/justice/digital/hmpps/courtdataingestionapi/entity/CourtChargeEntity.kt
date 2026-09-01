@@ -23,6 +23,8 @@ data class CourtChargeEntity(
   val pleaDate: LocalDate,
   val pleaValue: String,
   val startDate: LocalDate,
+  val endDate: LocalDate?,
+  val code: String,
   val title: String,
   val wording: String,
   @OneToMany(mappedBy = "courtCharge", cascade = [CascadeType.ALL])

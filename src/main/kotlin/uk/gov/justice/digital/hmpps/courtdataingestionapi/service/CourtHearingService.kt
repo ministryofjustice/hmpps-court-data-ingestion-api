@@ -97,7 +97,7 @@ class CourtHearingService(
 
     val pcrs = results.flatMap { (result, defendant) -> result.data.map { pcr -> pcr to defendant } }
     val hearing = pcrs.first().first.hearing
-    val courtId = hearing.courtDetails.court.courtHouseId ?: UUID.randomUUID() // TODO HMCTS to confirm not null courthouse
+    val courtId = hearing.courtDetails.court.courtHouseId
     val courtRegister = getCourtRegister(courtId)
     return CourtHearingEntity(
       hmctsCourtId = courtId,
@@ -118,8 +118,10 @@ class CourtHearingService(
             pleaDate = offence.pleaDate,
             pleaValue = offence.pleaValue,
             startDate = offence.startDate,
+            endDate = offence.endDate,
             title = offence.title,
             wording = offence.title,
+            code = offence.code,
             results = offence.results.map {
               val (code, description) = it.resultDescription.split(" - ", limit = 2)
               CourtChargeResultEntity(
@@ -132,7 +134,7 @@ class CourtHearingService(
       }.toMutableList(),
       nextCourtHearings = pcrs.map { (pcr, defendant) ->
         val nextHearing = pcr.hearing.nextHearing
-        val courtId = nextHearing.court.courtHouseId ?: UUID.randomUUID() // TODO HMCTS to confirm not null courthouse
+        val courtId = nextHearing.court.courtHouseId
         val courtRegister = getCourtRegister(courtId)
         CourtNextHearingEntity(
           defendantId = defendant.defendantId,

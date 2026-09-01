@@ -15,5 +15,4 @@ data class CourtChargeResultEntity(
   var courtCharge: CourtChargeEntity? = null,
   val resultCode: String,
   val resultDescription: String,
-
 )

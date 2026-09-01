@@ -26,6 +26,7 @@ data class CourtHearingDocument(
 data class CourtCharge(
   val listingNumber: Int,
   val offenceLegislation: String,
+  val code: String,
   val pleaDate: LocalDate,
   val pleaValue: String,
   val startDate: LocalDate,

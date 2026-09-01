@@ -87,6 +87,7 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
             startDate = LocalDate.of(2026, 6, 15),
             title = "Theft from the person of another",
             wording = "Theft from the person of another",
+            code = "TH68001",
             results = listOf(
               CourtResult(
                 code = "RIB",
@@ -306,6 +307,7 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
             ),
           ),
           startDate = LocalDate.now().minusMonths(2),
+          endDate = null,
           title = "Theft",
           wording = "On the 15th June 2026, stole property belonging to another.",
         ),
