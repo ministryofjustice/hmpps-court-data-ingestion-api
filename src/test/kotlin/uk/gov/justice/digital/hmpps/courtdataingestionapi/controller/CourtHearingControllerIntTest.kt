@@ -85,6 +85,7 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
             pleaDate = LocalDate.of(2026, 8, 15),
             pleaValue = "NOT_GUILTY",
             startDate = LocalDate.of(2026, 6, 15),
+            endDate = LocalDate.of(2026, 7, 15),
             title = "Theft from the person of another",
             wording = "Theft from the person of another",
             code = "TH68001",
