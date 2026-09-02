@@ -30,6 +30,7 @@ data class CourtCharge(
   val pleaDate: LocalDate,
   val pleaValue: String,
   val startDate: LocalDate,
+  val endDate: LocalDate?,
   val title: String,
   val wording: String,
   val results: List<CourtResult>,

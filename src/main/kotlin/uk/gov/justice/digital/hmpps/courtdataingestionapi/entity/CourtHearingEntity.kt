@@ -75,6 +75,7 @@ data class CourtHearingEntity(
           pleaDate = it.pleaDate,
           pleaValue = it.pleaValue,
           startDate = it.startDate,
+          endDate = it.endDate,
           title = it.title,
           wording = it.wording,
           code = it.code,
