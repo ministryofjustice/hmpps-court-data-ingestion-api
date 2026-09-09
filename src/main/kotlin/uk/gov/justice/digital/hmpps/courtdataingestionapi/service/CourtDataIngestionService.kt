@@ -42,7 +42,7 @@ class CourtDataIngestionService(
         hmctsCourtDocumentId = message.documentId,
         prisonEmailAddress = message.prisonEmailAddress,
         documentGeneratedTimestamp = message.documentGeneratedTimestamp.withZoneSameInstant(TimezoneConfig.TIMEZONE).toLocalDateTime(),
-        courtDocumentCases = message.cases.map { CourtDocumentCaseEntity(caseReference = it.urn) }.toMutableList(),
+        courtDocumentCases = message.cases.flatMap { it.caseReferences() }.distinct().map { CourtDocumentCaseEntity(caseReference = it) }.toMutableList(),
         prisonDocumentId = prisonDocument.documentUuid,
         eventType = message.eventType,
         courtDocumentType = message.eventType.documentType,

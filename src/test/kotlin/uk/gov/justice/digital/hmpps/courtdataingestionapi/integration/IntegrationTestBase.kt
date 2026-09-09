@@ -141,14 +141,13 @@ abstract class IntegrationTestBase {
     masterDefendantId: UUID,
     documentId: UUID = COURT_DOCUMENT_ID,
     hearingId: UUID = UUID.fromString(HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID),
+    hmctsCases: List<HmctsCase> = listOf(HmctsCase(CASE_REFERENCE)),
   ): HmctsSubscriptionNotificationRequestBody {
     val event =
       HmctsSubscriptionNotificationRequestBody(
         masterDefendantId = masterDefendantId,
         documentId = documentId,
-        cases = listOf(
-          HmctsCase(CASE_REFERENCE),
-        ),
+        cases = hmctsCases,
         prisonEmailAddress = PRISON_EMAIL,
         documentGeneratedTimestamp = ZonedDateTime.of(2026, 6, 12, 16, 0, 0, 0, ZoneOffset.UTC),
         eventType = HmctsEventType.PRISON_COURT_REGISTER_GENERATED,
