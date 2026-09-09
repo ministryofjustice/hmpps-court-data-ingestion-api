@@ -19,7 +19,7 @@ data class CourtChargeEntity(
   val defendantId: UUID,
   val masterDefendantId: UUID,
   val hmctsId: UUID,
-  val listingNumber: Int,
+  val listingNumber: Int?,
   val offenceLegislation: String,
   val pleaDate: LocalDate,
   val pleaValue: String,
