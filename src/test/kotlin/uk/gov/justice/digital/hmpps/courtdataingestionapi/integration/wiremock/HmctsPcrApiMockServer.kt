@@ -192,7 +192,8 @@ class HmctsPcrApiMockServer : WireMockServer(WIREMOCK_PORT) {
       "caseMarkers": [],
       "caseURN": "ZZ231257861",
       "results": []
-    }
+    },
+    "sharedTime": "2026-08-15T09:00:00Z"
   }
 ]
     """
