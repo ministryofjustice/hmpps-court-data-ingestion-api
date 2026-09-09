@@ -50,13 +50,14 @@ class CourtDataIngestionServiceTest : IntegrationTestBase() {
   @Transactional
   @ParameterizedTest
   @MethodSource("getHmctsCasesForDataIngestionTestParameters")
-  fun `When passing case URNs {cases}, then should create {expected} case references`(cases: List<String>, expected: Int) {
-    log.debug("When passing case URNs [{}], then should create [{}] case references", cases, expected)
+  fun `When passing case URNs {cases}, then should create {expectedTotal} case references and first one should be {expectedFirstValue}`(cases: List<String>, expectedTotal: Int, expectedFirstValue: String) {
+    log.debug("When passing case URNs [{}], then should create [{}] case references and first one should be [{}]", cases, expectedTotal, expectedFirstValue)
 
     sendSubscriptionNotification(MATCHING_CORE_PERSON, hmctsCases = cases.map { HmctsCase(it) })
 
     val curtDocument = courtDocumentRepository.findFirstByPrisonDocumentId(PRISON_DOCUMENT_ID).get()
-    assertThat(curtDocument.courtDocumentCases.size).isEqualTo(expected)
+    assertThat(curtDocument.courtDocumentCases.size).isEqualTo(expectedTotal)
+    assertThat(curtDocument.courtDocumentCases.first().caseReference).isEqualTo(expectedFirstValue)
   }
 
   private fun setupMocks(contentHashPushed: Boolean, metadataPushed: Boolean) {
@@ -81,10 +82,10 @@ class CourtDataIngestionServiceTest : IntegrationTestBase() {
 
     @JvmStatic
     fun getHmctsCasesForDataIngestionTestParameters() = listOf(
-      Arguments.of(listOf(CASE_REFERENCE), 1),
-      Arguments.of(listOf("${CASE_REFERENCE},${CASE_REFERENCE}"), 1),
-      Arguments.of(listOf("${CASE_REFERENCE}, ${CASE_REFERENCE}"), 1),
-      Arguments.of(listOf(CASE_REFERENCE, "${CASE_REFERENCE},${CASE_REFERENCE}"), 1),
+      Arguments.of(listOf(CASE_REFERENCE), 1, CASE_REFERENCE),
+      Arguments.of(listOf("$CASE_REFERENCE,$CASE_REFERENCE"), 1, CASE_REFERENCE),
+      Arguments.of(listOf("$CASE_REFERENCE, $CASE_REFERENCE"), 1, CASE_REFERENCE),
+      Arguments.of(listOf(CASE_REFERENCE, "$CASE_REFERENCE,$CASE_REFERENCE"), 1, CASE_REFERENCE),
     )
   }
 }
