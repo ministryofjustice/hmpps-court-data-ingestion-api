@@ -147,6 +147,38 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
     }
 
     @Test
+    fun `Only latest shared time is ingested`() {
+      val masterDefendantId = UUID.randomUUID()
+      val defendantId = UUID.randomUUID()
+      val hearingId = UUID.randomUUID()
+      val prisonerNumber = "123ABC"
+      HmctsCourtDefendantApiExtension.hmctsCourtDefendantApi.stubDefendants(
+        CASE_REFERENCE,
+        listOf(
+          DefendantDetails(defendantId, masterDefendantId),
+        ),
+      )
+      CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantId, listOf(prisonerNumber))
+      val firstVersionHearing = UPDATED_HEARING.copy()
+      val secondVersionHearing = firstVersionHearing.copy(
+        hearing = firstVersionHearing.hearing.copy(
+          hearingType = "Updated Hearing Type",
+        ),
+        sharedTime = firstVersionHearing.sharedTime.plusMinutes(10),
+      )
+      HmctsPcrApiExtension.hmctsPcrApiMockServer.stubGetPcr(
+        CASE_REFERENCE,
+        hearingId,
+        defendantId,
+        objectMapper.writeValueAsString(listOf(firstVersionHearing, secondVersionHearing)),
+      )
+      sendSubscriptionNotification(masterDefendantId, hearingId = hearingId)
+
+      val hearing = getCourtHearing(prisonerNumber, hearingId.toString())
+      assertThat(hearing.hearingType).isEqualTo("Updated Hearing Type")
+    }
+
+    @Test
     fun `Document still ingested if error in getting hearing data`() {
       val defendantId = UUID.randomUUID()
       val prisonerNumber = "QRSER123"
@@ -315,6 +347,7 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
           wording = "On the 15th June 2026, stole property belonging to another.",
         ),
       ),
+      sharedTime = LocalDateTime.now().minusHours(1),
     )
   }
 }

@@ -1,12 +1,14 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi
 
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.ZonedDateTime
 import java.util.UUID
 
 data class HmctsPcr(
   val hearing: HmctsHearing,
   val offences: List<HmctsOffence>,
+  val sharedTime: LocalDateTime,
 )
 
 data class HmctsHearing(
