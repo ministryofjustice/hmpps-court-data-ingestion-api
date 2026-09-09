@@ -95,7 +95,7 @@ class CourtHearingService(
       return null
     }
 
-    val pcrs = results.flatMap { (result, defendant) -> result.data.map { pcr -> pcr to defendant } }
+    val pcrs = results.map { (result, defendant) -> result.data.maxBy { it.sharedTime } to defendant }
     val hearing = pcrs.first().first.hearing
     val courtId = hearing.courtDetails.court.courtHouseId
     val courtRegister = getCourtRegister(courtId)
