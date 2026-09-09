@@ -111,6 +111,7 @@ class CourtHearingService(
       courtCharges = pcrs.flatMap { (pcr, defendant) ->
         pcr.offences.map { offence ->
           CourtChargeEntity(
+            hmctsId = offence.id,
             defendantId = defendant.defendantId,
             masterDefendantId = defendant.masterDefendantId,
             listingNumber = offence.listingNumber,

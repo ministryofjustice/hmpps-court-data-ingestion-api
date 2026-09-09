@@ -125,6 +125,7 @@ class HmctsPcrApiMockServer : WireMockServer(WIREMOCK_PORT) {
     },
     "offences": [
       {
+        "id": "f895c2ed-0b26-4bc2-9d24-d9f64df362ab",
         "code": "TH68001",
         "listingNumber": 1,
         "offenceLegislation": "Contrary to section 1(1) and 7 of the Theft Act 1968.",
