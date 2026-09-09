@@ -85,6 +85,9 @@ class CourtDataIngestionServiceTest : IntegrationTestBase() {
       Arguments.of(listOf(CASE_REFERENCE), 1, CASE_REFERENCE),
       Arguments.of(listOf("$CASE_REFERENCE,$CASE_REFERENCE"), 1, CASE_REFERENCE),
       Arguments.of(listOf("$CASE_REFERENCE, $CASE_REFERENCE"), 1, CASE_REFERENCE),
+      Arguments.of(listOf(" , $CASE_REFERENCE"), 1, CASE_REFERENCE),
+      Arguments.of(listOf("$CASE_REFERENCE, "), 1, CASE_REFERENCE),
+      Arguments.of(listOf("$CASE_REFERENCE, ,"), 1, CASE_REFERENCE),
       Arguments.of(listOf(CASE_REFERENCE, "$CASE_REFERENCE,$CASE_REFERENCE"), 1, CASE_REFERENCE),
     )
   }
