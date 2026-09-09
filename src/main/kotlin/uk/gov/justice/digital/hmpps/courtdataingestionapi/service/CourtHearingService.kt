@@ -90,7 +90,7 @@ class CourtHearingService(
       json.addAll(result.raw)
     }
 
-    if (results.isEmpty()) {
+    if (results.isEmpty() || results.all { (result, _) -> result.data.isEmpty() }) {
       log.error("No hearing data found from HMCTS PCR API ${courtDocumentEntity.id}")
       return null
     }

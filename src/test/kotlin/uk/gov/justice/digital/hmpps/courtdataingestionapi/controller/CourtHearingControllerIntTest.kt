@@ -206,6 +206,34 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
     }
 
     @Test
+    fun `Document still ingested if empty response from hearing data`() {
+      val defendantId = UUID.randomUUID()
+      val prisonerNumber = "QRSER123"
+      HmctsCourtDefendantApiExtension.hmctsCourtDefendantApi.stubDefendants(
+        CASE_REFERENCE,
+        listOf(
+          DefendantDetails(defendantId, HEARING_TEST_DEFENDANT_ID),
+        ),
+      )
+      HmctsPcrApiExtension.hmctsPcrApiMockServer.stubGetPcr(
+        CASE_REFERENCE,
+        UUID.fromString(TEST_HMCTS_HEARING_ID),
+        defendantId,
+        "[]",
+      )
+      CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantId, listOf(prisonerNumber))
+      sendSubscriptionNotification(HEARING_TEST_DEFENDANT_ID)
+
+      webTestClient
+        .get()
+        .uri("/court-hearings/prisoner/$prisonerNumber/hearing/$TEST_HMCTS_HEARING_ID")
+        .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RO")))
+        .exchange()
+        .expectStatus()
+        .isNotFound
+    }
+
+    @Test
     fun `Get court hearing for not found hearing`() {
       val prisonerNumber = "123ABC"
       webTestClient
