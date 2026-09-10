@@ -197,7 +197,13 @@ class CourtHearingIntTests : IntegrationTestBase() {
         offences = listOf(
           UPDATED_HEARING.offences.first().copy(
             listingNumber = null,
+            offenceLegislation = null,
+            pleaDate = null,
+            pleaValue = null,
           ),
+        ),
+        hearing = UPDATED_HEARING.hearing.copy(
+          nextHearing = null,
         ),
       )
       HmctsPcrApiExtension.hmctsPcrApiMockServer.stubGetPcr(
@@ -210,6 +216,10 @@ class CourtHearingIntTests : IntegrationTestBase() {
 
       val hearing = getCourtHearing(prisonerNumber, hearingId.toString())
       assertThat(hearing.charges.first().listingNumber).isNull()
+      assertThat(hearing.charges.first().pleaDate).isNull()
+      assertThat(hearing.charges.first().pleaValue).isNull()
+      assertThat(hearing.charges.first().offenceLegislation).isNull()
+      assertThat(hearing.nextHearing).isNull()
     }
 
     @Test
