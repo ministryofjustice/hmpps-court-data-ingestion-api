@@ -48,6 +48,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsCase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsSubscriptionNotificationRequestBody
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.PrisonerSearchEventAdditionalInformation
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.SQSMessage
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtHearing
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import uk.gov.justice.hmpps.sqs.HmppsQueue
@@ -234,6 +235,16 @@ abstract class IntegrationTestBase {
         .returnResult().responseBody!!
     } matches { it?.status == "COMPLETED" }
   }
+
+  protected fun getCourtHearing(prisonerNumber: String, hearingId: String): CourtHearing = webTestClient
+    .get()
+    .uri("/court-hearings/prisoner/$prisonerNumber/hearing/$hearingId")
+    .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RO")))
+    .exchange()
+    .expectStatus()
+    .isOk
+    .expectBody<CourtHearing>()
+    .returnResult().responseBody!!
 
   companion object {
     val COURT_DOCUMENT_ID = UUID.randomUUID()
