@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
+import java.time.LocalDate
 import java.util.Optional
 import java.util.UUID
 
@@ -34,6 +35,25 @@ interface CourtDocumentRepository : JpaRepository<CourtDocumentEntity, UUID> {
     @Param("afterId") afterId: UUID,
     @Param("limit") limit: Int,
   ): List<CourtDocumentEntity>
+
+  @Query(
+    value = """
+      SELECT id
+      FROM court_document
+      WHERE court_hearing_id IS NULL
+      AND ingestion_at > :ingestedAfter
+      AND hmcts_court_hearing_id IS NOT NULL
+      AND id > :afterId
+      ORDER BY id
+      LIMIT :limit
+    """,
+    nativeQuery = true,
+  )
+  fun findUnpopulatedCourtHearingDataIngestedAfter(
+    @Param("afterId") afterId: UUID,
+    @Param("ingestedAfter") ingestedAfter: LocalDate,
+    @Param("limit") limit: Int,
+  ): List<UUID>
 
   @Query(
     value = """
