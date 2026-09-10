@@ -133,8 +133,8 @@ class CourtHearingService(
           )
         }
       }.toMutableList(),
-      nextCourtHearings = pcrs.map { (pcr, defendant) ->
-        val nextHearing = pcr.hearing.nextHearing
+      nextCourtHearings = pcrs.mapNotNull { (pcr, defendant) ->
+        val nextHearing = pcr.hearing.nextHearing ?: return@mapNotNull null
         val courtId = nextHearing.court.courtHouseId
         val courtRegister = getCourtRegister(courtId)
         CourtNextHearingEntity(
@@ -143,7 +143,7 @@ class CourtHearingService(
           hmctsCourtId = courtId,
           courtName = getCourtName(courtId, courtRegister),
           hmppsCourtId = courtRegister?.courtId,
-          dateTime = nextHearing.dateTime.withZoneSameInstant(TimezoneConfig.TIMEZONE).toLocalDateTime(),
+          dateTime = nextHearing.dateTime?.withZoneSameInstant(TimezoneConfig.TIMEZONE)?.toLocalDateTime(),
           hearingId = nextHearing.hearingId,
         )
       }.toMutableList(),
