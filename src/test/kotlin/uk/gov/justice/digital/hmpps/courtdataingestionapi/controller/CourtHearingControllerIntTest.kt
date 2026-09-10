@@ -179,6 +179,38 @@ class CourtHearingControllerIntTest : IntegrationTestBase() {
     }
 
     @Test
+    fun `Ingest minimal data`() {
+      val masterDefendantId = UUID.randomUUID()
+      val defendantId = UUID.randomUUID()
+      val hearingId = UUID.randomUUID()
+      val prisonerNumber = "123ABC"
+      HmctsCourtDefendantApiExtension.hmctsCourtDefendantApi.stubDefendants(
+        CASE_REFERENCE,
+        listOf(
+          DefendantDetails(defendantId, masterDefendantId),
+        ),
+      )
+      CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantId, listOf(prisonerNumber))
+      val minimalHearing = UPDATED_HEARING.copy(
+        offences = listOf(
+          UPDATED_HEARING.offences.first().copy(
+            listingNumber = null,
+          ),
+        ),
+      )
+      HmctsPcrApiExtension.hmctsPcrApiMockServer.stubGetPcr(
+        CASE_REFERENCE,
+        hearingId,
+        defendantId,
+        objectMapper.writeValueAsString(listOf(minimalHearing)),
+      )
+      sendSubscriptionNotification(masterDefendantId, hearingId = hearingId)
+
+      val hearing = getCourtHearing(prisonerNumber, hearingId.toString())
+      assertThat(hearing.charges.first().listingNumber).isNull()
+    }
+
+    @Test
     fun `Document still ingested if error in getting hearing data`() {
       val defendantId = UUID.randomUUID()
       val prisonerNumber = "QRSER123"
