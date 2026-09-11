@@ -120,4 +120,20 @@ interface CourtDocumentRepository : JpaRepository<CourtDocumentEntity, UUID> {
     @Param("afterId") afterId: UUID,
     @Param("limit") limit: Int,
   ): List<UUID>
+
+  @Query(
+    value = """
+      SELECT distinct d.id
+      FROM Court_Document d
+      WHERE d.id > :afterId
+        AND d.id IN (SELECT t.court_document_id FROM Court_Document_Case t WHERE t.case_reference LIKE '%,%')
+      ORDER BY d.id
+      LIMIT :limit
+    """,
+    nativeQuery = true,
+  )
+  fun findCourtDocumentIdsWithConcatenatedCaseReferencesAfter(
+    @Param("afterId") afterId: UUID,
+    @Param("limit") limit: Int,
+  ): List<UUID>
 }
