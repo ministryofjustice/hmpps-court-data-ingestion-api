@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.transaction.Transactional
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -12,6 +13,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentCa
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.DestinationType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsDocumentManagementApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtHearingRepository
@@ -39,7 +41,7 @@ class ConcatenatedCaseReferencesFixBackfillIntTest : IntegrationTestBase() {
   @Transactional
   fun `selectBatch test when passing document with set case references, should return {expected} total item`(cases: List<List<String>>, expected: Int) {
     // Setup mocked data
-    cases.forEach { it ->
+    cases.forEach {
       val extraDoc = copyCourtDocument()
       addCourtDocumentCases(extraDoc, it)
       courtDocumentRepository.save(extraDoc)
@@ -63,29 +65,46 @@ class ConcatenatedCaseReferencesFixBackfillIntTest : IntegrationTestBase() {
   @Transactional
   fun `processBatch test when passing document with set case references, should return {expected} total item`(cases: List<List<String>>, expected: Int) {
     // Setup mocked data
+    if (expected == 0) return
+
     cases.forEach {
       val extraDoc = copyCourtDocument()
       addCourtDocumentCases(extraDoc, it)
       courtDocumentRepository.save(extraDoc)
     }
 
-    // Run test
     val batch = backfill.selectBatch(cursor = "", batchSize = 100)
-    assertThat(batch.items).hasSize(expected)
+    val testDocumentUuid: UUID = batch.items.first()
 
-    if (expected == 0) return
-
-    val before = courtDocumentRepository.findById(batch.items.first()).get()
+    val before = courtDocumentRepository.findById(testDocumentUuid).get()
     assertThat(before.courtDocumentCases.filter { it.caseReference.contains(",") }).hasSizeGreaterThan(0)
 
-    backfill.process(batch.items.first())
+    HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.stubMergeMetadata(testDocumentUuid)
+
+    // Run test
+    backfill.process(testDocumentUuid)
 
     // Check results
-    val result = courtDocumentRepository.findById(batch.items.first()).get()
+    val result = courtDocumentRepository.findById(testDocumentUuid).get()
     assertThat(result.courtDocumentCases.filter { it.caseReference.contains(",") }).isEmpty()
   }
 
-  // TODO (CDIA-327): Add full cycle integration tests
+  // TODO (CDIA-327): I'd be good to have a way to confirm not just backfill run but it also fixed the data
+  @Test
+  fun `run {concatenated-cases} backfill, should return {expected} total item`() {
+    // Setup mocked data
+    sendSubscriptionNotification(MATCHING_CORE_PERSON)
+    val documentBefore = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
+    HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.stubMergeMetadata(documentBefore.prisonDocumentId)
+
+    // Run test
+    runBackfill("concatenated-cases")
+
+    // Check results
+    val results = getCourtDocument(documentBefore.prisonerNumber!!, documentBefore.prisonDocumentId)
+    assertThat(results).isNotEmpty()
+    assertThat(results.first().caseReferences.filter { it.contains(",") }).isEmpty()
+  }
 
   companion object {
     const val METADATA_VERSION: Int = 2
@@ -116,6 +135,7 @@ class ConcatenatedCaseReferencesFixBackfillIntTest : IntegrationTestBase() {
     )
 
     private fun addCourtDocumentCases(courtDocument: CourtDocumentEntity, cases: List<String>) {
+      courtDocument.courtDocumentCases.toMutableList()
       cases.forEach {
         courtDocument.courtDocumentCases.add(
           CourtDocumentCaseEntity(

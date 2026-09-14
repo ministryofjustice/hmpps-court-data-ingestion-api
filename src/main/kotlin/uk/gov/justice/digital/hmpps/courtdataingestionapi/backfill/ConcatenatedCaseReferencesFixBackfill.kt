@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.backfill
 
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsDocumentManagementApi
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentCaseEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsCase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
@@ -10,6 +11,7 @@ import java.util.UUID
 @Component
 class ConcatenatedCaseReferencesFixBackfill(
   private val courtDocumentRepository: CourtDocumentRepository,
+  private val documentManagementApi: HmppsDocumentManagementApi,
 ) : Backfill<UUID> {
 
   override val id = "concatenated-cases"
@@ -48,7 +50,11 @@ class ConcatenatedCaseReferencesFixBackfill(
     }
 
     courtDocumentRepository.save(document)
-
-    // TODO (CDIA-327): Update Document's metadata
+    documentManagementApi.mergeMetadata(
+      item,
+      metadata = mapOf(
+        "caseReferences" to document.courtDocumentCases.map { it.caseReference }.toSet().toTypedArray(),
+      ),
+    )
   }
 }
