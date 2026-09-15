@@ -13,6 +13,7 @@ data class HmctsApiConfiguration(
   val courthouseKey: String,
   val courtScheduleKey: String,
   val courtDefendantKey: String,
+  val pcrKey: String,
   /*
    * Rate limit for requests to HMCTS API.
    * HMCTS have a 100request per min rate limit
@@ -31,5 +32,6 @@ data class HmctsApiConfiguration(
 
   companion object {
     const val SUBSCRIBE_TO_ALL_EVENT_TYPES = "ALL_EVENT_TYPES"
+    const val SUBSCRIPTION_KEY_HEADER = "Ocp-Apim-Subscription-Key"
   }
 }

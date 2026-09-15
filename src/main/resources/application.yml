@@ -89,6 +89,13 @@ spring:
             authorization-grant-type: client_credentials
             scope:
               - ${hmcts.client.creds.client.court.schedule.scope}
+          hmcts-pcr-api:
+            provider: hmcts-auth
+            client-id: ${hmcts.client.creds.client.id}
+            client-secret: ${hmcts.client.creds.client.secret}
+            authorization-grant-type: client_credentials
+            scope:
+              - ${hmcts.client.creds.client.pcr.scope}
           prisoner-search-api:
             provider: hmpps-auth
             client-id: ${client.creds.client.id}
@@ -157,6 +164,7 @@ hmcts-api-config:
   courthouse-key: ${HMCTS_COURTHOUSE_KEY}
   court-schedule-key: ${HMCTS_COURT_SCHEDULE_KEY}
   court-defendant-key: ${HMCTS_COURT_DEFENDANT_KEY:}
+  pcr-key: ${HMCTS_PCR_KEY:}
   rate-limit:  ${HMCTS_RATE_LIMIT:0.4}
 
 extraction:
@@ -177,6 +185,7 @@ document:
 feature-toggles:
   defendant-resolution: ${DEFENDANT_RESOLUTION_ENABLED:true}
   structured-extraction: ${STRUCTURED_EXTRACTION_ENABLED:false}
+  offence-data-enabled: ${OFFENCE_DATA_ENABLED:false}
 
 core:
   person:

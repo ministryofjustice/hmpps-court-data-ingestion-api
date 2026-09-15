@@ -100,8 +100,6 @@ class ExtractionBackfillService(
               IngestionContext(
                 prisonEmailAddress = document.prisonEmailAddress,
                 prisonDocumentId = document.prisonDocumentId,
-                hearingId = document.hmctsCourtHearingId,
-                caseReferences = document.courtDocumentCases.map { it.caseReference },
               ),
             )
             courtDocumentRepository.save(document.applyEnrichment(enriched))

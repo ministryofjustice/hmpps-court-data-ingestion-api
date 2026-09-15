@@ -96,8 +96,6 @@ class HashExtractedTextTest {
     prisonEmailAddress = null,
     prisonDocumentId = null,
     extractedText = extractedText,
-    hearingId = null,
-    caseReferences = null,
   )
 
   private fun readFixtureBytes(name: String): ByteArray {

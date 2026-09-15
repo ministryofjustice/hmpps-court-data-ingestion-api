@@ -35,7 +35,7 @@ class HmctsCourtDefendantApiClient(
       }
       .apply {
         if (hmctsApiConfiguration.courtDefendantKey.isNotBlank()) {
-          header(SUBSCRIPTION_KEY_HEADER, hmctsApiConfiguration.courtDefendantKey)
+          header(HmctsApiConfiguration.SUBSCRIPTION_KEY_HEADER, hmctsApiConfiguration.courtDefendantKey)
         }
       }
       .header(X_CORRELATION_ID_HEADER, WebClientConfiguration.getCorrelationId().toString())
@@ -44,9 +44,5 @@ class HmctsCourtDefendantApiClient(
       .block() ?: emptyList()
   } catch (e: WebClientResponseException) {
     if (HttpStatus.NOT_FOUND.isSameCodeAs(e.statusCode)) emptyList() else throw e
-  }
-
-  companion object {
-    const val SUBSCRIPTION_KEY_HEADER = "Ocp-Apim-Subscription-Key"
   }
 }

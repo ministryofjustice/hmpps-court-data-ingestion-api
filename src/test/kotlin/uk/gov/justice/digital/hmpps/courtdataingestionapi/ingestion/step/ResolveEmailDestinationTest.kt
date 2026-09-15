@@ -46,7 +46,12 @@ class ResolveEmailDestinationTest {
       .thenReturn(mapping(prisonCode = "MDI", categoryCode = "PRISON"))
     whenever(categoryRepository.findByCode("PRISON")).thenReturn(category("PRISON", requiresPrisonCode = true))
 
-    val result = enricher.enrich(context("omu.test@justice.gov.uk"))
+    val input = IngestionContext(
+      prisonEmailAddress = "omu.test@justice.gov.uk",
+      prisonDocumentId = null,
+    )
+
+    val result = enricher.enrich(input)
 
     assertThat(result.addressedPrison).isEqualTo("MDI")
     assertThat(result.destinationType).isEqualTo(DestinationType.PRISON)
@@ -55,8 +60,12 @@ class ResolveEmailDestinationTest {
   @Test
   fun `identifies pecs destination from a mapping with no prison code`() {
     whenever(repository.findMappingByEmail("pecs.south@example.gov.uk"))
-      .thenReturn(mapping(prisonCode = null, categoryCode = "PECS"))
-    whenever(categoryRepository.findByCode("PECS")).thenReturn(category("PECS", requiresPrisonCode = false))
+      .thenReturn(EmailMapping(prisonCode = null, sourceType = "PECS"))
+
+    val input = IngestionContext(
+      prisonEmailAddress = "pecs.south@example.gov.uk",
+      prisonDocumentId = null,
+    )
 
     val result = enricher.enrich(context("pecs.south@example.gov.uk"))
 
@@ -68,7 +77,12 @@ class ResolveEmailDestinationTest {
   fun `falls back to geoamey suffix when the delivery address is not mapped`() {
     whenever(repository.findMappingByEmail("sheffieldcc@geoamey.co.uk")).thenReturn(null)
 
-    val result = enricher.enrich(context("sheffieldcc@geoamey.co.uk"))
+    val input = IngestionContext(
+      prisonEmailAddress = "sheffieldcc@geoamey.co.uk",
+      prisonDocumentId = null,
+    )
+
+    val result = enricher.enrich(input)
 
     assertThat(result.destinationType).isEqualTo(DestinationType.PECS)
   }
@@ -77,7 +91,12 @@ class ResolveEmailDestinationTest {
   fun `falls back to serco pecs suffix when the delivery address is not mapped`() {
     whenever(repository.findMappingByEmail("pecswoolwichcrown@serco.com")).thenReturn(null)
 
-    val result = enricher.enrich(context("PECSWoolwichCrown@serco.com"))
+    val input = IngestionContext(
+      prisonEmailAddress = "PECSWoolwichCrown@serco.com",
+      prisonDocumentId = null,
+    )
+
+    val result = enricher.enrich(input)
 
     assertThat(result.destinationType).isEqualTo(DestinationType.PECS)
   }

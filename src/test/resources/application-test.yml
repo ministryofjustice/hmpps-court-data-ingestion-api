@@ -31,6 +31,9 @@ hmcts:
   courthouse:
     api:
       url: http://localhost:8338
+  pcr:
+    api:
+      url: http://localhost:8341
   court:
     schedule:
       api:

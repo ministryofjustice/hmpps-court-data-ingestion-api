@@ -35,6 +35,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.H
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsCourtDefendantApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsCourtScheduleApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsCourthouseApiExtension
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsPcrApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsSubcriptionApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsSubcriptionApiMockServer
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsAuthApiExtension
@@ -47,6 +48,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsCase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsSubscriptionNotificationRequestBody
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.PrisonerSearchEventAdditionalInformation
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.SQSMessage
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtHearing
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import uk.gov.justice.hmpps.sqs.HmppsQueue
@@ -72,6 +74,7 @@ import javax.sql.DataSource
   HmctsCourthouseApiExtension::class,
   HmctsCourtDefendantApiExtension::class,
   CourtRegisterApiExtension::class,
+  HmctsPcrApiExtension::class,
 )
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
@@ -136,20 +139,20 @@ abstract class IntegrationTestBase {
   }
 
   protected fun sendSubscriptionNotification(
-    defendantId: UUID,
+    masterDefendantId: UUID,
     documentId: UUID = COURT_DOCUMENT_ID,
+    hearingId: UUID = UUID.fromString(HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID),
+    hmctsCases: List<HmctsCase> = listOf(HmctsCase(CASE_REFERENCE)),
   ): HmctsSubscriptionNotificationRequestBody {
     val event =
       HmctsSubscriptionNotificationRequestBody(
-        masterDefendantId = defendantId,
+        masterDefendantId = masterDefendantId,
         documentId = documentId,
-        cases = listOf(
-          HmctsCase(CASE_REFERENCE),
-        ),
+        cases = hmctsCases,
         prisonEmailAddress = PRISON_EMAIL,
         documentGeneratedTimestamp = ZonedDateTime.of(2026, 6, 12, 16, 0, 0, 0, ZoneOffset.UTC),
         eventType = HmctsEventType.PRISON_COURT_REGISTER_GENERATED,
-        hearingId = UUID.fromString(HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID),
+        hearingId = hearingId,
       )
     courtDataIngestionQueue.sqsClient.sendMessage(
       SendMessageRequest.builder()
@@ -159,7 +162,7 @@ abstract class IntegrationTestBase {
     )
 
     awaitAtMost30Secs untilCallTo {
-      courtDocumentRepository.countByMasterDefendantId(defendantId)
+      courtDocumentRepository.countByMasterDefendantId(masterDefendantId)
     } matches { it!! >= 1L }
     return event
   }
@@ -232,6 +235,16 @@ abstract class IntegrationTestBase {
         .returnResult().responseBody!!
     } matches { it?.status == "COMPLETED" }
   }
+
+  protected fun getCourtHearing(prisonerNumber: String, hearingId: String): CourtHearing = webTestClient
+    .get()
+    .uri("/court-hearings/prisoner/$prisonerNumber/hearing/$hearingId")
+    .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RO")))
+    .exchange()
+    .expectStatus()
+    .isOk
+    .expectBody<CourtHearing>()
+    .returnResult().responseBody!!
 
   companion object {
     val COURT_DOCUMENT_ID = UUID.randomUUID()

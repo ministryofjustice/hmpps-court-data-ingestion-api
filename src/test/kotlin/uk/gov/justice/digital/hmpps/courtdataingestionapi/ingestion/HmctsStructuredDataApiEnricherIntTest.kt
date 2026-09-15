@@ -21,10 +21,10 @@ class HmctsStructuredDataApiEnricherIntTest : IntegrationTestBase() {
     val file = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
 
     assertThat(file.courtHearing).isNotNull
-    assertThat(file.courtHearing!!.courtId.toString()).isEqualTo(TEST_HMCTS_COURTHOUSE_ID)
+    assertThat(file.courtHearing!!.hmctsCourtId.toString()).isEqualTo(TEST_HMCTS_COURTHOUSE_ID)
     assertThat(file.courtHearing!!.hearingType).isEqualTo("First hearing")
     assertThat(file.courtHearing!!.courtName).isEqualTo("Central London County Court")
-    assertThat(file.courtHearing!!.courtCode).isEqualTo("LND001")
+    assertThat(file.courtHearing!!.hmppsCourtId).isEqualTo("LND001")
   }
 
   @Test
@@ -35,10 +35,10 @@ class HmctsStructuredDataApiEnricherIntTest : IntegrationTestBase() {
     val file = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
 
     assertThat(file.courtHearing).isNotNull
-    assertThat(file.courtHearing!!.courtId.toString()).isEqualTo(TEST_HMCTS_COURTHOUSE_ID_NO_REGISTER)
+    assertThat(file.courtHearing!!.hmctsCourtId.toString()).isEqualTo(TEST_HMCTS_COURTHOUSE_ID_NO_REGISTER)
     assertThat(file.courtHearing!!.hearingType).isEqualTo("First hearing")
     assertThat(file.courtHearing!!.courtName).isEqualTo("Central London County Court")
-    assertThat(file.courtHearing!!.courtCode).isNull()
+    assertThat(file.courtHearing!!.hmppsCourtId).isNull()
   }
 
   @Test

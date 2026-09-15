@@ -1,6 +1,6 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api
 
-import java.time.LocalDateTime
+import java.time.LocalDate
 import java.util.UUID
 
 data class CourtDocument(
@@ -14,5 +14,5 @@ data class CourtDocument(
 data class CourtDocumentHearing(
   val courtName: String,
   val hearingType: String,
-  val hearingDate: LocalDateTime,
+  val hearingDate: LocalDate,
 )

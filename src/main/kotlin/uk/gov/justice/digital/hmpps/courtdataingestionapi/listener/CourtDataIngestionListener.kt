@@ -47,4 +47,9 @@ data class HmctsSubscriptionNotificationRequestBody(
 
 data class HmctsCase(
   val urn: String,
-)
+) {
+  fun caseReferences(): List<String> = urn.split(",")
+    .map { it.trim() }
+    .filter { it.isNotBlank() }
+    .distinct()
+}

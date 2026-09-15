@@ -22,7 +22,7 @@ class HmctsSubscriptionApiClient(@Qualifier("hmctsSubscriptionApiWebClient") pri
     rateLimiter.acquire()
     return webClient.post()
       .uri("/client-subscriptions")
-      .header(SUBSCRIPTION_KEY_HEADER, hmctsApiConfiguration.subscriptionKey)
+      .header(HmctsApiConfiguration.SUBSCRIPTION_KEY_HEADER, hmctsApiConfiguration.subscriptionKey)
       .header(X_CORRELATION_ID_HEADER, WebClientConfiguration.getCorrelationId().toString())
       .bodyValue(request)
       .retrieve()
@@ -37,7 +37,7 @@ class HmctsSubscriptionApiClient(@Qualifier("hmctsSubscriptionApiWebClient") pri
     rateLimiter.acquire()
     return webClient.put()
       .uri("/client-subscriptions/$subscriptionId")
-      .header(SUBSCRIPTION_KEY_HEADER, hmctsApiConfiguration.subscriptionKey)
+      .header(HmctsApiConfiguration.SUBSCRIPTION_KEY_HEADER, hmctsApiConfiguration.subscriptionKey)
       .header(X_CORRELATION_ID_HEADER, WebClientConfiguration.getCorrelationId().toString())
       .bodyValue(request)
       .retrieve()
@@ -49,7 +49,7 @@ class HmctsSubscriptionApiClient(@Qualifier("hmctsSubscriptionApiWebClient") pri
     rateLimiter.acquire()
     return webClient.get()
       .uri("/client-subscriptions/$clientSubscriptionId/documents/$externalFileId")
-      .header(SUBSCRIPTION_KEY_HEADER, hmctsApiConfiguration.subscriptionKey)
+      .header(HmctsApiConfiguration.SUBSCRIPTION_KEY_HEADER, hmctsApiConfiguration.subscriptionKey)
       .header(X_CORRELATION_ID_HEADER, WebClientConfiguration.getCorrelationId().toString())
       .retrieve()
       .toEntity<ByteArray>()
@@ -69,9 +69,5 @@ class HmctsSubscriptionApiClient(@Qualifier("hmctsSubscriptionApiWebClient") pri
   private fun extractFilename(headers: HttpHeaders): String? {
     val disposition = headers.contentDisposition
     return disposition.filename
-  }
-
-  companion object {
-    const val SUBSCRIPTION_KEY_HEADER = "Ocp-Apim-Subscription-Key"
   }
 }

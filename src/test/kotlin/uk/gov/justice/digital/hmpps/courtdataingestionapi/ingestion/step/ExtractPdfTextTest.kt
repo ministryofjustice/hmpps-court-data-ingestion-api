@@ -16,8 +16,6 @@ class ExtractPdfTextTest {
       prisonEmailAddress = null,
       prisonDocumentId = null,
       downloadedFileBytes = bytes,
-      hearingId = null,
-      caseReferences = null,
     )
 
     val result = enricher.enrich(input)
@@ -31,8 +29,6 @@ class ExtractPdfTextTest {
       prisonEmailAddress = null,
       prisonDocumentId = null,
       downloadedFileBytes = "not-a-pdf".toByteArray(),
-      hearingId = null,
-      caseReferences = null,
     )
 
     val result = enricher.enrich(input)
@@ -43,7 +39,7 @@ class ExtractPdfTextTest {
 
   @Test
   fun `skips when no bytes present`() {
-    val input = IngestionContext(null, null, hearingId = null, caseReferences = null)
+    val input = IngestionContext(null, null)
 
     val result = enricher.enrich(input)
 

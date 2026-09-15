@@ -6,4 +6,5 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 data class FeatureToggles(
   var defendantResolution: Boolean = false,
   var structuredExtraction: Boolean = false,
+  val offenceDataEnabled: Boolean = false,
 )

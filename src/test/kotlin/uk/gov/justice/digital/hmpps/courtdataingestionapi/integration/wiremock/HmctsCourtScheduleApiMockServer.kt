@@ -41,7 +41,7 @@ class HmctsCourtScheduleApiMockServer : WireMockServer(WIREMOCK_PORT) {
     private const val WIREMOCK_PORT = 8337
   }
 
-  fun stubCourtSchedule() {
+  fun stubCourtSchedule(hearingType: String = "First hearing") {
     stubFor(
       get(urlEqualTo("/case/${IntegrationTestBase.CASE_REFERENCE}/courtschedule"))
         .willReturn(
@@ -66,7 +66,7 @@ class HmctsCourtScheduleApiMockServer : WireMockServer(WIREMOCK_PORT) {
                                   ],
                                   "hearingDescription": "First hearing",
                                   "hearingId": "$TEST_HMCTS_HEARING_ID",
-                                  "hearingType": "First hearing",
+                                  "hearingType": "$hearingType",
                                   "listNote": ""
                               }
                           ]
