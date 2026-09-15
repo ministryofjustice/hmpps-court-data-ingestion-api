@@ -48,9 +48,11 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsCase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsSubscriptionNotificationRequestBody
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.PrisonerSearchEventAdditionalInformation
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.SQSMessage
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocument
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtHearing
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.typeReference
 import uk.gov.justice.hmpps.sqs.HmppsQueue
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.HmppsSqsProperties
@@ -244,6 +246,16 @@ abstract class IntegrationTestBase {
     .expectStatus()
     .isOk
     .expectBody<CourtHearing>()
+    .returnResult().responseBody!!
+
+  protected fun getCourtDocument(prisonerNumber: String, documentUuid: UUID): List<CourtDocument> = webTestClient
+    .get()
+    .uri("/court-document/person/$prisonerNumber?prisonDocumentIds=$documentUuid")
+    .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RO")))
+    .exchange()
+    .expectStatus()
+    .isOk
+    .expectBody(typeReference<List<CourtDocument>>())
     .returnResult().responseBody!!
 
   companion object {
