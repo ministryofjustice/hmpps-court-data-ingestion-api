@@ -92,6 +92,24 @@ interface CourtDocumentRepository : JpaRepository<CourtDocumentEntity, UUID> {
       SELECT *
       FROM court_document
       WHERE id > :afterId
+        AND addressed_prison IS NULL
+        AND delivery_mapping_id IS NULL
+        AND prison_email_address IS NOT NULL
+      ORDER BY id
+      LIMIT :limit
+    """,
+    nativeQuery = true,
+  )
+  fun findUnaddressedAfter(
+    @Param("afterId") afterId: UUID,
+    @Param("limit") limit: Int,
+  ): List<CourtDocumentEntity>
+
+  @Query(
+    value = """
+      SELECT *
+      FROM court_document
+      WHERE id > :afterId
         AND (metadata_version < :metadataVersion
           OR extracted_text_sha256 IS NOT NULL)
       ORDER BY id
