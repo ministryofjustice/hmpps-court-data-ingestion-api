@@ -79,7 +79,7 @@ class ConcatenatedCaseReferencesFixBackfillIntTest : IntegrationTestBase() {
     val before = courtDocumentRepository.findById(testDocumentUuid).get()
     assertThat(before.courtDocumentCases.filter { it.caseReference.contains(",") }).hasSizeGreaterThan(0)
 
-    HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.stubMergeMetadata(testDocumentUuid)
+    HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.stubMergeMetadata(before.prisonDocumentId)
 
     // Run test
     backfill.process(testDocumentUuid)
