@@ -19,6 +19,7 @@ data class IngestionContext(
   // Step 5: destination classification
   val addressedPrison: String? = null,
   val destinationType: DestinationType? = null,
+  val deliveryMappingId: UUID? = null,
 
   // Step 6: duplicate resolution
   val duplicateOf: UUID? = null,
