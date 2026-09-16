@@ -12,6 +12,8 @@ data class UnclassifiedAddress(
   val firstSeen: LocalDateTime,
   val lastSeen: LocalDateTime,
   val recentDocumentTypes: List<String>,
+  val categoryCode: String? = null,
+  val prisonCode: String? = null,
 )
 
 @Repository
@@ -22,6 +24,8 @@ class UnclassifiedAddressRepository(
   fun findUnclassified(): List<UnclassifiedAddress> = jdbcTemplate.query(
     """
     SELECT lower(trim(cd.prison_email_address))                            AS email_address,
+           NULL                                                            AS category_code,
+           NULL                                                            AS prison_code,
            count(*)                                                        AS document_count,
            count(*) FILTER (WHERE cd.prisoner_number IS NOT NULL)          AS matched_count,
            min(cd.ingestion_at)                                            AS first_seen,
@@ -37,20 +41,28 @@ class UnclassifiedAddressRepository(
      GROUP BY lower(trim(cd.prison_email_address))
      ORDER BY document_count DESC
     """.trimIndent(),
-  ) { rs, _ ->
-    UnclassifiedAddress(
-      emailAddress = rs.getString("email_address"),
-      documentCount = rs.getInt("document_count"),
-      matchedToPersonCount = rs.getInt("matched_count"),
-      firstSeen = rs.getTimestamp("first_seen").toLocalDateTime(),
-      lastSeen = rs.getTimestamp("last_seen").toLocalDateTime(),
-      recentDocumentTypes = rs.getString("document_types")
-        ?.split(",")
-        ?.filter { it.isNotBlank() }
-        ?.take(5)
-        ?: emptyList(),
-    )
-  }
+    ::map,
+  )
+  fun findClassified(categoryCode: String?): List<UnclassifiedAddress> = jdbcTemplate.query(
+    """
+    SELECT m.email                                                         AS email_address,
+           m.category_code                                                 AS category_code,
+           m.prison_code                                                   AS prison_code,
+           count(cd.id)                                                    AS document_count,
+           count(*) FILTER (WHERE cd.prisoner_number IS NOT NULL)          AS matched_count,
+           min(cd.ingestion_at)                                            AS first_seen,
+           max(cd.ingestion_at)                                            AS last_seen,
+           string_agg(DISTINCT cd.court_document_type, ',')                AS document_types
+      FROM prison_email_mapping m
+      LEFT JOIN court_document cd
+             ON lower(trim(cd.prison_email_address)) = m.email
+     WHERE (:categoryCode IS NULL OR m.category_code = :categoryCode)
+     GROUP BY m.email, m.category_code, m.prison_code
+     ORDER BY document_count DESC
+    """.trimIndent(),
+    MapSqlParameterSource().addValue("categoryCode", categoryCode),
+    ::map,
+  )
 
   fun countDocumentsFor(normalisedEmail: String): Int = jdbcTemplate.queryForObject(
     "SELECT count(*) FROM court_document WHERE lower(trim(prison_email_address)) = :email AND addressed_prison IS NULL",
@@ -79,4 +91,19 @@ class UnclassifiedAddressRepository(
     mapOf("email" to normalisedEmail),
     Int::class.java,
   ) ?: 0
+
+  private fun map(rs: java.sql.ResultSet, @Suppress("UNUSED_PARAMETER") rowNum: Int) = UnclassifiedAddress(
+    emailAddress = rs.getString("email_address"),
+    categoryCode = rs.getString("category_code"),
+    prisonCode = rs.getString("prison_code"),
+    documentCount = rs.getInt("document_count"),
+    matchedToPersonCount = rs.getInt("matched_count"),
+    firstSeen = rs.getTimestamp("first_seen")?.toLocalDateTime() ?: LocalDateTime.MIN,
+    lastSeen = rs.getTimestamp("last_seen")?.toLocalDateTime() ?: LocalDateTime.MIN,
+    recentDocumentTypes = rs.getString("document_types")
+      ?.split(",")
+      ?.filter { it.isNotBlank() }
+      ?.take(5)
+      ?: emptyList(),
+  )
 }
