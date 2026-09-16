@@ -23,11 +23,16 @@ ALTER TABLE prison_email_mapping
 
 UPDATE prison_email_mapping SET category_code = 'PRISON' WHERE category_code IS NULL AND prison_code IS NOT NULL;
 
-ALTER TABLE prison_email_mapping
-    DROP CONSTRAINT IF EXISTS ck_prison_email_mapping_prison_code;
+UPDATE prison_email_mapping SET category_code = 'PECS' WHERE category_code IS NULL AND source_type = 'PECS';
 
 ALTER TABLE prison_email_mapping
-    ADD CONSTRAINT ck_prison_email_mapping_prison_code
+    DROP CONSTRAINT IF EXISTS ck_prison_email_mapping_source_type;
+
+ALTER TABLE prison_email_mapping
+    ALTER COLUMN source_type DROP NOT NULL;
+
+ALTER TABLE prison_email_mapping
+    ADD CONSTRAINT ck_prison_email_mapping_category_prison_code
         CHECK (category_code <> 'PRISON' OR prison_code IS NOT NULL);
 
 ALTER TABLE court_document

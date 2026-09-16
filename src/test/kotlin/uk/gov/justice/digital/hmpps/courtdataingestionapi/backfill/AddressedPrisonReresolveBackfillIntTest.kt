@@ -90,10 +90,9 @@ class AddressedPrisonReresolveBackfillIntTest : IntegrationTestBase() {
 
   private fun insertMapping(email: String, prisonCode: String?, categoryCode: String) {
     jdbcTemplate.update(
-      "INSERT INTO prison_email_mapping (email, prison_code, source_type, category_code) VALUES (?, ?, ?, ?)",
+      "INSERT INTO prison_email_mapping (email, prison_code, category_code) VALUES (?, ?, ?)",
       email,
       prisonCode,
-      categoryCode,
       categoryCode,
     )
   }
@@ -102,12 +101,17 @@ class AddressedPrisonReresolveBackfillIntTest : IntegrationTestBase() {
     val id = UUID.randomUUID()
     jdbcTemplate.update(
       """
-      INSERT INTO court_document (id, prison_document_id, prison_email_address, ingestion_at)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO court_document
+        (id, master_defendant_id, hmcts_court_document_id, prison_document_id, prison_email_address,
+         event_type, document_generated_timestamp, ingestion_at)
+      VALUES (?, ?, ?, ?, ?, 'PRISON_COURT_REGISTER_GENERATED', ?, ?)
       """.trimIndent(),
       id,
       UUID.randomUUID(),
+      UUID.randomUUID(),
+      UUID.randomUUID(),
       email,
+      LocalDateTime.now().minusDays(1),
       LocalDateTime.now().minusDays(1),
     )
     return id

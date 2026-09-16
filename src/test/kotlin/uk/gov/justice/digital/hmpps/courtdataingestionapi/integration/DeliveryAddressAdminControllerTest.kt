@@ -153,20 +153,25 @@ class DeliveryAddressAdminControllerTest : IntegrationTestBase() {
     .queryForObject("SELECT prison_code FROM prison_email_mapping WHERE email = ?", String::class.java, email)
 
   private fun insertMapping(email: String) = jdbcTemplate.update(
-    "INSERT INTO prison_email_mapping (email, prison_code, source_type, category_code) VALUES (?, 'LEI', 'PRISON', 'PRISON')",
+    "INSERT INTO prison_email_mapping (email, prison_code, category_code) VALUES (?, 'LEI', 'PRISON')",
     email,
   )
 
   private fun insertDocument(email: String, prisonerNumber: String?, deliverySource: String? = null) = jdbcTemplate.update(
     """
-      INSERT INTO court_document (id, prison_document_id, prison_email_address, prisoner_number, delivery_source, ingestion_at)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO court_document
+        (id, master_defendant_id, hmcts_court_document_id, prison_document_id, prison_email_address,
+         event_type, document_generated_timestamp, ingestion_at, prisoner_number, delivery_source)
+      VALUES (?, ?, ?, ?, ?, 'PRISON_COURT_REGISTER_GENERATED', ?, ?, ?, ?)
     """.trimIndent(),
     UUID.randomUUID(),
     UUID.randomUUID(),
+    UUID.randomUUID(),
+    UUID.randomUUID(),
     email,
+    LocalDateTime.now().minusDays(1),
+    LocalDateTime.now().minusDays(1),
     prisonerNumber,
     deliverySource,
-    LocalDateTime.now().minusDays(1),
   )
 }

@@ -27,10 +27,6 @@ class PrisonEmailMappingRepository(
     return jdbcTemplate.query(sql, mapOf("email" to normalisedEmail), ::map).firstOrNull()
   }
 
-  /**
-   * Upsert on the natural key. Returns the row so the caller can record which mapping set
-   * addressed_prison on the documents it then sweeps.
-   */
   fun upsert(
     normalisedEmail: String,
     categoryCode: String,
@@ -39,11 +35,10 @@ class PrisonEmailMappingRepository(
   ): EmailMapping {
     jdbcTemplate.update(
       """
-      INSERT INTO prison_email_mapping (email, prison_code, source_type, category_code, created_by)
-      VALUES (:email, :prisonCode, :categoryCode, :categoryCode, :createdBy)
+      INSERT INTO prison_email_mapping (email, prison_code, category_code, created_by)
+      VALUES (:email, :prisonCode, :categoryCode, :createdBy)
       ON CONFLICT (email) DO UPDATE
         SET prison_code = EXCLUDED.prison_code,
-            source_type = EXCLUDED.source_type,
             category_code = EXCLUDED.category_code,
             created_by = EXCLUDED.created_by
       """.trimIndent(),
