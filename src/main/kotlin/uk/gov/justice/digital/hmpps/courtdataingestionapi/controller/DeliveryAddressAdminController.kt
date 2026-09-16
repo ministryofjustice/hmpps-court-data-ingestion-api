@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.DeliveryCategory
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.DeliveryCategory
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.ClassifyAddressPreview
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.ClassifyAddressResult
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.DeliveryAddressAdminService

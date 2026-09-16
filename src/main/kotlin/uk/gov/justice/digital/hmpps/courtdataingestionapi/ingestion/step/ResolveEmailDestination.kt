@@ -35,18 +35,11 @@ class ResolveEmailDestination(
     )
   }
 
-  /**
-   * Resolution without an [IngestionContext], so the re-resolution backfill can reuse exactly this
-   * logic without having to build a context it has no other use for.
-   */
   fun resolve(prisonEmailAddress: String?): ResolvedDestination? {
     val normalisedEmail = PrisonEmailNormaliser.normalise(prisonEmailAddress) ?: return null
     val mapping = prisonEmailMappingRepository.findMappingByEmail(normalisedEmail)
-    val category = mapping?.categoryCode?.let { categoryRepository.findByCode(it) }
+    val category = mapping?.categoryCode?.let { categoryRepository.findById(it).orElse(null) }
 
-    // A category that carries no prison code (probation, youth custody) leaves addressedPrison
-    // null: the document was not delivered to a prison, so there is nothing to record. It does not
-    // affect who sees the document, which follows the person.
     val addressedPrison = if (category?.requiresPrisonCode == false) null else mapping?.prisonCode
 
     return ResolvedDestination(
@@ -56,13 +49,6 @@ class ResolveEmailDestination(
     )
   }
 
-  /**
-   * A mapped category that has no matching [DestinationType] is a classification the delivery
-   * source column cannot express, which is expected for anything other than PRISON and PECS.
-   * It is logged rather than swallowed: before this was explicit, an unrecognised source type
-   * fell silently through to the suffix rules below, so adding a new category appeared to work
-   * while changing nothing.
-   */
   private fun resolveDestinationType(normalisedEmail: String, mapping: EmailMapping?): DestinationType? {
     val declared = mapping?.categoryCode ?: mapping?.sourceType
     if (declared != null) {

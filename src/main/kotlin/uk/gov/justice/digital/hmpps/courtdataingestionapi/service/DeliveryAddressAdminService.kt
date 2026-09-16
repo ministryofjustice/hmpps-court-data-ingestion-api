@@ -1,11 +1,12 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.service
 
+import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.backfill.AddressedPrisonReresolveBackfill
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.backfill.BackfillRunner
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.DeliveryCategory
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.prisonemail.PrisonEmailNormaliser
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.DeliveryCategory
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.DeliveryCategoryRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.PrisonEmailMappingRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.UnclassifiedAddress
@@ -20,7 +21,6 @@ data class ClassifyAddressPreview(
   val documentsAffected: Int,
   val peopleAffected: Int,
   val currentLocations: List<LocationCount>,
-  /** True when the distribution is drawn from a sample rather than every person. */
   val locationsSampled: Boolean,
   val replacesExisting: Boolean,
 )
@@ -46,15 +46,14 @@ class DeliveryAddressAdminService(
 
   fun unclassifiedAddresses(): List<UnclassifiedAddress> = addressRepository.findUnclassified()
 
-  fun categories(): List<DeliveryCategory> = categoryRepository.findAll()
+  fun categories(): List<DeliveryCategory> = categoryRepository.findAll(Sort.by("name"))
 
-  fun createCategory(category: DeliveryCategory, createdBy: String?): DeliveryCategory? = categoryRepository.create(category, createdBy)
+  fun createCategory(category: DeliveryCategory, createdBy: String?): DeliveryCategory? = if (categoryRepository.existsById(category.code)) {
+    null
+  } else {
+    categoryRepository.save(category.copy(createdBy = createdBy))
+  }
 
-  /**
-   * Dry run for the confirm page. Deliberately reports where the matched people are now: if they
-   * are spread across the estate rather than held at the prison being mapped, the delivery address serves
-   * a hub and mapping it to one establishment would put other prisons' paperwork in their view.
-   */
   fun preview(emailAddress: String, categoryCode: String, prisonCode: String?): ClassifyAddressPreview {
     val normalised = PrisonEmailNormaliser.normalise(emailAddress) ?: emailAddress
     val category = categoryRepository.findByCode(categoryCode) ?: throw UnknownCategoryException(categoryCode)
@@ -85,12 +84,6 @@ class DeliveryAddressAdminService(
     )
   }
 
-  /**
-   * Creates the mapping, then asks the runner for the re-resolution sweep. The sweep is a
-   * registered backfill with the usual database lock and heartbeat, so a second classification
-   * while one is in flight reports that rather than starting a duplicate run: the sweep is
-   * declarative, so the run already going will pick up this mapping too.
-   */
   @Transactional
   fun classify(
     emailAddress: String,
@@ -99,7 +92,7 @@ class DeliveryAddressAdminService(
     triggeredBy: String?,
   ): ClassifyAddressResult {
     val normalised = PrisonEmailNormaliser.normalise(emailAddress) ?: emailAddress
-    val category = categoryRepository.findByCode(categoryCode) ?: throw UnknownCategoryException(categoryCode)
+    val category = categoryRepository.findById(categoryCode).orElse(null) ?: throw UnknownCategoryException(categoryCode)
     require(!category.requiresPrisonCode || !prisonCode.isNullOrBlank()) {
       "Category ${category.code} requires a prison code"
     }
@@ -124,7 +117,6 @@ class DeliveryAddressAdminService(
   }
 
   private companion object {
-    /** Each sampled person is one prisoner-search lookup, so the preview stays interactive. */
     const val LOCATION_SAMPLE_LIMIT = 200
   }
 }

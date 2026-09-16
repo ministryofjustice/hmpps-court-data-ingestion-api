@@ -4,12 +4,13 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.DeliveryCategory
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.DestinationType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionContext
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.DeliveryCategory
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.DeliveryCategoryRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.EmailMapping
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.PrisonEmailMappingRepository
+import java.util.Optional
 import java.util.UUID
 
 class ResolveEmailDestinationTest {
@@ -42,7 +43,7 @@ class ResolveEmailDestinationTest {
   fun `identifies prison destination from mapping`() {
     whenever(repository.findMappingByEmail("omu.test@justice.gov.uk"))
       .thenReturn(mapping(prisonCode = "MDI", categoryCode = "PRISON"))
-    whenever(categoryRepository.findByCode("PRISON")).thenReturn(category("PRISON", requiresPrisonCode = true))
+    whenever(categoryRepository.findById("PRISON")).thenReturn(Optional.of(category("PRISON", requiresPrisonCode = true)))
 
     val result = enricher.enrich(context("omu.test@justice.gov.uk"))
 
@@ -54,7 +55,7 @@ class ResolveEmailDestinationTest {
   fun `identifies pecs destination from a mapping with no prison code`() {
     whenever(repository.findMappingByEmail("pecs.south@example.gov.uk"))
       .thenReturn(mapping(prisonCode = null, categoryCode = "PECS"))
-    whenever(categoryRepository.findByCode("PECS")).thenReturn(category("PECS", requiresPrisonCode = false))
+    whenever(categoryRepository.findById("PECS")).thenReturn(Optional.of(category("PECS", requiresPrisonCode = false)))
 
     val result = enricher.enrich(context("pecs.south@example.gov.uk"))
 
@@ -84,8 +85,8 @@ class ResolveEmailDestinationTest {
   fun `a category with no delivery source equivalent leaves both the prison and the source null`() {
     val mapping = mapping(prisonCode = null, categoryCode = "YOUTH_CUSTODY")
     whenever(repository.findMappingByEmail("ycs.warrants@justice.gov.uk")).thenReturn(mapping)
-    whenever(categoryRepository.findByCode("YOUTH_CUSTODY"))
-      .thenReturn(category("YOUTH_CUSTODY", requiresPrisonCode = false))
+    whenever(categoryRepository.findById("YOUTH_CUSTODY"))
+      .thenReturn(Optional.of(category("YOUTH_CUSTODY", requiresPrisonCode = false)))
 
     val result = enricher.enrich(context("ycs.warrants@justice.gov.uk"))
 
