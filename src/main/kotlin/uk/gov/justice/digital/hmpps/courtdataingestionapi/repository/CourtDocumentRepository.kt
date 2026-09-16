@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.repository
 
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
@@ -86,6 +87,42 @@ interface CourtDocumentRepository : JpaRepository<CourtDocumentEntity, UUID> {
     @Param("afterId") afterId: UUID,
     @Param("limit") limit: Int,
   ): List<CourtDocumentEntity>
+
+  @Query(
+    value = """
+      SELECT *
+      FROM court_document
+      WHERE id > :afterId
+        AND addressed_prison IS NULL
+        AND delivery_mapping_id IS NULL
+        AND prison_email_address IS NOT NULL
+      ORDER BY id
+      LIMIT :limit
+    """,
+    nativeQuery = true,
+  )
+  fun findUnaddressedAfter(
+    @Param("afterId") afterId: UUID,
+    @Param("limit") limit: Int,
+  ): List<CourtDocumentEntity>
+
+  @Modifying(clearAutomatically = true, flushAutomatically = true)
+  @Query(
+    value = """
+      UPDATE court_document
+         SET addressed_prison = :addressedPrison,
+             delivery_mapping_id = :deliveryMappingId,
+             delivery_source = COALESCE(CAST(:deliverySource AS TEXT), delivery_source)
+       WHERE id = :id
+    """,
+    nativeQuery = true,
+  )
+  fun applyDeliveryResolution(
+    @Param("id") id: UUID,
+    @Param("addressedPrison") addressedPrison: String?,
+    @Param("deliveryMappingId") deliveryMappingId: UUID,
+    @Param("deliverySource") deliverySource: String?,
+  ): Int
 
   @Query(
     value = """

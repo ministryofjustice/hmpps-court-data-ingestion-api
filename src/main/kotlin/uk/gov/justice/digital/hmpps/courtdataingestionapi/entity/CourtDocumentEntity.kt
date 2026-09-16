@@ -40,6 +40,9 @@ data class CourtDocumentEntity(
   @OneToMany(mappedBy = "courtDocument", cascade = [CascadeType.ALL])
   var courtDocumentViews: MutableList<CourtDocumentViewEntity> = mutableListOf(),
 
+  @Column(name = "delivery_mapping_id")
+  var deliveryMappingId: UUID? = null,
+
   @Column(name = "addressed_prison")
   var addressedPrison: String? = null,
 
