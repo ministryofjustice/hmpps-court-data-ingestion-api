@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.jdbc.core.JdbcTemplate
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -18,10 +19,12 @@ class DeliveryAddressAdminControllerTest : IntegrationTestBase() {
   @Autowired
   private lateinit var jdbcTemplate: JdbcTemplate
 
+  @Autowired
+  override lateinit var courtDocumentRepository: CourtDocumentRepository
+
   @BeforeEach
   fun setUp() {
-    jdbcTemplate.update("DELETE FROM court_document_case")
-    jdbcTemplate.update("DELETE FROM court_document")
+    courtDocumentRepository.deleteAll()
     jdbcTemplate.update("DELETE FROM prison_email_mapping")
     jdbcTemplate.update("DELETE FROM delivery_category WHERE code NOT IN ('PRISON', 'PECS')")
   }

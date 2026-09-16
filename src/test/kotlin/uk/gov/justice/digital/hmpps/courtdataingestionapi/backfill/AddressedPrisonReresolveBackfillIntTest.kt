@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.jdbc.core.JdbcTemplate
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -18,19 +19,15 @@ class AddressedPrisonReresolveBackfillIntTest : IntegrationTestBase() {
   @Autowired
   private lateinit var jdbcTemplate: JdbcTemplate
 
+  @Autowired
+  override lateinit var courtDocumentRepository: CourtDocumentRepository
+
   @BeforeEach
   fun setUp() {
-    jdbcTemplate.update("DELETE FROM court_document_case")
-    jdbcTemplate.update("DELETE FROM court_document")
+    courtDocumentRepository.deleteAll()
     jdbcTemplate.update("DELETE FROM prison_email_mapping")
 
-    jdbcTemplate.update(
-      """
-      INSERT INTO delivery_category (code, name, requires_prison_code, unmatched_needs_review)
-      VALUES ('YOUTH_CUSTODY', 'Youth custody', FALSE, FALSE)
-      ON CONFLICT (code) DO NOTHING
-      """.trimIndent(),
-    )
+    insertDeliveryCategory("YOUTH_CUSTODY", "Youth custody", requiresPrisonCode = false)
     insertMapping(MAPPED_EMAIL, prisonCode = "LEI", categoryCode = "PRISON")
     insertMapping(YOUTH_EMAIL, prisonCode = null, categoryCode = "YOUTH_CUSTODY")
   }
@@ -87,6 +84,17 @@ class AddressedPrisonReresolveBackfillIntTest : IntegrationTestBase() {
 
     assertThat(addressedPrisonOf(id)).isEqualTo("LEI")
   }
+
+  private fun insertDeliveryCategory(code: String, name: String, requiresPrisonCode: Boolean) = jdbcTemplate.update(
+    """
+      INSERT INTO delivery_category (code, name, requires_prison_code, unmatched_needs_review)
+      VALUES (?, ?, ?, FALSE)
+      ON CONFLICT (code) DO NOTHING
+    """.trimIndent(),
+    code,
+    name,
+    requiresPrisonCode,
+  )
 
   private fun insertMapping(email: String, prisonCode: String?, categoryCode: String) {
     jdbcTemplate.update(

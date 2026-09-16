@@ -49,15 +49,15 @@ class ResolveEmailDestination(
     )
   }
 
-  private fun resolveDestinationType(normalisedEmail: String, mapping: EmailMapping?): DestinationType? {
-    val declared = mapping?.categoryCode ?: mapping?.sourceType
-    if (declared != null) {
-      val mapped = runCatching { DestinationType.valueOf(declared) }.getOrNull()
+  private fun resolveDestinationType(normalisedEmail: String, emailMapping: EmailMapping?): DestinationType? {
+    val addressClassification = emailMapping?.categoryCode ?: emailMapping?.sourceType
+    if (addressClassification != null) {
+      val mapped = runCatching { DestinationType.valueOf(addressClassification) }.getOrNull()
       if (mapped != null) return mapped
       log.info(
         "Delivery address {} is classified as {}, which has no delivery source equivalent; leaving delivery_source null",
         normalisedEmail,
-        declared,
+        addressClassification,
       )
       return null
     }
@@ -65,7 +65,7 @@ class ResolveEmailDestination(
     return when {
       normalisedEmail.endsWith("@geoamey.co.uk") -> DestinationType.PECS
       normalisedEmail.startsWith("pecs") && normalisedEmail.endsWith("@serco.com") -> DestinationType.PECS
-      mapping?.prisonCode != null -> DestinationType.PRISON
+      emailMapping?.prisonCode != null -> DestinationType.PRISON
       else -> null
     }
   }
