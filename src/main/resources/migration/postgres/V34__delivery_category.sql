@@ -28,7 +28,7 @@ ALTER TABLE prison_email_mapping
 
 ALTER TABLE prison_email_mapping
     ADD CONSTRAINT ck_prison_email_mapping_prison_code
-        CHECK (category_code IS NULL OR category_code <> 'PRISON' OR prison_code IS NOT NULL);
+        CHECK (category_code <> 'PRISON' OR prison_code IS NOT NULL);
 
 ALTER TABLE court_document
     ADD COLUMN IF NOT EXISTS delivery_mapping_id UUID REFERENCES prison_email_mapping (id);
