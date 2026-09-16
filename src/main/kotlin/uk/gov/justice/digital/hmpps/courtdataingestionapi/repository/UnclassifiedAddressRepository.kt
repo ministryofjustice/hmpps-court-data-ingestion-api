@@ -21,7 +21,7 @@ class UnclassifiedAddressRepository(
 
   fun findUnclassified(): List<UnclassifiedAddress> = jdbcTemplate.query(
     """
-    SELECT cd.prison_email_address                                         AS email_address,
+    SELECT lower(trim(cd.prison_email_address))                            AS email_address,
            count(*)                                                        AS document_count,
            count(*) FILTER (WHERE cd.prisoner_number IS NOT NULL)          AS matched_count,
            min(cd.ingestion_at)                                            AS first_seen,
@@ -32,9 +32,9 @@ class UnclassifiedAddressRepository(
        AND cd.prison_email_address IS NOT NULL
        AND cd.delivery_source IS DISTINCT FROM 'PECS'
        AND NOT EXISTS (
-             SELECT 1 FROM prison_email_mapping m WHERE m.email = cd.prison_email_address
+             SELECT 1 FROM prison_email_mapping m WHERE m.email = lower(trim(cd.prison_email_address))
            )
-     GROUP BY cd.prison_email_address
+     GROUP BY lower(trim(cd.prison_email_address))
      ORDER BY document_count DESC
     """.trimIndent(),
   ) { rs, _ ->
@@ -53,7 +53,7 @@ class UnclassifiedAddressRepository(
   }
 
   fun countDocumentsFor(normalisedEmail: String): Int = jdbcTemplate.queryForObject(
-    "SELECT count(*) FROM court_document WHERE prison_email_address = :email AND addressed_prison IS NULL",
+    "SELECT count(*) FROM court_document WHERE lower(trim(prison_email_address)) = :email AND addressed_prison IS NULL",
     mapOf("email" to normalisedEmail),
     Int::class.java,
   ) ?: 0
@@ -62,7 +62,7 @@ class UnclassifiedAddressRepository(
     """
     SELECT DISTINCT prisoner_number
       FROM court_document
-     WHERE prison_email_address = :email
+     WHERE lower(trim(prison_email_address)) = :email
        AND addressed_prison IS NULL
        AND prisoner_number IS NOT NULL
      LIMIT :limit
@@ -74,7 +74,7 @@ class UnclassifiedAddressRepository(
     """
     SELECT count(DISTINCT prisoner_number)
       FROM court_document
-     WHERE prison_email_address = :email AND addressed_prison IS NULL AND prisoner_number IS NOT NULL
+     WHERE lower(trim(prison_email_address)) = :email AND addressed_prison IS NULL AND prisoner_number IS NOT NULL
     """.trimIndent(),
     mapOf("email" to normalisedEmail),
     Int::class.java,
