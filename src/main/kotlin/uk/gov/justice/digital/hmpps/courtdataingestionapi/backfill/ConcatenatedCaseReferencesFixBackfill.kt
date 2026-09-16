@@ -51,7 +51,7 @@ class ConcatenatedCaseReferencesFixBackfill(
 
     courtDocumentRepository.save(document)
     documentManagementApi.mergeMetadata(
-      item,
+      document.prisonDocumentId,
       metadata = mapOf(
         "caseReferences" to document.courtDocumentCases.map { it.caseReference }.toSet().toTypedArray(),
       ),

@@ -34,7 +34,7 @@ data class CourtDocumentEntity(
   @ManyToOne(optional = true)
   var courtHearing: CourtHearingEntity? = null,
 
-  @OneToMany(mappedBy = "courtDocument", cascade = [CascadeType.ALL])
+  @OneToMany(mappedBy = "courtDocument", cascade = [CascadeType.ALL], orphanRemoval = true)
   val courtDocumentCases: MutableList<CourtDocumentCaseEntity> = mutableListOf(),
 
   @OneToMany(mappedBy = "courtDocument", cascade = [CascadeType.ALL])

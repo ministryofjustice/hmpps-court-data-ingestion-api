@@ -1,14 +1,13 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.backfill
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.transaction.Transactional
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.transaction.support.TransactionTemplate
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentCaseEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.DestinationType
@@ -16,17 +15,13 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.Integratio
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsDocumentManagementApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtHearingRepository
 import java.time.LocalDateTime
 import java.util.UUID
 
 class ConcatenatedCaseReferencesFixBackfillIntTest : IntegrationTestBase() {
 
   @Autowired
-  private lateinit var mapper: ObjectMapper
-
-  @Autowired
-  private lateinit var courtHearingRepository: CourtHearingRepository
+  private lateinit var transactionTemplate: TransactionTemplate
 
   @Autowired
   private lateinit var backfill: ConcatenatedCaseReferencesFixBackfill
@@ -37,9 +32,9 @@ class ConcatenatedCaseReferencesFixBackfillIntTest : IntegrationTestBase() {
   }
 
   @ParameterizedTest
-  @MethodSource("getSelectBatchCourtDocumentBackfillTestParameters")
+  @MethodSource("getSelectBatchUnitTestParameters")
   @Transactional
-  fun `selectBatch test when passing document with set case references, should return {expected} total item`(cases: List<List<String>>, expected: Int) {
+  fun `selectBatch test, when checking documents for concatenated case references, should return {expected} total items for processing`(cases: List<List<String>>, expected: Int) {
     // Setup mocked data
     cases.forEach {
       val extraDoc = copyCourtDocument()
@@ -55,55 +50,57 @@ class ConcatenatedCaseReferencesFixBackfillIntTest : IntegrationTestBase() {
 
     if (expected > 0) {
       val result = courtDocumentRepository.findById(batch.items.first()).get()
-      assertThat(result.courtDocumentCases).hasSizeGreaterThan(0)
-      assertThat(result.courtDocumentCases.filter { it.caseReference.contains(",") }).hasSizeGreaterThan(0)
+      assertThat(result.courtDocumentCases).isNotEmpty()
+      assertThat(result.courtDocumentCases.filter { it.caseReference.contains(",") }).isNotEmpty()
     }
   }
 
   @ParameterizedTest
-  @MethodSource("getSelectBatchCourtDocumentBackfillTestParameters")
+  @MethodSource("getProcessBatchUnitTestParameters")
   @Transactional
-  fun `processBatch test when passing document with set case references, should return {expected} total item`(cases: List<List<String>>, expected: Int) {
+  fun `processBatch test, when a document with concatenated case references is processed, should return no concatenated ones after`(cases: List<String>) {
     // Setup mocked data
-    if (expected == 0) return
-
-    cases.forEach {
-      val extraDoc = copyCourtDocument()
-      addCourtDocumentCases(extraDoc, it)
-      courtDocumentRepository.save(extraDoc)
-    }
-
-    val batch = backfill.selectBatch(cursor = "", batchSize = 100)
-    val testDocumentUuid: UUID = batch.items.first()
-
-    val before = courtDocumentRepository.findById(testDocumentUuid).get()
-    assertThat(before.courtDocumentCases.filter { it.caseReference.contains(",") }).hasSizeGreaterThan(0)
-
-    HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.stubMergeMetadata(testDocumentUuid)
+    val extraDoc = copyCourtDocument()
+    addCourtDocumentCases(extraDoc, cases)
+    courtDocumentRepository.saveAndFlush(extraDoc)
+    HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.stubMergeMetadata(extraDoc.prisonDocumentId)
 
     // Run test
-    backfill.process(testDocumentUuid)
+    backfill.process(extraDoc.id)
 
     // Check results
-    val result = courtDocumentRepository.findById(testDocumentUuid).get()
+    assertThat(extraDoc.courtDocumentCases.filter { it.caseReference.contains(",") }).isNotEmpty()
+
+    val result = courtDocumentRepository.findById(extraDoc.id).get()
     assertThat(result.courtDocumentCases.filter { it.caseReference.contains(",") }).isEmpty()
   }
 
-  // TODO (CDIA-327): I'd be good to have a way to confirm not just backfill run but it also fixed the data
-  @Test
-  fun `run {concatenated-cases} backfill, should return {expected} total item`() {
+  @ParameterizedTest
+  @MethodSource("getRunBackfillIntegrationTestParameters")
+  fun `run {concatenated-cases} backfill test, should find {expectedConcatenated} case references needing to be fixed, and return {expectedFixed} total case references with no concatenated ones after backfill run`(cases: List<String>, expectedConcatenated: Int, expectedFixed: Int) {
     // Setup mocked data
     sendSubscriptionNotification(MATCHING_CORE_PERSON)
-    val documentBefore = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
+    val documentBefore = setupCourtDocumentCases(cases)
     HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.stubMergeMetadata(documentBefore.prisonDocumentId)
 
     // Run test
     runBackfill("concatenated-cases")
 
     // Check results
+    assertThat(documentBefore.courtDocumentCases).isNotEmpty()
+    assertThat(documentBefore.courtDocumentCases.filter { it.caseReference.contains(",") }).hasSize(expectedConcatenated)
+
     val results = getCourtDocument(documentBefore.prisonerNumber!!, documentBefore.prisonDocumentId)
     assertThat(results).isNotEmpty()
     assertThat(results.first().caseReferences.filter { it.contains(",") }).isEmpty()
+    assertThat(results.first().caseReferences).hasSize(expectedFixed)
+  }
+
+  private fun setupCourtDocumentCases(cases: List<String>): CourtDocumentEntity = transactionTemplate.execute {
+    val document = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
+    addCourtDocumentCases(document, cases)
+    courtDocumentRepository.save(document)
+    document
   }
 
   companion object {
@@ -159,7 +156,7 @@ class ConcatenatedCaseReferencesFixBackfillIntTest : IntegrationTestBase() {
     val CONCATENATED_CASES_2_EXTRA_CASE = listOf("case1", "case3", "case1,case2")
 
     @JvmStatic
-    fun getSelectBatchCourtDocumentBackfillTestParameters() = listOf(
+    fun getSelectBatchUnitTestParameters() = listOf(
       Arguments.of(listOf(CONCATENATED_CASES_0), 0),
 
       Arguments.of(listOf(CONCATENATED_CASES_2_ALL_DUPLICATED), 1),
@@ -176,6 +173,30 @@ class ConcatenatedCaseReferencesFixBackfillIntTest : IntegrationTestBase() {
 
       Arguments.of(listOf(CONCATENATED_CASES_2_ALL_DUPLICATED, CONCATENATED_CASES_2_SOME_DUPLICATED, CONCATENATED_CASES_2_EXTRA_CASE), 3),
       Arguments.of(listOf(CONCATENATED_CASES_2_ALL_DUPLICATED, CONCATENATED_CASES_2_SOME_DUPLICATED, CONCATENATED_CASES_2_EXTRA_CASE, CONCATENATED_CASES_0), 3),
+    )
+
+    @JvmStatic
+    fun getProcessBatchUnitTestParameters() = listOf(
+      Arguments.of(CONCATENATED_CASES_2_ALL_DUPLICATED),
+      Arguments.of(CONCATENATED_CASES_2_SOME_DUPLICATED),
+      Arguments.of(CONCATENATED_CASES_2_EXTRA_CASE),
+    )
+
+    // Remember to add 1 to the total expected after fix because of default case reference added by sendSubscription
+    @JvmStatic
+    fun getRunBackfillIntegrationTestParameters() = listOf(
+      Arguments.of(CONCATENATED_CASES_0, 0, 3),
+      Arguments.of(CONCATENATED_CASES_2_ALL_DUPLICATED, 1, 3),
+      Arguments.of(CONCATENATED_CASES_2_SOME_DUPLICATED, 1, 3),
+      Arguments.of(CONCATENATED_CASES_2_EXTRA_CASE, 1, 4),
+
+      Arguments.of(listOf("case1,case2", "case1,case2"), 2, 3),
+      Arguments.of(listOf("case1,case2", "case2,case1"), 2, 3),
+      Arguments.of(listOf("case1,case2", "case2,case3"), 2, 4),
+      Arguments.of(listOf("case1,case2", "case3,case4"), 2, 5),
+      Arguments.of(listOf("case1", "case1,case2", "case3,case4"), 2, 5),
+      Arguments.of(listOf("case1,case2", "case3,case4", "case5"), 2, 6),
+      Arguments.of(listOf("case1", "case1,case2", "case3,case4", "case5"), 2, 6),
     )
   }
 }
