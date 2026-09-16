@@ -56,6 +56,7 @@ class DeliveryAddressAdminControllerTest : IntegrationTestBase() {
       .jsonPath("$[0].emailAddress").isEqualTo(UNCLASSIFIED)
       .jsonPath("$[0].documentCount").isEqualTo(2)
       .jsonPath("$[0].matchedToPersonCount").isEqualTo(1)
+      .jsonPath("$[0].recentDocumentTypes[0]").isEqualTo("PRISON_COURT_REGISTER")
   }
 
   @Test
@@ -161,8 +162,8 @@ class DeliveryAddressAdminControllerTest : IntegrationTestBase() {
     """
       INSERT INTO court_document
         (id, master_defendant_id, hmcts_court_document_id, prison_document_id, prison_email_address,
-         event_type, document_generated_timestamp, ingestion_at, prisoner_number, delivery_source)
-      VALUES (?, ?, ?, ?, ?, 'PRISON_COURT_REGISTER_GENERATED', ?, ?, ?, ?)
+         event_type, court_document_type, document_generated_timestamp, ingestion_at, prisoner_number, delivery_source)
+      VALUES (?, ?, ?, ?, ?, 'PRISON_COURT_REGISTER_GENERATED', 'PRISON_COURT_REGISTER', ?, ?, ?, ?)
     """.trimIndent(),
     UUID.randomUUID(),
     UUID.randomUUID(),

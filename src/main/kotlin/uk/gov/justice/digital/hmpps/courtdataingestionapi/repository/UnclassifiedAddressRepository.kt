@@ -14,13 +14,6 @@ data class UnclassifiedAddress(
   val recentDocumentTypes: List<String>,
 )
 
-/**
- * Reads for the unclassified delivery address admin.
- *
- * Grouped by address rather than listed by document on purpose. The useful artefact is a short
- * list of addresses to classify, and an address row is a count with no person on it, which keeps
- * identity off a screen that has no caseload gate.
- */
 @Repository
 class UnclassifiedAddressRepository(
   private val jdbcTemplate: NamedParameterJdbcTemplate,
@@ -33,7 +26,7 @@ class UnclassifiedAddressRepository(
            count(*) FILTER (WHERE cd.prisoner_number IS NOT NULL)          AS matched_count,
            min(cd.ingestion_at)                                            AS first_seen,
            max(cd.ingestion_at)                                            AS last_seen,
-           (array_agg(DISTINCT cd.court_document_type::text))[1:5]         AS document_types
+           string_agg(DISTINCT cd.court_document_type, ',')                AS document_types
       FROM court_document cd
      WHERE cd.addressed_prison IS NULL
        AND cd.prison_email_address IS NOT NULL
@@ -51,8 +44,11 @@ class UnclassifiedAddressRepository(
       matchedToPersonCount = rs.getInt("matched_count"),
       firstSeen = rs.getTimestamp("first_seen").toLocalDateTime(),
       lastSeen = rs.getTimestamp("last_seen").toLocalDateTime(),
-      recentDocumentTypes = (rs.getArray("document_types")?.array as? Array<*>)
-        ?.filterNotNull()?.map { it.toString() } ?: emptyList(),
+      recentDocumentTypes = rs.getString("document_types")
+        ?.split(",")
+        ?.filter { it.isNotBlank() }
+        ?.take(5)
+        ?: emptyList(),
     )
   }
 
@@ -62,10 +58,6 @@ class UnclassifiedAddressRepository(
     Int::class.java,
   ) ?: 0
 
-  /**
-   * Distinct people behind the documents a classification would move. Capped, because the
-   * caller looks each one up in prisoner-search to build the location distribution.
-   */
   fun prisonerNumbersFor(normalisedEmail: String, limit: Int): List<String> = jdbcTemplate.query(
     """
     SELECT DISTINCT prisoner_number
