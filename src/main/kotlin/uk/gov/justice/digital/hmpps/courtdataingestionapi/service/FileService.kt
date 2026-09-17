@@ -93,6 +93,10 @@ class FileService(
     put("isUnread", documentNotificationService.isUnread(document))
   }
 
+  fun deleteFileOnTransactionRollback(documentUuid: UUID) {
+    hmppsDocumentManagementApi.deleteDocument(documentUuid)
+  }
+
   data class MirrorOutcome(
     val contentHashPushed: Boolean,
     val metadataPushed: Boolean,

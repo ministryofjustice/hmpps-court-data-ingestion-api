@@ -44,7 +44,7 @@ class DefendantResolutionBehaviourIntTest : IntegrationTestBase() {
     CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(ourDefendantId, listOf("CO0001"))
     CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePersonNotFound(ourMaster)
 
-    sendSubscriptionNotification(ourMaster)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(ourMaster)
 
     val file = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(ourMaster)!!
     assertThat(file.prisonerNumber).isEqualTo("CO0001")
@@ -65,7 +65,7 @@ class DefendantResolutionBehaviourIntTest : IntegrationTestBase() {
     )
     CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(sharedId, listOf("FC0001"))
 
-    sendSubscriptionNotification(sharedId)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(sharedId)
 
     val file = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(sharedId)!!
     assertThat(file.prisonerNumber).isEqualTo("FC0001")
@@ -80,7 +80,7 @@ class DefendantResolutionBehaviourIntTest : IntegrationTestBase() {
     courtCaseDefendantService.upsert(ourDefendantId, CASE_REFERENCE, ourMaster, "Our Defendant", dob)
     CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(ourDefendantId, listOf("CA0001"))
 
-    sendSubscriptionNotification(ourMaster)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(ourMaster)
 
     val file = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(ourMaster)!!
     assertThat(file.prisonerNumber).isEqualTo("CA0001")
@@ -103,7 +103,7 @@ class DefendantResolutionBehaviourIntTest : IntegrationTestBase() {
     )
     CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantId, emptyList())
 
-    sendSubscriptionNotification(master)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(master)
 
     val file = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(master)!!
     assertThat(file.prisonerNumber).isNull()
@@ -121,7 +121,7 @@ class DefendantResolutionBehaviourIntTest : IntegrationTestBase() {
     )
     CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantId, listOf("AM0001", "AM0002"))
 
-    sendSubscriptionNotification(master)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(master)
 
     val file = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(master)!!
     assertThat(file.prisonerNumber).isNull()
@@ -143,7 +143,7 @@ class DefendantResolutionBehaviourIntTest : IntegrationTestBase() {
     )
     CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(claimedMaster, listOf("RW0001"))
 
-    sendSubscriptionNotification(claimedMaster)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(claimedMaster)
 
     val file = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(claimedMaster)!!
     assertThat(file.masterDefendantId).isEqualTo(claimedMaster)

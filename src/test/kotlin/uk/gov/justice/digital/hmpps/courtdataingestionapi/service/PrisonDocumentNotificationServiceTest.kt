@@ -64,7 +64,7 @@ class PrisonDocumentNotificationServiceTest : IntegrationTestBase() {
   @Test
   fun `Given a viewed document is then marked as new, should be unread`() {
     setupPrisonNewDocNotification(MATCHING_PRISON_ID, getNewDocNotificationDateFrom(1))
-    sendSubscriptionNotification(MATCHING_CORE_PERSON)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON)
     val document = courtDocumentRepository.findAll()[0]
     sendCourtDocumentViewNotification(document)
     sendCourtDocumentMarkAsNewNotification(document)
@@ -77,7 +77,7 @@ class PrisonDocumentNotificationServiceTest : IntegrationTestBase() {
   @Test
   fun `Given a marked as new document is then viewed, should be read`() {
     setupPrisonNewDocNotification(MATCHING_PRISON_ID, getNewDocNotificationDateFrom(-1))
-    sendSubscriptionNotification(MATCHING_CORE_PERSON)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON)
     val document = courtDocumentRepository.findAll()[0]
     sendCourtDocumentMarkAsNewNotification(document)
     sendCourtDocumentViewNotification(document)
@@ -96,7 +96,7 @@ class PrisonDocumentNotificationServiceTest : IntegrationTestBase() {
   }
 
   private fun buildTestCourtDocument(views: Int): CourtDocumentEntity {
-    sendSubscriptionNotification(MATCHING_CORE_PERSON)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON)
     val dbCourtDocument = courtDocumentRepository.findAll()[0]
 
     if (views <= 0) {

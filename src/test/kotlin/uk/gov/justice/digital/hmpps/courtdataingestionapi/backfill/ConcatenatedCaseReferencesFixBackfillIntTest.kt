@@ -79,7 +79,7 @@ class ConcatenatedCaseReferencesFixBackfillIntTest : IntegrationTestBase() {
   @MethodSource("getRunBackfillIntegrationTestParameters")
   fun `run {concatenated-cases} backfill test, should find {expectedConcatenated} case references needing to be fixed, and return {expectedFixed} total case references with no concatenated ones after backfill run`(cases: List<String>, expectedConcatenated: Int, expectedFixed: Int) {
     // Setup mocked data
-    sendSubscriptionNotification(MATCHING_CORE_PERSON)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON)
     val documentBefore = setupCourtDocumentCases(cases)
     HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.stubMergeMetadata(documentBefore.prisonDocumentId)
 

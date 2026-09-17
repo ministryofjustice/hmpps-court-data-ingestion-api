@@ -33,7 +33,7 @@ class AddressedPrisonResolutionIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `ingesting a document resolves the delivery address to a prison code`() {
-    sendSubscriptionNotification(MATCHING_CORE_PERSON)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON)
 
     val document = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
 

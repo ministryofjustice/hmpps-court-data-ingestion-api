@@ -22,7 +22,7 @@ class CourtHearingScheduleApiControllerIntTest : IntegrationTestBase() {
     @Test
     fun `Get court hearing for matching hearing`() {
       hmctsCourtScheduleApi.stubCourtSchedule()
-      sendSubscriptionNotification(MATCHING_CORE_PERSON)
+      sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON)
 
       val hearing = getCourtHearing(MATCHING_PRISONER_NUMBER, HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID)
 
@@ -39,13 +39,13 @@ class CourtHearingScheduleApiControllerIntTest : IntegrationTestBase() {
     @Test
     fun `Ingestion of updated court hearing`() {
       hmctsCourtScheduleApi.stubCourtSchedule()
-      sendSubscriptionNotification(MATCHING_CORE_PERSON)
+      sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON)
 
       var hearing = getCourtHearing(MATCHING_PRISONER_NUMBER, HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID)
       assertThat(hearing.hearingType).isEqualTo("First hearing")
 
       hmctsCourtScheduleApi.stubCourtSchedule("Second hearing")
-      sendSubscriptionNotification(MATCHING_CORE_PERSON)
+      sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON)
       hearing = getCourtHearing(MATCHING_PRISONER_NUMBER, HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID)
       assertThat(hearing.hearingType).isEqualTo("Second hearing")
     }
@@ -53,7 +53,7 @@ class CourtHearingScheduleApiControllerIntTest : IntegrationTestBase() {
     @Test
     fun `Get court hearing given a hearing with no matching court in register, then return matching hearing and null courtCode`() {
       hmctsCourtScheduleApi.stubCourtScheduleWithoutCourtRegistry()
-      sendSubscriptionNotification(MATCHING_CORE_PERSON)
+      sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON)
 
       val hearing = getCourtHearing(MATCHING_PRISONER_NUMBER, HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID)
 
@@ -104,7 +104,7 @@ class CourtHearingScheduleApiControllerIntTest : IntegrationTestBase() {
 
     @Test
     fun `Get court hearing by prisoner`() {
-      sendSubscriptionNotification(MATCHING_CORE_PERSON)
+      sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON)
       val hearings = webTestClient
         .get()
         .uri("/court-hearings/prisoner/$MATCHING_PRISONER_NUMBER")
