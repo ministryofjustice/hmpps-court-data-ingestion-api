@@ -82,7 +82,7 @@ class CourtHearingIntTests : IntegrationTestBase() {
       assertThat(hearing.charges).isEqualTo(
         listOf(
           CourtCharge(
-            hmctsId = UUID.fromString("f895c2ed-0b26-4bc2-9d24-d9f64df362ab"),
+            chargeId = UUID.fromString("f895c2ed-0b26-4bc2-9d24-d9f64df362ab"),
             listingNumber = 1,
             offenceLegislation = "Contrary to section 1(1) and 7 of the Theft Act 1968.",
             pleaDate = LocalDate.of(2026, 8, 15),
@@ -107,6 +107,7 @@ class CourtHearingIntTests : IntegrationTestBase() {
           hmctsCourtId = UUID.fromString(TEST_HMCTS_COURTHOUSE_ID_NO_REGISTER),
           hmppsCourtId = null,
           hearingDate = LocalDateTime.of(2026, 8, 15, 10, 0),
+          hearingId = hearing.nextHearing!!.hearingId,
         ),
       )
     }
@@ -379,7 +380,7 @@ class CourtHearingIntTests : IntegrationTestBase() {
             courtHouseId = UUID.fromString(TEST_HMCTS_COURTHOUSE_ID),
           ),
           dateTime = ZonedDateTime.now().plusDays(30),
-          hearingId = TEST_HMCTS_HEARING_ID,
+          hearingId = UUID.fromString(TEST_HMCTS_HEARING_ID),
         ),
       ),
       offences = listOf(
