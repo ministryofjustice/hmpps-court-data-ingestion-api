@@ -56,7 +56,7 @@ class UnclassifiedAddressRepository(
       FROM prison_email_mapping m
       LEFT JOIN court_document cd
              ON lower(trim(cd.prison_email_address)) = m.email
-     WHERE (:categoryCode IS NULL OR m.category_code = :categoryCode)
+     WHERE (CAST(:categoryCode AS TEXT) IS NULL OR m.category_code = CAST(:categoryCode AS TEXT))
      GROUP BY m.email, m.category_code, m.prison_code
      ORDER BY document_count DESC
     """.trimIndent(),
