@@ -178,4 +178,45 @@ class DeliveryAddressAdminControllerTest : IntegrationTestBase() {
     prisonerNumber,
     deliverySource,
   )
+
+  @Test
+  fun `classified addresses are listed with their category and prison`() {
+    insertMapping(MAPPED)
+    insertDocument(MAPPED, prisonerNumber = "A3333AA")
+
+    webTestClient.get().uri("/admin/delivery-addresses?classified=true")
+      .headers(setAuthorisation(roles = listOf(SUPPORT_ROLE)))
+      .exchange()
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.length()").isEqualTo(1)
+      .jsonPath("$[0].emailAddress").isEqualTo(MAPPED)
+      .jsonPath("$[0].categoryCode").isEqualTo("PRISON")
+      .jsonPath("$[0].prisonCode").isEqualTo("LEI")
+      .jsonPath("$[0].documentCount").isEqualTo(1)
+  }
+
+  @Test
+  fun `classified addresses can be narrowed to one category`() {
+    insertMapping(MAPPED)
+
+    webTestClient.get().uri("/admin/delivery-addresses?classified=true&category=YOUTH_CUSTODY")
+      .headers(setAuthorisation(roles = listOf(SUPPORT_ROLE)))
+      .exchange()
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.length()").isEqualTo(0)
+  }
+
+  @Test
+  fun `an address classified before any traffic arrives still appears`() {
+    insertMapping(MAPPED)
+
+    webTestClient.get().uri("/admin/delivery-addresses?classified=true")
+      .headers(setAuthorisation(roles = listOf(SUPPORT_ROLE)))
+      .exchange()
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$[0].documentCount").isEqualTo(0)
+  }
 }

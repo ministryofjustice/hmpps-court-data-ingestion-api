@@ -29,6 +29,8 @@ import java.security.Principal
 
 data class DeliveryAddressResponse(
   val emailAddress: String,
+  val categoryCode: String? = null,
+  val prisonCode: String? = null,
   val documentCount: Int,
   val matchedToPersonCount: Int,
   val firstSeen: String,
@@ -75,11 +77,15 @@ class DeliveryAddressAdminController(
     ],
   )
   fun deliveryAddresses(
-    @Parameter(description = "Only addresses with no category. The only supported value today is false.")
+    @Parameter(description = "true returns the addresses that have been classified, false those that have not")
     @RequestParam(defaultValue = "false") classified: Boolean,
-  ): List<DeliveryAddressResponse> = service.unclassifiedAddresses().map {
+    @Parameter(description = "Narrow a classified list to one category")
+    @RequestParam(required = false) category: String?,
+  ): List<DeliveryAddressResponse> = service.addresses(classified, category).map {
     DeliveryAddressResponse(
       emailAddress = it.emailAddress,
+      categoryCode = it.categoryCode,
+      prisonCode = it.prisonCode,
       documentCount = it.documentCount,
       matchedToPersonCount = it.matchedToPersonCount,
       firstSeen = it.firstSeen.toLocalDate().toString(),
