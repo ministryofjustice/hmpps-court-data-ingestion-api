@@ -56,6 +56,16 @@ class HmctsCourtDefendantApiMockServer : WireMockServer(WIREMOCK_PORT) {
     )
   }
 
+  fun stubDefendantsError(caseReference: String) {
+    stubFor(
+      get(urlPathEqualTo("/defendants/cases/$caseReference"))
+        .willReturn(
+          aResponse()
+            .withStatus(500),
+        ),
+    )
+  }
+
   private fun jsonResponse(body: String) = aResponse()
     .withHeader("Content-Type", "application/json")
     .withStatus(200)

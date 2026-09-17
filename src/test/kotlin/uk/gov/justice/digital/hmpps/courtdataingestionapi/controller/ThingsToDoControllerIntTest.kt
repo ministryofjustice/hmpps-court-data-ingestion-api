@@ -13,7 +13,7 @@ class ThingsToDoControllerIntTest : IntegrationTestBase() {
 
   @Test
   fun `Person with document thing to do`() {
-    sendSubscriptionNotification(MATCHING_CORE_PERSON)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON)
 
     val result = webTestClient
       .get()

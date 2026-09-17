@@ -41,7 +41,7 @@ class CourtDataIngestionServiceTest : IntegrationTestBase() {
     log.debug("When given mirror outcome contentHashPushed=[{}] and metadataPushed=[{}], then should return metadata_version as expected=[{}]", contentHashPushed, metadataPushed, expected)
     setupMocks(contentHashPushed, metadataPushed)
 
-    sendSubscriptionNotification(MATCHING_CORE_PERSON)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON)
 
     val curtDocument = courtDocumentRepository.findFirstByPrisonDocumentId(PRISON_DOCUMENT_ID).get()
     assertThat(curtDocument.metadataVersion).isEqualTo(expected)
@@ -53,7 +53,7 @@ class CourtDataIngestionServiceTest : IntegrationTestBase() {
   fun `When passing case URNs {cases}, then should create {expectedTotal} case references and first one should be {expectedFirstValue}`(cases: List<String>, expectedTotal: Int, expectedFirstValue: String) {
     log.debug("When passing case URNs [{}], then should create [{}] case references and first one should be [{}]", cases, expectedTotal, expectedFirstValue)
 
-    sendSubscriptionNotification(MATCHING_CORE_PERSON, hmctsCases = cases.map { HmctsCase(it) })
+    sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON, hmctsCases = cases.map { HmctsCase(it) })
 
     val curtDocument = courtDocumentRepository.findFirstByPrisonDocumentId(PRISON_DOCUMENT_ID).get()
     assertThat(curtDocument.courtDocumentCases.size).isEqualTo(expectedTotal)

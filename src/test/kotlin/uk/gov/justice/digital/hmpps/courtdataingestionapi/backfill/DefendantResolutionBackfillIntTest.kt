@@ -28,7 +28,7 @@ class DefendantResolutionBackfillIntTest : IntegrationTestBase() {
 
     // 1. ingest with nothing to resolve on: CPR has no record for the master, so it lands unmatched
     CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePersonNotFound(masterDefendantId)
-    sendSubscriptionNotification(masterDefendantId)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(masterDefendantId)
 
     val before = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(masterDefendantId)!!
     assertThat(before.prisonerNumber).isNull()
@@ -52,7 +52,7 @@ class DefendantResolutionBackfillIntTest : IntegrationTestBase() {
     val defendantId = UUID.randomUUID()
     courtCaseDefendantService.upsert(defendantId, CASE_REFERENCE, masterDefendantId, "Some One", dob)
     CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantId, listOf("RES901"))
-    sendSubscriptionNotification(masterDefendantId)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(masterDefendantId)
 
     val doc = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(masterDefendantId)!!
     assertThat(doc.prisonerNumber).isEqualTo("RES901")
