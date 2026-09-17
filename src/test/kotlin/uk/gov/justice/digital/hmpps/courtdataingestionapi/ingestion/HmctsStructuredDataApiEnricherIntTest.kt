@@ -16,7 +16,7 @@ class HmctsStructuredDataApiEnricherIntTest : IntegrationTestBase() {
 
   @Test
   fun `Test receiving a message from the queue will lookup data`() {
-    sendSubscriptionNotification(MATCHING_CORE_PERSON)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON)
 
     val file = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
 
@@ -30,7 +30,7 @@ class HmctsStructuredDataApiEnricherIntTest : IntegrationTestBase() {
   @Test
   fun `Test when receiving a message from the queue with a hearing with no matching court on court register, then will lookup data and courtCode will be left empty`() {
     hmctsCourtScheduleApi.stubCourtScheduleWithoutCourtRegistry()
-    sendSubscriptionNotification(MATCHING_CORE_PERSON)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON)
 
     val file = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
 
@@ -43,10 +43,10 @@ class HmctsStructuredDataApiEnricherIntTest : IntegrationTestBase() {
 
   @Test
   fun `Test receiving a message from the queue will replace existing hearing `() {
-    sendSubscriptionNotification(MATCHING_CORE_PERSON)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON)
     val fileOne = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
     val created = fileOne.courtHearing!!.createdAt
-    sendSubscriptionNotification(MATCHING_CORE_PERSON)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON)
     val fileTwo = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
     val updated = fileTwo.courtHearing!!.updatedAt
     assertThat(updated > created).isTrue

@@ -29,32 +29,39 @@ class CourtDataIngestionService(
   fun receiveMessage(message: HmctsSubscriptionNotificationRequestBody) {
     val prisonDocument = fileService.ingestFile(message.documentId, message.eventType.documentType.documentApiType)
 
-    val enriched = ingestionEnrichmentFlow.run(
-      IngestionContext(
-        prisonEmailAddress = message.prisonEmailAddress,
-        prisonDocumentId = prisonDocument.documentUuid,
-      ),
-    )
+    try {
+      val enriched = ingestionEnrichmentFlow.run(
+        IngestionContext(
+          prisonEmailAddress = message.prisonEmailAddress,
+          prisonDocumentId = prisonDocument.documentUuid,
+        ),
+      )
 
-    val courtDocumentEntity = courtDocumentRepository.save(
-      CourtDocumentEntity(
-        masterDefendantId = message.masterDefendantId,
-        hmctsCourtDocumentId = message.documentId,
-        prisonEmailAddress = message.prisonEmailAddress,
-        documentGeneratedTimestamp = message.documentGeneratedTimestamp.withZoneSameInstant(TimezoneConfig.TIMEZONE).toLocalDateTime(),
-        courtDocumentCases = message.cases.flatMap { it.caseReferences() }.distinct().map { CourtDocumentCaseEntity(caseReference = it) }.toMutableList(),
-        prisonDocumentId = prisonDocument.documentUuid,
-        eventType = message.eventType,
-        courtDocumentType = message.eventType.documentType,
-        hmctsCourtHearingId = message.hearingId,
-      ).applyEnrichment(enriched),
-    )
+      val courtDocumentEntity = courtDocumentRepository.save(
+        CourtDocumentEntity(
+          masterDefendantId = message.masterDefendantId,
+          hmctsCourtDocumentId = message.documentId,
+          prisonEmailAddress = message.prisonEmailAddress,
+          documentGeneratedTimestamp = message.documentGeneratedTimestamp.withZoneSameInstant(TimezoneConfig.TIMEZONE)
+            .toLocalDateTime(),
+          courtDocumentCases = message.cases.flatMap { it.caseReferences() }.distinct()
+            .map { CourtDocumentCaseEntity(caseReference = it) }.toMutableList(),
+          prisonDocumentId = prisonDocument.documentUuid,
+          eventType = message.eventType,
+          courtDocumentType = message.eventType.documentType,
+          hmctsCourtHearingId = message.hearingId,
+        ).applyEnrichment(enriched),
+      )
 
-    defendantMatchingService.matchPrisonerForDocument(courtDocumentEntity)
+      defendantMatchingService.matchPrisonerForDocument(courtDocumentEntity)
 
-    courtHearingService.fetchAndCreateHearingData(courtDocumentEntity)
+      courtHearingService.fetchAndCreateHearingData(courtDocumentEntity)
 
-    mirrorEnrichmentToDocumentStore(courtDocumentEntity)
+      mirrorEnrichmentToDocumentStore(courtDocumentEntity)
+    } catch (e: Exception) {
+      fileService.deleteFileOnTransactionRollback(prisonDocument.documentUuid)
+      throw e
+    }
   }
 
   private fun mirrorEnrichmentToDocumentStore(courtDocumentEntity: CourtDocumentEntity) {

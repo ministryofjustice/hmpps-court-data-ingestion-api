@@ -27,7 +27,7 @@ class PrisonerCreatedCoDefendantIntTest : IntegrationTestBase() {
     val prisonerNumber = "CD0001"
 
     CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePersonNotFound(master)
-    sendSubscriptionNotification(master)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(master)
 
     courtCaseDefendantService.upsert(defendantId, CASE_REFERENCE, master, "Co Defendant", dob)
 
@@ -51,7 +51,7 @@ class PrisonerCreatedCoDefendantIntTest : IntegrationTestBase() {
     val prisonerNumber = "CD0002"
 
     CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePersonNotFound(master)
-    sendSubscriptionNotification(master)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(master)
 
     courtCaseDefendantService.upsert(defendantId, CASE_REFERENCE, master, "Co Defendant", dob)
 
@@ -74,7 +74,7 @@ class PrisonerCreatedCoDefendantIntTest : IntegrationTestBase() {
     val prisonerNumber = "FB0001"
 
     CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePersonNotFound(sharedId)
-    sendSubscriptionNotification(sharedId)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(sharedId)
 
     CorePersonApiExtension.corePersonApi.stubPrisonerCorePerson(prisonerNumber, listOf(sharedId))
 

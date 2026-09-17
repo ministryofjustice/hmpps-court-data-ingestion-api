@@ -17,7 +17,7 @@ class PrisonerSearchEventListenerIntTest : IntegrationTestBase() {
   @Test
   fun `Test previously ingested warrant file matches once prisoner is created in NOMIS`() {
     // Send a notification which has no matching prisoner id in core person.
-    sendSubscriptionNotification(DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION)
 
     // Later a prisoner is created matching the file created above.
     sendPrisonerCreatedMessage(PRISONER_NUMBER_WITH_MATCH)
@@ -41,7 +41,7 @@ class PrisonerSearchEventListenerIntTest : IntegrationTestBase() {
   @Test
   fun `Test previously ingested warrant file matches once prisoner is updated in NOMIS`() {
     // Send a notification which has no matching prisoner id in core person.
-    sendSubscriptionNotification(DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION)
 
     // Later a prisoner is created matching the file created above.
     sendPrisonerUpdatedMessage(PRISONER_NUMBER_WITH_MATCH, listOf("PERSONAL_DETAILS"))
@@ -65,7 +65,7 @@ class PrisonerSearchEventListenerIntTest : IntegrationTestBase() {
   @Test
   fun `Test no attempt to match document when prisoner updated event is not change to personal details`() {
     // Send a notification which has no matching prisoner id in core person.
-    sendSubscriptionNotification(DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(DEFENDANT_ID_NUMBER_WITH_MATCH_AFTER_CREATION)
 
     // Later a prisoner is created matching the file created above.
     sendPrisonerUpdatedMessage(PRISONER_NUMBER_WITH_MATCH, listOf("SENTENCE"))

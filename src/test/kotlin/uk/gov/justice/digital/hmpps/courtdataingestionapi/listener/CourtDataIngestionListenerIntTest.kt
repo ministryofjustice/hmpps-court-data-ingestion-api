@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.listener
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions.assertThat
 import org.awaitility.kotlin.matches
+import org.awaitility.kotlin.untilAsserted
 import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -10,11 +11,13 @@ import org.springframework.core.io.ClassPathResource
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.MatchOutcome
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsCourtDefendantApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsDocumentManagementApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
 import uk.gov.justice.hmpps.sqs.countMessagesOnQueue
 import java.time.LocalDateTime
+import java.util.UUID
 
 @Transactional(readOnly = true)
 class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
@@ -24,7 +27,7 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
 
   @Test
   fun `Test receiving a message from the queue not found response for core person api and all data is ingested`() {
-    val event = sendSubscriptionNotification(NOT_FOUND_CORE_PERSON)
+    val event = sendSubscriptionNotificationWaitForRecordToBeCreated(NOT_FOUND_CORE_PERSON)
 
     val file = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(NOT_FOUND_CORE_PERSON)!!
     assertThat(file.masterDefendantId).isEqualTo(NOT_FOUND_CORE_PERSON)
@@ -45,7 +48,7 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
 
   @Test
   fun `Test receiving a message from the queue no prisoner ids from core person api`() {
-    sendSubscriptionNotification(NO_MATCHING_IDS_PERSON)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(NO_MATCHING_IDS_PERSON)
 
     val file = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(NO_MATCHING_IDS_PERSON)!!
     assertThat(file.masterDefendantId).isEqualTo(NO_MATCHING_IDS_PERSON)
@@ -57,7 +60,7 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
 
   @Test
   fun `Test receiving a message from the queue with matching prisoner numbers from core person api`() {
-    sendSubscriptionNotification(MATCHING_CORE_PERSON)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON)
 
     val file = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
     assertThat(file.masterDefendantId).isEqualTo(MATCHING_CORE_PERSON)
@@ -88,7 +91,7 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
 
   @Test
   fun `Test receiving a message for a person with aliases`() {
-    sendSubscriptionNotification(MATCHING_CORE_ALIASES)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_ALIASES)
 
     val file = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_ALIASES)!!
     assertThat(file.masterDefendantId).isEqualTo(MATCHING_CORE_ALIASES)
@@ -96,5 +99,17 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
     assertThat(file.prisonerNumber).isNull()
     assertThat(file.identifiedAt).isNull()
     assertThat(file.matchOutcome).isEqualTo(MatchOutcome.MULTIPLE_PRISON_NUMBERS)
+  }
+
+  @Test
+  fun `Test uploaded document is deleted if unhandled exception rolls back transaction`() {
+    val masterDefendantId = UUID.randomUUID()
+    HmctsCourtDefendantApiExtension.hmctsCourtDefendantApi.stubDefendantsError(
+      CASE_REFERENCE,
+    )
+    sendSubscriptionNotification(masterDefendantId)
+    awaitAtMost30Secs untilAsserted {
+      HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.verifyDeleteDocument()
+    }
   }
 }
