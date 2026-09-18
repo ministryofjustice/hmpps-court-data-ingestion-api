@@ -28,7 +28,7 @@ class CourtDocumentControllerIntTest : IntegrationTestBase() {
 
     @Test
     fun `Get court documents for person and document id matching`() {
-      sendSubscriptionNotification(MATCHING_CORE_PERSON)
+      sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON)
       val dbCourtDocument = courtDocumentRepository.findAll()[0]
       val documents = webTestClient
         .get()
@@ -54,7 +54,7 @@ class CourtDocumentControllerIntTest : IntegrationTestBase() {
 
     @Test
     fun `Get court documents for document id matching but not person`() {
-      sendSubscriptionNotification(MATCHING_CORE_PERSON)
+      sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON)
       val dbCourtDocument = courtDocumentRepository.findAll()[0]
       val documents = webTestClient
         .get()
@@ -73,7 +73,7 @@ class CourtDocumentControllerIntTest : IntegrationTestBase() {
   inner class ViewDocumentTests {
     @Test
     fun `View document ingested`() {
-      sendSubscriptionNotification(MATCHING_CORE_PERSON)
+      sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON)
 
       var courtDocument = courtDocumentRepository.findAll()[0]
       webTestClient
@@ -130,7 +130,7 @@ class CourtDocumentControllerIntTest : IntegrationTestBase() {
   inner class MarkAsNewDocumentTests {
     @Test
     fun `Mark document as new`() {
-      sendSubscriptionNotification(MATCHING_CORE_PERSON)
+      sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON)
 
       var courtDocument = courtDocumentRepository.findAll()[0]
       webTestClient

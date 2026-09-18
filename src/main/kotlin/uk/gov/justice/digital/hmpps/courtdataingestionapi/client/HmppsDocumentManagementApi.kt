@@ -152,6 +152,19 @@ class HmppsDocumentManagementApi(
       ?: error("Error in search")
   }
 
+  fun deleteDocument(documentId: UUID) {
+    webClient.delete()
+      .uri("/documents/$documentId")
+      .header("Service-Name", appName)
+      .header("Username", SYSTEM_USERNAME)
+      .retrieve()
+      .rethrowAnyHttpErrorWithContext { response, body ->
+        "Error deleting document (UUID=$documentId, StatusCode=${response.statusCode().value()}, Response=$body)"
+      }
+      .toBodilessEntity()
+      .block()
+  }
+
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
     private const val SYSTEM_USERNAME = "hmcts-getcourtdata"

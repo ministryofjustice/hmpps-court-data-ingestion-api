@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.TestPropertySource
-import org.springframework.test.web.reactive.server.expectBody
 import tools.jackson.databind.ObjectMapper
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.CorePersonApiExtension
@@ -67,7 +66,7 @@ class CourtHearingIntTests : IntegrationTestBase() {
         defendantId,
       )
       CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantId, listOf(prisonerNumber))
-      sendSubscriptionNotification(masterDefendantId, hearingId = hearingId)
+      sendSubscriptionNotificationWaitForRecordToBeCreated(masterDefendantId, hearingId = hearingId)
 
       val hearing = getCourtHearing(prisonerNumber, hearingId.toString())
 
@@ -130,7 +129,7 @@ class CourtHearingIntTests : IntegrationTestBase() {
         hearingId,
         defendantId,
       )
-      sendSubscriptionNotification(masterDefendantId, hearingId = hearingId)
+      sendSubscriptionNotificationWaitForRecordToBeCreated(masterDefendantId, hearingId = hearingId)
 
       var hearing = getCourtHearing(prisonerNumber, hearingId.toString())
       assertThat(hearing.hearingType).isEqualTo("First hearing")
@@ -141,7 +140,7 @@ class CourtHearingIntTests : IntegrationTestBase() {
         defendantId,
         objectMapper.writeValueAsString(listOf(UPDATED_HEARING)),
       )
-      sendSubscriptionNotification(masterDefendantId, hearingId = hearingId)
+      sendSubscriptionNotificationWaitForRecordToBeCreated(masterDefendantId, hearingId = hearingId)
       hearing = getCourtHearing(prisonerNumber, hearingId.toString())
       assertThat(hearing.hearingType).isEqualTo("Second hearing")
 
@@ -175,7 +174,7 @@ class CourtHearingIntTests : IntegrationTestBase() {
         defendantId,
         objectMapper.writeValueAsString(listOf(firstVersionHearing, secondVersionHearing)),
       )
-      sendSubscriptionNotification(masterDefendantId, hearingId = hearingId)
+      sendSubscriptionNotificationWaitForRecordToBeCreated(masterDefendantId, hearingId = hearingId)
 
       val hearing = getCourtHearing(prisonerNumber, hearingId.toString())
       assertThat(hearing.hearingType).isEqualTo("Updated Hearing Type")
@@ -213,7 +212,7 @@ class CourtHearingIntTests : IntegrationTestBase() {
         defendantId,
         objectMapper.writeValueAsString(listOf(minimalHearing)),
       )
-      sendSubscriptionNotification(masterDefendantId, hearingId = hearingId)
+      sendSubscriptionNotificationWaitForRecordToBeCreated(masterDefendantId, hearingId = hearingId)
 
       val hearing = getCourtHearing(prisonerNumber, hearingId.toString())
       assertThat(hearing.charges.first().listingNumber).isNull()
@@ -239,7 +238,7 @@ class CourtHearingIntTests : IntegrationTestBase() {
         defendantId,
       )
       CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantId, listOf(prisonerNumber))
-      sendSubscriptionNotification(HEARING_TEST_MASTER_DEFENDANT_ID)
+      sendSubscriptionNotificationWaitForRecordToBeCreated(HEARING_TEST_MASTER_DEFENDANT_ID)
 
       webTestClient
         .get()
@@ -267,7 +266,7 @@ class CourtHearingIntTests : IntegrationTestBase() {
         "[]",
       )
       CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantId, listOf(prisonerNumber))
-      sendSubscriptionNotification(HEARING_TEST_MASTER_DEFENDANT_ID)
+      sendSubscriptionNotificationWaitForRecordToBeCreated(HEARING_TEST_MASTER_DEFENDANT_ID)
 
       webTestClient
         .get()
@@ -324,7 +323,7 @@ class CourtHearingIntTests : IntegrationTestBase() {
         defendantId,
       )
       CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantId, listOf(prisonerNumber))
-      sendSubscriptionNotification(masterDefendantId, hearingId = hearingId)
+      sendSubscriptionNotificationWaitForRecordToBeCreated(masterDefendantId, hearingId = hearingId)
       val hearings = webTestClient
         .get()
         .uri("/court-hearings/prisoner/$prisonerNumber")

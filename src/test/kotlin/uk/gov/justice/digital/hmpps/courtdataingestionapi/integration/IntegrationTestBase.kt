@@ -140,6 +140,20 @@ abstract class IntegrationTestBase {
     hmppsAuth.stubHealthPing(status)
   }
 
+  protected fun sendSubscriptionNotificationWaitForRecordToBeCreated(
+    masterDefendantId: UUID,
+    documentId: UUID = COURT_DOCUMENT_ID,
+    hearingId: UUID = UUID.fromString(HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID),
+    hmctsCases: List<HmctsCase> = listOf(HmctsCase(CASE_REFERENCE)),
+  ): HmctsSubscriptionNotificationRequestBody {
+    val event = sendSubscriptionNotification(masterDefendantId, documentId, hearingId, hmctsCases)
+
+    awaitAtMost30Secs untilCallTo {
+      courtDocumentRepository.countByMasterDefendantId(masterDefendantId)
+    } matches { it!! >= 1L }
+    return event
+  }
+
   protected fun sendSubscriptionNotification(
     masterDefendantId: UUID,
     documentId: UUID = COURT_DOCUMENT_ID,
@@ -162,10 +176,6 @@ abstract class IntegrationTestBase {
         .messageBody(TestUtil.objectMapper().writeValueAsString(event))
         .build(),
     )
-
-    awaitAtMost30Secs untilCallTo {
-      courtDocumentRepository.countByMasterDefendantId(masterDefendantId)
-    } matches { it!! >= 1L }
     return event
   }
 

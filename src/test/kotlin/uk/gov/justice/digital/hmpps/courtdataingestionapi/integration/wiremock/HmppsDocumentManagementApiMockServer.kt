@@ -4,6 +4,8 @@ import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.aMultipart
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.binaryEqualTo
+import com.github.tomakehurst.wiremock.client.WireMock.delete
+import com.github.tomakehurst.wiremock.client.WireMock.deleteRequestedFor
 import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.equalToJson
 import com.github.tomakehurst.wiremock.client.WireMock.get
@@ -46,6 +48,7 @@ class HmppsDocumentManagementApiExtension :
     hmppsDocumentManagementApi.stubSetFileContentHash()
     hmppsDocumentManagementApi.stubDownloadFile()
     hmppsDocumentManagementApi.stubDocumentFindByUuids()
+    hmppsDocumentManagementApi.stubDeleteDocument()
   }
 
   override fun beforeEach(context: ExtensionContext) {
@@ -75,6 +78,18 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
             .withHeader("Content-Type", "application/json")
             .withBody(happyResponse)
             .withStatus(201),
+        ),
+    )
+  }
+
+  fun stubDeleteDocument() {
+    stubFor(
+      delete(urlPathMatching("/documents/[a-zA-Z0-9\\-]{36}"))
+        .withHeader("Service-Name", equalTo(SERVICE_NAME))
+        .withHeader("Username", equalTo(USERNAME))
+        .willReturn(
+          aResponse()
+            .withStatus(200),
         ),
     )
   }
@@ -227,6 +242,11 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
     }
 
     verify(didHappenXTimes, request)
+  }
+
+  fun verifyDeleteDocument() {
+    val request = deleteRequestedFor(urlMatching("/documents/$DOCUMENT_UUID_FORMAT"))
+    verify(request)
   }
 
   fun verifyUploadedDocument(

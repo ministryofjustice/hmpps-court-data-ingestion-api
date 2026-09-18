@@ -44,7 +44,11 @@ class DeliveryAddressAdminService(
   private val reresolveBackfill: AddressedPrisonReresolveBackfill,
 ) {
 
-  fun unclassifiedAddresses(): List<UnclassifiedAddress> = addressRepository.findUnclassified()
+  fun addresses(classified: Boolean, categoryCode: String?): List<UnclassifiedAddress> = if (classified) {
+    addressRepository.findClassified(categoryCode)
+  } else {
+    addressRepository.findUnclassified()
+  }
 
   fun categories(): List<DeliveryCategory> = categoryRepository.findAll(Sort.by("name"))
 

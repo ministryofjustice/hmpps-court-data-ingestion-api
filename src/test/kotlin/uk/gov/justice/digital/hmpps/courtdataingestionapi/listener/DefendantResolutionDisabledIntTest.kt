@@ -35,7 +35,7 @@ class DefendantResolutionDisabledIntTest : IntegrationTestBase() {
     )
     CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(claimedId, listOf("OFF001"))
 
-    sendSubscriptionNotification(claimedId)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(claimedId)
 
     val file = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(claimedId)!!
 
@@ -56,7 +56,7 @@ class DefendantResolutionDisabledIntTest : IntegrationTestBase() {
 
     CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePersonNotFound(claimedId)
 
-    sendSubscriptionNotification(claimedId)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(claimedId)
 
     val file = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(claimedId)!!
     assertThat(file.prisonerNumber).isNull()

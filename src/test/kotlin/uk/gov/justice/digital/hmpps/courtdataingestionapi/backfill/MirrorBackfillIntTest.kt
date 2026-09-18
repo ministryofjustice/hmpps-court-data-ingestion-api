@@ -35,7 +35,7 @@ class MirrorBackfillIntTest : IntegrationTestBase() {
   )
   fun `selectBatch when data is forced to metadata-version {version}, then should return {expected} pending records for backfill Mirror`(metadataVersion: Int, expected: Int) {
     // Setup
-    sendSubscriptionNotification(MATCHING_CORE_PERSON)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON)
     val document = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
     document.metadataVersion = metadataVersion
     courtDocumentRepository.save(document)
@@ -61,7 +61,7 @@ class MirrorBackfillIntTest : IntegrationTestBase() {
       hmctsCourtScheduleApi.stubCourtScheduleWithoutCourtRegistry()
     }
 
-    sendSubscriptionNotification(MATCHING_CORE_PERSON)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON)
     val documentBefore = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
     documentBefore.metadataVersion = metadataVersion
     courtDocumentRepository.save(documentBefore)

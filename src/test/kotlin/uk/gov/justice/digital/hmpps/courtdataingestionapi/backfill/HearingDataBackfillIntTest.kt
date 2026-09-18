@@ -40,7 +40,7 @@ class HearingDataBackfillIntTest : IntegrationTestBase() {
     )
     CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantId, listOf(prisonerNumber))
     // Ingest data where hearing is not loaded
-    sendSubscriptionNotification(masterDefendantId, hearingId = hearingId)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(masterDefendantId, hearingId = hearingId)
 
     val document = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(masterDefendantId)!!
     val hearing = document.courtHearing
