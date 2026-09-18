@@ -193,3 +193,10 @@ core:
       stub:
         enabled: ${CORE_PERSON_STUB_ENABLED:false}
         prisonernumbers: ${CORE_PERSON_STUB_PRISONERNUMBERS:}
+
+prison-court-documents:
+  week-row-threshold: 100
+  day-row-cap: 500
+
+prison-roll:
+  page-size: 1000
