@@ -34,7 +34,7 @@ data class HmctsCourt(
 data class HmctsNextHearing(
   val court: HmctsCourt,
   val dateTime: ZonedDateTime?,
-  val hearingId: String?,
+  val hearingId: UUID?,
 )
 
 data class HmctsOffence(

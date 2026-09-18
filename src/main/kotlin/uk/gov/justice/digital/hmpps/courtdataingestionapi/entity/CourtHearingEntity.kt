@@ -70,7 +70,7 @@ data class CourtHearingEntity(
         it.masterDefendantId == masterDefendantId
       }.map {
         CourtCharge(
-          hmctsId = it.hmctsId,
+          chargeId = it.hmctsId,
           listingNumber = it.listingNumber,
           offenceLegislation = it.offenceLegislation,
           pleaDate = it.pleaDate,
@@ -96,6 +96,7 @@ data class CourtHearingEntity(
           hmctsCourtId = it.hmctsCourtId,
           hmppsCourtId = it.hmppsCourtId,
           hearingDate = it.dateTime,
+          hearingId = it.hearingId,
         )
       },
     )
