@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.bodyToMono
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.prisonersearch.Prisoner
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.prisonersearch.PrisonerPage
 
 @Component
 class PrisonerSearchApiClient(@Qualifier("prisonerSearchApiWebClient") private val webClient: WebClient) {
@@ -17,6 +18,22 @@ class PrisonerSearchApiClient(@Qualifier("prisonerSearchApiWebClient") private v
       .uri("/prisoner/$prisonerNumber")
       .retrieve()
       .bodyToMono<Prisoner>()
+      .block()!!
+  }
+
+  fun getRoll(prisonId: String, page: Int, pageSize: Int): PrisonerPage {
+    log.info("Getting roll page {} for prison {}", page, prisonId)
+    return webClient
+      .get()
+      .uri { builder ->
+        builder.path("/prisoner-search/prison/{prisonId}")
+          .queryParam("include-restricted-patients", false)
+          .queryParam("page", page)
+          .queryParam("size", pageSize)
+          .build(prisonId)
+      }
+      .retrieve()
+      .bodyToMono<PrisonerPage>()
       .block()!!
   }
 

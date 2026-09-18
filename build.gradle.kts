@@ -17,6 +17,7 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
   implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+  implementation("org.springframework.boot:spring-boot-starter-cache")
 
   // Telem
   implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.31.1")
