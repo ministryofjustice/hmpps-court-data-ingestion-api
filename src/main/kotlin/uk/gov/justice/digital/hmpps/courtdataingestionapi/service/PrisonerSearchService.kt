@@ -24,7 +24,19 @@ class PrisonerSearchService(
     }
   }
 
+  fun getPrisonerNumbersInPrison(prisonId: String): List<String> {
+    val prisonerNumbers = mutableListOf<String>()
+    var page = 0
+    do {
+      val response = prisonerSearchApiClient.getPrisonersInPrison(prisonId, page++, PAGE_SIZE)
+      prisonerNumbers += response.content.map { it.prisonerNumber }
+    } while (!response.last && page < MAX_PAGES)
+    return prisonerNumbers
+  }
+
   private companion object {
+    private const val PAGE_SIZE = 1000
+    private const val MAX_PAGES = 10
     private val log = LoggerFactory.getLogger(this::class.java)
   }
 }
