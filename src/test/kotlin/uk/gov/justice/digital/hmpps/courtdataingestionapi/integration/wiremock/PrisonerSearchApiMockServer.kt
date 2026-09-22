@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock
 
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
+import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo
@@ -85,6 +86,7 @@ class PrisonerSearchApiMockServer : WireMockServer(WIREMOCK_PORT) {
   fun stubPrisonersInPrison(prisonId: String, vararg prisonerNumbers: String) {
     stubFor(
       get(urlPathEqualTo("/prisoner-search/prison/$prisonId"))
+        .withHeader("Content-Type", equalTo("application/json"))
         .willReturn(
           aResponse()
             .withHeaders(HttpHeaders(HttpHeader("Content-Type", "application/json")))
