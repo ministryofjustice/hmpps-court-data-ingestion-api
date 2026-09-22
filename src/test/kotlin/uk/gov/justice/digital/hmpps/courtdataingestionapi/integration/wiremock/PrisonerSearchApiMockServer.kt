@@ -4,6 +4,7 @@ import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
+import com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo
 import com.github.tomakehurst.wiremock.http.HttpHeader
 import com.github.tomakehurst.wiremock.http.HttpHeaders
 import org.junit.jupiter.api.extension.AfterAllCallback
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtensionContext
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.TestUtil
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.PrisonerSearchEventListenerIntTest
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.prisonersearch.Prisoner
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.prisonersearch.PrisonerPage
 
 class PrisonerSearchApiExtension :
   BeforeAllCallback,
@@ -75,6 +77,21 @@ class PrisonerSearchApiMockServer : WireMockServer(WIREMOCK_PORT) {
             .withHeaders(HttpHeaders(HttpHeader("Content-Type", "application/json")))
             .withBody(
               TestUtil.objectMapper().writeValueAsString(prisonerRecord(prisonerNumber = prisonerNumber, prisonId = null)),
+            ),
+        ),
+    )
+  }
+
+  fun stubPrisonersInPrison(prisonId: String, vararg prisonerNumbers: String) {
+    stubFor(
+      get(urlPathEqualTo("/prisoner-search/prison/$prisonId"))
+        .willReturn(
+          aResponse()
+            .withHeaders(HttpHeaders(HttpHeader("Content-Type", "application/json")))
+            .withBody(
+              TestUtil.objectMapper().writeValueAsString(
+                PrisonerPage(content = prisonerNumbers.map { prisonerRecord(it, prisonId) }, last = true),
+              ),
             ),
         ),
     )
