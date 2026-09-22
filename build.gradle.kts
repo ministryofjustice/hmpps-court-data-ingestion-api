@@ -81,7 +81,7 @@ tasks {
   withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     compilerOptions.jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_24
     // Kotlin 2.2+ changed where annotations on constructor properties default-target;
-    // restore the prior behavior so JPA/validation/Jackson annotations land correctly.
+    // restore the prior behaviour so JPA/validation/Jackson annotations land correctly.
     compilerOptions.freeCompilerArgs.add("-Xannotation-default-target=param-property")
   }
 }
