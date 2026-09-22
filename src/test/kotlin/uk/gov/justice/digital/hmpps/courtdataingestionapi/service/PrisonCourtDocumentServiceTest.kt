@@ -56,9 +56,21 @@ class PrisonCourtDocumentServiceTest {
   @Test
   fun `repeat copies are dropped, following a chain of shared hashes, keeping the oldest`() {
     val (a, b, c) = documents(3)
-    a.apply { extractedTextSha256 = "text-1"; downloadedFileSha256 = "file-1"; ingestionAt = LocalDateTime.now().minusHours(3) }
-    b.apply { extractedTextSha256 = "text-1"; downloadedFileSha256 = "file-2"; ingestionAt = LocalDateTime.now().minusHours(2) }
-    c.apply { extractedTextSha256 = "text-3"; downloadedFileSha256 = "file-2"; ingestionAt = LocalDateTime.now().minusHours(1) }
+    a.apply {
+      extractedTextSha256 = "text-1"
+      downloadedFileSha256 = "file-1"
+      ingestionAt = LocalDateTime.now().minusHours(3)
+    }
+    b.apply {
+      extractedTextSha256 = "text-1"
+      downloadedFileSha256 = "file-2"
+      ingestionAt = LocalDateTime.now().minusHours(2)
+    }
+    c.apply {
+      extractedTextSha256 = "text-3"
+      downloadedFileSha256 = "file-2"
+      ingestionAt = LocalDateTime.now().minusHours(1)
+    }
     whenever(prisonerSearchService.getPrisonerNumbersInPrison("LEI")).thenReturn(listOf("A1111AA"))
     whenever(
       courtDocumentRepository.findByPrisonerNumberInAndIngestionAtGreaterThanEqualAndIngestionAtLessThanOrderByIngestionAtDesc(any(), any(), any()),
