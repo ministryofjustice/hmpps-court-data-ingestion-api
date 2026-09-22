@@ -99,6 +99,7 @@ class CourtHearingService(
     val hearing = pcrs.first().first.hearing
     val courtId = hearing.courtDetails.court.courtHouseId
     val courtRegister = getCourtRegister(courtId)
+    var chargeOrder = 0
     return CourtHearingEntity(
       hmctsCourtId = courtId,
       courtName = getCourtName(courtId, courtRegister),
@@ -110,6 +111,7 @@ class CourtHearingService(
       courtDocuments = mutableListOf(courtDocumentEntity),
       courtCharges = pcrs.flatMap { (pcr, defendant) ->
         pcr.offences.map { offence ->
+          chargeOrder += 1
           CourtChargeEntity(
             hmctsId = offence.id,
             defendantId = defendant.defendantId,
@@ -123,6 +125,7 @@ class CourtHearingService(
             title = offence.title,
             wording = offence.title,
             code = offence.code,
+            sortOrder = chargeOrder,
             results = offence.results.map {
               val (code, description) = it.resultDescription.split(" - ", limit = 2)
               CourtChargeResultEntity(
