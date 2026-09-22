@@ -17,7 +17,7 @@ import java.time.LocalDate
 @RestController
 @RequestMapping("/court-document/prison/{prisonCode}")
 @Tag(name = "PrisonCourtDocumentController", description = "Court documents received for a prison's current population")
-@PreAuthorize("hasRole('COURT_DATA_INGESTION__COURT_DATA_RO')")
+@PreAuthorize("hasAnyRole('COURT_DATA_INGESTION__COURT_DATA_RO', 'COURT_DATA_INGESTION__COURT_DATA_RW')")
 class PrisonCourtDocumentController(
   private val service: PrisonCourtDocumentService,
 ) {
