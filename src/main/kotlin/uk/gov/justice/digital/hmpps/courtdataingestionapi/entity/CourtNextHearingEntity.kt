@@ -20,5 +20,5 @@ data class CourtNextHearingEntity(
   var courtName: String,
   var hmppsCourtId: String? = null,
   val dateTime: LocalDateTime?,
-  val hearingId: String?,
+  val hearingId: UUID?,
 )
