@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.backfill
 
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.data.domain.Limit
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsDocumentManagementApi
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
@@ -27,7 +28,7 @@ class HashBackfill(
 
   override fun selectBatch(cursor: String, batchSize: Int): BackfillBatch<CourtDocumentEntity> {
     val afterId = parseCursorUUID(cursor)
-    val items = courtDocumentRepository.findUnhashedAfter(afterId, batchSize)
+    val items = courtDocumentRepository.findByIdGreaterThanAndDownloadedFileSha256IsNullOrderById(afterId, Limit.of(batchSize))
     val nextCursor = items.lastOrNull()?.id?.toString() ?: cursor
     return BackfillBatch(items, nextCursor)
   }

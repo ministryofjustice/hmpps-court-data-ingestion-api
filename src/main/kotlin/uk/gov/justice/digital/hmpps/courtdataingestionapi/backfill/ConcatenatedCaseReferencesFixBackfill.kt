@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.backfill
 
+import org.springframework.data.domain.Limit
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsDocumentManagementApi
@@ -19,7 +20,7 @@ class ConcatenatedCaseReferencesFixBackfill(
 
   override fun selectBatch(cursor: String, batchSize: Int): BackfillBatch<UUID> {
     val afterId = parseCursorUUID(cursor)
-    val items = courtDocumentRepository.findCourtDocumentIdsWithConcatenatedCaseReferencesAfter(afterId, batchSize)
+    val items = courtDocumentRepository.findIdsWithConcatenatedCaseReferencesAfter(afterId, Limit.of(batchSize))
     val nextCursor = items.lastOrNull()?.toString() ?: cursor
     return BackfillBatch(items, nextCursor)
   }

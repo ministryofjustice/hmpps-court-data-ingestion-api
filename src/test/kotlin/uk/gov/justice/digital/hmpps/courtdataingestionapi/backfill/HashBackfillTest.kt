@@ -33,9 +33,9 @@ class HashBackfillTest {
   private val backfill = HashBackfill(repository, documentManagementApi, fileService, pdfTextExtractor, normaliser, METADATA_VERSION)
 
   @Test
-  fun `selectBatch delegates to findUnhashedAfter and advances the cursor`() {
+  fun `selectBatch selects documents with no file hash and advances the cursor`() {
     val first = sampleWarrant(downloadedFileSha = null, extractedTextSha = null)
-    whenever(repository.findUnhashedAfter(any(), any())).thenReturn(listOf(first))
+    whenever(repository.findByIdGreaterThanAndDownloadedFileSha256IsNullOrderById(any(), any())).thenReturn(listOf(first))
 
     val batch = backfill.selectBatch(cursor = "", batchSize = 100)
 

@@ -1,12 +1,14 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.repository
 
+import org.springframework.data.domain.Limit
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
-import java.time.LocalDate
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.DestinationType
+import java.time.LocalDateTime
 import java.util.Optional
 import java.util.UUID
 
@@ -19,158 +21,78 @@ interface CourtDocumentRepository : JpaRepository<CourtDocumentEntity, UUID> {
   fun findByPrisonerNumber(prisonerNumber: String): List<CourtDocumentEntity>
   fun findByPrisonerNumberAndPrisonDocumentIdIn(personId: String, prisonDocumentIds: List<UUID>): List<CourtDocumentEntity>
   fun findFirstByPrisonDocumentId(prisonDocumentId: UUID): Optional<CourtDocumentEntity>
-
-  @Query(
-    value = """
-      SELECT *
-      FROM court_document
-      WHERE court_hearing_id IS NULL
-      AND hmcts_court_hearing_id IS NOT NULL
-      AND id > :afterId
-      ORDER BY id
-      LIMIT :limit
-    """,
-    nativeQuery = true,
-  )
-  fun findUnpopulatedCourtHearingData(
-    @Param("afterId") afterId: UUID,
-    @Param("limit") limit: Int,
+  fun findByIdGreaterThanAndDownloadedFileSha256IsNullOrderById(afterId: UUID, limit: Limit): List<CourtDocumentEntity>
+  fun findByIdGreaterThanAndExtractedTextSha256IsNotNullOrderById(afterId: UUID, limit: Limit): List<CourtDocumentEntity>
+  fun findByIdGreaterThanAndAddressedPrisonIsNullAndDeliveryMappingIdIsNullAndPrisonEmailAddressIsNotNullOrderById(
+    afterId: UUID,
+    limit: Limit,
   ): List<CourtDocumentEntity>
 
   @Query(
-    value = """
-      SELECT id
-      FROM court_document
-      WHERE court_hearing_id IS NULL
-      AND ingestion_at > :ingestedAfter
-      AND hmcts_court_hearing_id IS NOT NULL
-      AND id > :afterId
-      ORDER BY id
-      LIMIT :limit
+    """
+      SELECT d.id FROM CourtDocumentEntity d
+      WHERE d.courtHearing IS NULL
+      AND d.ingestionAt > :ingestedAfter
+      AND d.hmctsCourtHearingId IS NOT NULL
+      AND d.id > :afterId
+      ORDER BY d.id
     """,
-    nativeQuery = true,
   )
-  fun findUnpopulatedCourtHearingDataIngestedAfter(
+  fun findIdsWithUnpopulatedCourtHearingIngestedAfter(
     @Param("afterId") afterId: UUID,
-    @Param("ingestedAfter") ingestedAfter: LocalDate,
-    @Param("limit") limit: Int,
+    @Param("ingestedAfter") ingestedAfter: LocalDateTime,
+    limit: Limit,
   ): List<UUID>
 
   @Query(
-    value = """
-      SELECT *
-      FROM court_document
-      WHERE id > :afterId
-        AND downloaded_file_sha256 IS NULL
-      ORDER BY id
-      LIMIT :limit
+    """
+      SELECT d.id FROM CourtDocumentEntity d
+      WHERE d.id > :afterId
+      AND (d.metadataVersion < :metadataVersion OR d.extractedTextSha256 IS NOT NULL)
+      ORDER BY d.id
     """,
-    nativeQuery = true,
   )
-  fun findUnhashedAfter(
+  fun findUnmirroredIdsAfter(
     @Param("afterId") afterId: UUID,
-    @Param("limit") limit: Int,
-  ): List<CourtDocumentEntity>
+    @Param("metadataVersion") metadataVersion: Int,
+    limit: Limit,
+  ): List<UUID>
 
   @Query(
-    value = """
-      SELECT *
-      FROM court_document
-      WHERE id > :afterId
-        AND extracted_text_sha256 IS NOT NULL
-      ORDER BY id
-      LIMIT :limit
+    """
+      SELECT DISTINCT d.masterDefendantId FROM CourtDocumentEntity d
+      WHERE d.prisonerNumber IS NULL
+      AND d.masterDefendantId > :afterId
+      ORDER BY d.masterDefendantId
     """,
-    nativeQuery = true,
   )
-  fun findHashedAfter(
-    @Param("afterId") afterId: UUID,
-    @Param("limit") limit: Int,
-  ): List<CourtDocumentEntity>
+  fun findUnmatchedMasterDefendantIdsAfter(@Param("afterId") afterId: UUID, limit: Limit): List<UUID>
 
   @Query(
-    value = """
-      SELECT *
-      FROM court_document
-      WHERE id > :afterId
-        AND addressed_prison IS NULL
-        AND delivery_mapping_id IS NULL
-        AND prison_email_address IS NOT NULL
-      ORDER BY id
-      LIMIT :limit
+    """
+      SELECT DISTINCT d.id FROM CourtDocumentEntity d
+      JOIN d.courtDocumentCases c
+      WHERE d.id > :afterId
+      AND c.caseReference LIKE '%,%'
+      ORDER BY d.id
     """,
-    nativeQuery = true,
   )
-  fun findUnaddressedAfter(
-    @Param("afterId") afterId: UUID,
-    @Param("limit") limit: Int,
-  ): List<CourtDocumentEntity>
+  fun findIdsWithConcatenatedCaseReferencesAfter(@Param("afterId") afterId: UUID, limit: Limit): List<UUID>
 
   @Modifying(clearAutomatically = true, flushAutomatically = true)
   @Query(
-    value = """
-      UPDATE court_document
-         SET addressed_prison = :addressedPrison,
-             delivery_mapping_id = :deliveryMappingId,
-             delivery_source = COALESCE(CAST(:deliverySource AS TEXT), delivery_source)
-       WHERE id = :id
+    """
+      UPDATE CourtDocumentEntity d
+      SET d.addressedPrison = :addressedPrison,
+          d.deliveryMappingId = :deliveryMappingId,
+          d.deliverySource = COALESCE(:deliverySource, d.deliverySource)
+      WHERE d.id = :id
     """,
-    nativeQuery = true,
   )
   fun applyDeliveryResolution(
     @Param("id") id: UUID,
     @Param("addressedPrison") addressedPrison: String?,
     @Param("deliveryMappingId") deliveryMappingId: UUID,
-    @Param("deliverySource") deliverySource: String?,
+    @Param("deliverySource") deliverySource: DestinationType?,
   ): Int
-
-  @Query(
-    value = """
-      SELECT *
-      FROM court_document
-      WHERE id > :afterId
-        AND (metadata_version < :metadataVersion
-          OR extracted_text_sha256 IS NOT NULL)
-      ORDER BY id
-      LIMIT :limit
-    """,
-    nativeQuery = true,
-  )
-  fun findUnmirroredAfter(
-    @Param("afterId") afterId: UUID,
-    @Param("metadataVersion") metadataVersion: Int,
-    @Param("limit") limit: Int,
-  ): List<CourtDocumentEntity>
-
-  @Query(
-    value = """
-      SELECT DISTINCT master_defendant_id
-      FROM court_document
-      WHERE prisoner_number IS NULL
-      AND master_defendant_id > :afterId
-      ORDER BY master_defendant_id
-      LIMIT :limit
-    """,
-    nativeQuery = true,
-  )
-  fun findUnmatchedMasterDefendantIdsAfter(
-    @Param("afterId") afterId: UUID,
-    @Param("limit") limit: Int,
-  ): List<UUID>
-
-  @Query(
-    value = """
-      SELECT distinct d.id
-      FROM Court_Document d
-      WHERE d.id > :afterId
-        AND d.id IN (SELECT t.court_document_id FROM Court_Document_Case t WHERE t.case_reference LIKE '%,%')
-      ORDER BY d.id
-      LIMIT :limit
-    """,
-    nativeQuery = true,
-  )
-  fun findCourtDocumentIdsWithConcatenatedCaseReferencesAfter(
-    @Param("afterId") afterId: UUID,
-    @Param("limit") limit: Int,
-  ): List<UUID>
 }

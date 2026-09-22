@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.service.extraction
 
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.data.domain.Limit
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.extraction.format.FormatModelRegistry
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionContext
@@ -91,7 +92,7 @@ class ExtractionBackfillService(
     try {
       log.info("Hash backfill starting")
       while (true) {
-        val batch = courtDocumentRepository.findUnhashedAfter(afterId, batchSize)
+        val batch = courtDocumentRepository.findByIdGreaterThanAndDownloadedFileSha256IsNullOrderById(afterId, Limit.of(batchSize))
         if (batch.isEmpty()) break
 
         batch.forEach { document ->
