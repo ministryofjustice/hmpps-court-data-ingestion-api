@@ -6,6 +6,7 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtHearingEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
@@ -32,6 +33,66 @@ class PrisonCourtDocumentServiceTest {
       ingestionAt = LocalDateTime.now(),
       prisonerNumber = "A1111AA",
     )
+  }
+
+  private fun hearing() = CourtHearingEntity(
+    hmctsCourtId = UUID.randomUUID(),
+    courtName = "Leeds Crown Court",
+    hearingType = "First hearing",
+    hearingDate = LocalDate.now(),
+    hmctsCourtHearingId = UUID.randomUUID(),
+    courtDocuments = mutableListOf(),
+    courtCharges = mutableListOf(),
+    nextCourtHearings = mutableListOf(),
+  )
+
+  @Test
+  fun `documents on one hearing are one entry, with the newest arrival as its time`() {
+    val onOneHearing = hearing()
+    val (earlier, later) = documents(2)
+    earlier.apply {
+      courtHearing = onOneHearing
+      downloadedFileSha256 = "file-1"
+      ingestionAt = LocalDateTime.now().minusHours(2)
+    }
+    later.apply {
+      courtHearing = onOneHearing
+      downloadedFileSha256 = "file-2"
+      ingestionAt = LocalDateTime.now().minusHours(1)
+    }
+    whenever(prisonerSearchService.getPrisonerNumbersInPrison("LEI")).thenReturn(listOf("A1111AA"))
+    whenever(
+      courtDocumentRepository.findByPrisonerNumberInAndIngestionAtGreaterThanEqualAndIngestionAtLessThanOrderByIngestionAtDesc(
+        any(),
+        any(),
+        any(),
+      ),
+    ).thenReturn(listOf(later, earlier))
+
+    val day = service.day("LEI", LocalDate.now())
+
+    assertThat(day.hearings).hasSize(1)
+    assertThat(day.hearings.single().documents).hasSize(2)
+    assertThat(day.hearings.single().courtName).isEqualTo("Leeds Crown Court")
+    assertThat(day.hearings.single().receivedAt).isEqualTo(later.ingestionAt)
+    assertThat(day.documentsWithoutAHearing).isEmpty()
+  }
+
+  @Test
+  fun `a document with no hearing is kept apart from the hearings`() {
+    whenever(prisonerSearchService.getPrisonerNumbersInPrison("LEI")).thenReturn(listOf("A1111AA"))
+    whenever(
+      courtDocumentRepository.findByPrisonerNumberInAndIngestionAtGreaterThanEqualAndIngestionAtLessThanOrderByIngestionAtDesc(
+        any(),
+        any(),
+        any(),
+      ),
+    ).thenReturn(documents(1))
+
+    val day = service.day("LEI", LocalDate.now())
+
+    assertThat(day.hearings).isEmpty()
+    assertThat(day.documentsWithoutAHearing).hasSize(1)
   }
 
   @Test
