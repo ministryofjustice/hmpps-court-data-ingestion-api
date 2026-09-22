@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.repository
 
+import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
@@ -7,6 +8,7 @@ import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.Optional
 import java.util.UUID
 
@@ -20,29 +22,18 @@ interface CourtDocumentRepository : JpaRepository<CourtDocumentEntity, UUID> {
   fun findByPrisonerNumberAndPrisonDocumentIdIn(personId: String, prisonDocumentIds: List<UUID>): List<CourtDocumentEntity>
   fun findFirstByPrisonDocumentId(prisonDocumentId: UUID): Optional<CourtDocumentEntity>
 
+  @EntityGraph(attributePaths = ["courtHearing", "courtDocumentCases"])
+  fun findByPrisonerNumberInAndIngestionAtGreaterThanEqualAndIngestionAtLessThanOrderByIngestionAtDesc(
+    prisonerNumbers: Collection<String>,
+    from: LocalDateTime,
+    to: LocalDateTime,
+  ): List<CourtDocumentEntity>
+
   @Query(
     value = """
       SELECT *
       FROM court_document
       WHERE court_hearing_id IS NULL
-      AND hmcts_court_hearing_id IS NOT NULL
-      AND id > :afterId
-      ORDER BY id
-      LIMIT :limit
-    """,
-    nativeQuery = true,
-  )
-  fun findUnpopulatedCourtHearingData(
-    @Param("afterId") afterId: UUID,
-    @Param("limit") limit: Int,
-  ): List<CourtDocumentEntity>
-
-  @Query(
-    value = """
-      SELECT id
-      FROM court_document
-      WHERE court_hearing_id IS NULL
-      AND ingestion_at > :ingestedAfter
       AND hmcts_court_hearing_id IS NOT NULL
       AND id > :afterId
       ORDER BY id

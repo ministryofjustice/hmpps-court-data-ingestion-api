@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.springframework.core.io.ClassPathResource
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
+import java.util.UUID
 
 class HmctsSubcriptionApiExtension :
   BeforeAllCallback,
@@ -86,9 +87,9 @@ class HmctsSubcriptionApiMockServer : WireMockServer(WIREMOCK_PORT) {
     )
   }
 
-  fun stubFile() {
+  fun stubFile(documentId: UUID = IntegrationTestBase.COURT_DOCUMENT_ID) {
     stubFor(
-      get(urlEqualTo("/client-subscriptions/$TEST_SUBSCRIPTION_ID/documents/${IntegrationTestBase.COURT_DOCUMENT_ID}"))
+      get(urlEqualTo("/client-subscriptions/$TEST_SUBSCRIPTION_ID/documents/$documentId"))
         .willReturn(
           aResponse()
             .withHeader("Content-Type", "text/plain")
