@@ -28,40 +28,59 @@ class CorePersonApiClientPactTest {
   fun `get person by common platform ID`(mockServer: MockServer) {
     val client = createCorePersonApiClientMock(mockServer.getUrl())
 
-    val person = client.getPersonByCommonPlatformId(defendantId)
+    val person = client.getPersonByCommonPlatformId(DEFENDANT_ID)
 
     assertThat(person.identifiers.defendantIds).isNotEmpty()
-    assertThat(person.identifiers.defendantIds.first()).isEqualTo(defendantId.toString())
+    assertThat(person.identifiers.defendantIds.first()).isEqualTo(DEFENDANT_ID.toString())
     assertThat(person.identifiers.prisonNumbers).isNotEmpty()
     assertThat(person.identifiers.prisonNumbers.first()).isEqualTo(PRISONER_NUMBER)
+  }
+
+  @Test
+  @PactTestFor(
+    pactMethod = "getPersonByPrisonerNumber",
+    pactVersion = PactSpecVersion.V3,
+  )
+  fun `get person by prisoner number`(mockServer: MockServer) {
+    val client = createCorePersonApiClientMock(mockServer.getUrl())
+
+    val person = client.getPersonByPrisonerNumber(PRISONER_NUMBER)
+
+    person?.identifiers.let {
+      assertThat(it?.defendantIds).isNotEmpty()
+      assertThat(it?.defendantIds?.first()).isEqualTo(DEFENDANT_ID.toString())
+      assertThat(it?.prisonNumbers).isNotEmpty()
+      assertThat(it?.prisonNumbers?.first()).isEqualTo(PRISONER_NUMBER)
+    }
   }
 
   @Pact(consumer = "hmpps-court-data-ingestion-api", provider = "hmpps-person-record")
   fun getPersonByCommonPlatformId(builder: PactDslWithProvider): RequestResponsePact = builder
     .given("A person exists for the requested common platform Id")
     .uponReceiving("a request for a person by common platform Id")
-    .pathFromProviderState("/person/commonplatform/\${defendantId}", "/person/commonplatform/$defendantId")
+    .pathFromProviderState("/person/commonplatform/\${defendantId}", "/person/commonplatform/$DEFENDANT_ID")
     .method("GET")
     .willRespondWith()
     .status(200)
     .headers(JSON_HEADERS)
-    .body(
-      newJsonBody { body ->
-        body.`object`("identifiers") { identifiers ->
-          identifiers.array("prisonNumbers") { prisonNumbers ->
-            prisonNumbers.stringType(PRISONER_NUMBER)
-          }
-          identifiers.array("defendantIds") { defendantIds ->
-            defendantIds.stringType(defendantId.toString())
-          }
-        }
-      }.build(),
-    )
+    .body(buildCorePersonApiResponseBody())
+    .toPact()
+
+  @Pact(consumer = "hmpps-court-data-ingestion-api", provider = "hmpps-person-record")
+  fun getPersonByPrisonerNumber(builder: PactDslWithProvider): RequestResponsePact = builder
+    .given("A person exists for the requested prisoner number")
+    .uponReceiving("a request for a person by prisoner number")
+    .pathFromProviderState("/person/prison/\${prisonerNumber}", "/person/prison/$PRISONER_NUMBER")
+    .method("GET")
+    .willRespondWith()
+    .status(200)
+    .headers(JSON_HEADERS)
+    .body(buildCorePersonApiResponseBody())
     .toPact()
 
   companion object {
     const val PRISONER_NUMBER = "OFF900"
-    private val defendantId = UUID.randomUUID()
+    private val DEFENDANT_ID = UUID.randomUUID()
     private val JSON_HEADERS = mapOf("Content-Type" to "application/json")
 
     private fun createCorePersonApiClientMock(baseUrl: String): CorePersonProvider {
@@ -75,5 +94,16 @@ class CorePersonApiClientPactTest {
 
       return proxyFactory.createClient<CorePersonProvider>()
     }
+
+    private fun buildCorePersonApiResponseBody(prisonerNumber: String = PRISONER_NUMBER, defendantId: UUID = DEFENDANT_ID) = newJsonBody { body ->
+      body.`object`("identifiers") { identifiers ->
+        identifiers.array("prisonNumbers") { prisonNumbers ->
+          prisonNumbers.stringType(prisonerNumber)
+        }
+        identifiers.array("defendantIds") { defendantIds ->
+          defendantIds.stringType(defendantId.toString())
+        }
+      }
+    }.build()
   }
 }
