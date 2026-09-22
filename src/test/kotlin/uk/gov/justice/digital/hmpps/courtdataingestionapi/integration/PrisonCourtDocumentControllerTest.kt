@@ -183,6 +183,18 @@ class PrisonCourtDocumentControllerTest : IntegrationTestBase() {
     )
   }
 
+  @Test
+  fun `sends a JSON content type, which prisoner search requires even on a GET`() {
+    prisonerSearchApi.stubPrisonersInPrison(PRISON, MATCHING_PRISONER_NUMBER)
+
+    week()
+
+    prisonerSearchApi.verify(
+      getRequestedFor(urlPathEqualTo("/prisoner-search/prison/$PRISON"))
+        .withHeader("Content-Type", equalTo("application/json")),
+    )
+  }
+
   private fun weekUri(date: LocalDate = LocalDate.now()) = "/court-document/prison/$PRISON/week?date=$date"
 
   private fun dayUri(date: LocalDate = LocalDate.now()) = "/court-document/prison/$PRISON/day?date=$date"
