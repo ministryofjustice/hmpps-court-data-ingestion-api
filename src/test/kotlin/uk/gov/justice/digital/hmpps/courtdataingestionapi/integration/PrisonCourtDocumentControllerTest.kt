@@ -199,14 +199,13 @@ class PrisonCourtDocumentControllerTest : IntegrationTestBase() {
     )
   }
 
-  /** Waits for both to be hashed, since the hash is what decides whether they are the same. */
   private fun sendTwoDocuments(first: ByteArray, second: ByteArray) {
     val firstId = UUID.randomUUID().also { hmctsSubcriptionApi.stubFile(it, first) }
     val secondId = UUID.randomUUID().also { hmctsSubcriptionApi.stubFile(it, second) }
     sendSubscriptionNotification(MATCHING_CORE_PERSON, documentId = firstId)
     sendSubscriptionNotification(MATCHING_CORE_PERSON, documentId = secondId)
     awaitAtMost30Secs untilCallTo {
-      courtDocumentRepository.findAll().count { it.downloadedFileSha256 != null }
+      courtDocumentRepository.findAll().count { it.downloadedFileSha256 != null && it.courtHearing != null }
     } matches { it == 2 }
   }
 
