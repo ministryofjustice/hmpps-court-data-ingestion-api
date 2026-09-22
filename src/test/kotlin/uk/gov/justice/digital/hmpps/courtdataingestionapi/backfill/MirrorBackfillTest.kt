@@ -26,7 +26,7 @@ class MirrorBackfillTest {
   @Test
   fun `selectBatch passes ZERO_UUID on empty cursor`() {
     val first = sampleWarrant(extractedTextSha = "604576bd")
-    whenever(repository.findUnmirroredAfter(any(), any(), any())).thenReturn(listOf(first))
+    whenever(repository.findUnmirroredIdsAfter(any(), any(), any())).thenReturn(listOf(first.id))
 
     val batch = backfill.selectBatch(cursor = "", batchSize = 100)
 
@@ -37,7 +37,7 @@ class MirrorBackfillTest {
 
   @Test
   fun `selectBatch returns the input cursor unchanged when no items remain`() {
-    whenever(repository.findUnmirroredAfter(any(), any(), any())).thenReturn(emptyList())
+    whenever(repository.findUnmirroredIdsAfter(any(), any(), any())).thenReturn(emptyList())
 
     val batch = backfill.selectBatch(cursor = UUID.randomUUID().toString(), batchSize = 100)
 
@@ -82,9 +82,6 @@ class MirrorBackfillTest {
 
   @Test
   fun `process throws and does not update metadata version or mark on metadata failure even if content hash succeeded`() {
-    // Important: content hash is the dedup-critical call. If it succeeded but metadata failed we
-    // still leave the row unmarked, so a retry will idempotently re-push the content hash (no-op
-    // at doc store) and have another go at metadata. Marking the row done would strand metadata.
     val item = sampleWarrant(extractedTextSha = "604576bd").apply {
       deliverySource = DestinationType.PECS
     }

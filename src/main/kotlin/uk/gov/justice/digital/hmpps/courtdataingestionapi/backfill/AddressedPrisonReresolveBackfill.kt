@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.backfill
 
 import org.slf4j.LoggerFactory
+import org.springframework.data.domain.Limit
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
@@ -18,7 +19,10 @@ class AddressedPrisonReresolveBackfill(
 
   override fun selectBatch(cursor: String, batchSize: Int): BackfillBatch<CourtDocumentEntity> {
     val afterId = parseCursorUUID(cursor)
-    val items = courtDocumentRepository.findUnaddressedAfter(afterId, batchSize)
+    val items = courtDocumentRepository.findByIdGreaterThanAndAddressedPrisonIsNullAndDeliveryMappingIdIsNullAndPrisonEmailAddressIsNotNullOrderById(
+      afterId,
+      Limit.of(batchSize),
+    )
     return BackfillBatch(items, items.lastOrNull()?.id?.toString() ?: cursor)
   }
 
@@ -33,7 +37,7 @@ class AddressedPrisonReresolveBackfill(
       id = item.id,
       addressedPrison = resolved.addressedPrison,
       deliveryMappingId = resolved.mappingId,
-      deliverySource = resolved.destinationType?.name,
+      deliverySource = resolved.destinationType,
     )
 
     log.info(

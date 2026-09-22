@@ -30,9 +30,9 @@ class ContentHashRenormaliseApplyBackfillTest {
   private val backfill = ContentHashRenormaliseApplyBackfill(repository, documentManagementApi, recomputer)
 
   @Test
-  fun `selectBatch delegates to findHashedAfter and advances the cursor`() {
+  fun `selectBatch selects documents with an extracted text hash and advances the cursor`() {
     val item = sampleWarrant(extractedTextSha = "existing-hash")
-    whenever(repository.findHashedAfter(any(), any())).thenReturn(listOf(item))
+    whenever(repository.findByIdGreaterThanAndExtractedTextSha256IsNotNullOrderById(any(), any())).thenReturn(listOf(item))
 
     val batch = backfill.selectBatch(cursor = "", batchSize = 200)
 

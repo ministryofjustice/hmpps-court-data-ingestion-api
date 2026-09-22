@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.backfill
 
+import org.springframework.data.domain.Limit
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
@@ -7,9 +8,6 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtHearingSe
 import java.time.LocalDate
 import java.util.UUID
 
-/**
- * Fetches hearing data from new offence data api. Only fetched data from a given date.
- */
 @Component
 class HearingDataBackfill(
   private val courtDocumentRepository: CourtDocumentRepository,
@@ -21,10 +19,10 @@ class HearingDataBackfill(
 
   override fun selectBatch(cursor: String, batchSize: Int): BackfillBatch<UUID> {
     val afterId = parseCursorUUID(cursor)
-    val ids = courtDocumentRepository.findUnpopulatedCourtHearingDataIngestedAfter(
+    val ids = courtDocumentRepository.findIdsWithUnpopulatedCourtHearingIngestedAfter(
       afterId,
-      HEARING_DATA_AVAILABLE_FROM,
-      batchSize,
+      HEARING_DATA_AVAILABLE_FROM.atStartOfDay(),
+      Limit.of(batchSize),
     )
     return BackfillBatch(ids, cursor)
   }
