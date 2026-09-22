@@ -24,6 +24,16 @@ class PrisonCourtDocumentControllerTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `accepts the court data read write role, which the frontend client holds`() {
+    prisonerSearchApi.stubPrisonersInPrison(PRISON, MATCHING_PRISONER_NUMBER)
+
+    webTestClient.get().uri(weekUri())
+      .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RW")))
+      .exchange()
+      .expectStatus().isOk
+  }
+
+  @Test
   fun `requires the court data read role`() {
     webTestClient.get().uri(weekUri())
       .headers(setAuthorisation(roles = listOf("SOME_OTHER_ROLE")))
