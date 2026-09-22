@@ -66,28 +66,31 @@ data class CourtHearingEntity(
           it.ingestionAt,
         )
       },
-      charges = courtCharges.filter {
-        it.masterDefendantId == masterDefendantId
-      }.map {
-        CourtCharge(
-          chargeId = it.hmctsId,
-          listingNumber = it.listingNumber,
-          offenceLegislation = it.offenceLegislation,
-          pleaDate = it.pleaDate,
-          pleaValue = it.pleaValue,
-          startDate = it.startDate,
-          endDate = it.endDate,
-          title = it.title,
-          wording = it.wording,
-          code = it.code,
-          results = it.results.map { result ->
-            CourtResult(
-              code = result.resultCode,
-              description = result.resultDescription,
-            )
-          },
-        )
-      },
+      charges = courtCharges
+        .filter {
+          it.masterDefendantId == masterDefendantId
+        }
+        .sortedBy { it.sortOrder }
+        .map {
+          CourtCharge(
+            chargeId = it.hmctsId,
+            listingNumber = it.listingNumber,
+            offenceLegislation = it.offenceLegislation,
+            pleaDate = it.pleaDate,
+            pleaValue = it.pleaValue,
+            startDate = it.startDate,
+            endDate = it.endDate,
+            title = it.title,
+            wording = it.wording,
+            code = it.code,
+            results = it.results.map { result ->
+              CourtResult(
+                code = result.resultCode,
+                description = result.resultDescription,
+              )
+            },
+          )
+        },
       nextHearing = nextCourtHearings.find {
         it.masterDefendantId == masterDefendantId
       }?.let {

@@ -1,0 +1,2 @@
+ALTER TABLE court_charge
+    ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 1;
