@@ -13,10 +13,6 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocume
 import java.time.DayOfWeek
 import java.time.LocalDate
 
-/**
- * Documents received for the people currently held at a prison. A document follows the person,
- * so it leaves a prison's view when they move.
- */
 @Service
 @Transactional(readOnly = true)
 class PrisonCourtDocumentService(
@@ -84,7 +80,26 @@ class PrisonCourtDocumentService(
   private fun received(roll: List<String>, from: LocalDate, to: LocalDate): List<CourtDocumentEntity> = if (roll.isEmpty()) {
     emptyList()
   } else {
-    courtDocumentRepository.findByPrisonerNumberInAndIngestionAtGreaterThanEqualAndIngestionAtLessThanOrderByIngestionAtDesc(roll, from.atStartOfDay(), to.atStartOfDay())
+    withoutDuplicates(
+      courtDocumentRepository.findByPrisonerNumberInAndIngestionAtGreaterThanEqualAndIngestionAtLessThanOrderByIngestionAtDesc(
+        roll,
+        from.atStartOfDay(),
+        to.atStartOfDay(),
+      ),
+    )
+  }
+
+  private fun withoutDuplicates(documents: List<CourtDocumentEntity>): List<CourtDocumentEntity> {
+    val seen = mutableSetOf<String>()
+    return documents
+      .sortedBy { it.ingestionAt }
+      .filter { document ->
+        val hashes = listOfNotNull(document.extractedTextSha256, document.downloadedFileSha256).filter { it.isNotBlank() }
+        val repeat = hashes.any { it in seen }
+        seen += hashes
+        !repeat
+      }
+      .sortedByDescending { it.ingestionAt }
   }
 
   private fun CourtDocumentEntity.caseReferences() = courtDocumentCases.map { it.caseReference }

@@ -52,4 +52,31 @@ class PrisonCourtDocumentServiceTest {
     assertThat(week.documents).isNull()
     assertThat(week.totalDocuments).isEqualTo(101)
   }
+
+  @Test
+  fun `repeat copies are dropped, following a chain of shared hashes, keeping the oldest`() {
+    val (a, b, c) = documents(3)
+    a.apply { extractedTextSha256 = "text-1"; downloadedFileSha256 = "file-1"; ingestionAt = LocalDateTime.now().minusHours(3) }
+    b.apply { extractedTextSha256 = "text-1"; downloadedFileSha256 = "file-2"; ingestionAt = LocalDateTime.now().minusHours(2) }
+    c.apply { extractedTextSha256 = "text-3"; downloadedFileSha256 = "file-2"; ingestionAt = LocalDateTime.now().minusHours(1) }
+    whenever(prisonerSearchService.getPrisonerNumbersInPrison("LEI")).thenReturn(listOf("A1111AA"))
+    whenever(
+      courtDocumentRepository.findByPrisonerNumberInAndIngestionAtGreaterThanEqualAndIngestionAtLessThanOrderByIngestionAtDesc(any(), any(), any()),
+    ).thenReturn(listOf(c, b, a))
+
+    val week = service.week("LEI", LocalDate.now())
+
+    assertThat(week.totalDocuments).isEqualTo(1)
+    assertThat(week.documents!!.single().prisonDocumentId).isEqualTo(a.prisonDocumentId)
+  }
+
+  @Test
+  fun `documents with no hash are never treated as copies of each other`() {
+    whenever(prisonerSearchService.getPrisonerNumbersInPrison("LEI")).thenReturn(listOf("A1111AA"))
+    whenever(
+      courtDocumentRepository.findByPrisonerNumberInAndIngestionAtGreaterThanEqualAndIngestionAtLessThanOrderByIngestionAtDesc(any(), any(), any()),
+    ).thenReturn(documents(2))
+
+    assertThat(service.week("LEI", LocalDate.now()).totalDocuments).isEqualTo(2)
+  }
 }

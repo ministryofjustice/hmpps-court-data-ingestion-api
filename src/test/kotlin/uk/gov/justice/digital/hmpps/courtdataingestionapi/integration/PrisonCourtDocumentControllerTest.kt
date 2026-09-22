@@ -113,20 +113,24 @@ class PrisonCourtDocumentControllerTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `two documents on one hearing are one hearing`() {
+  fun `two different documents on one hearing are one hearing`() {
     prisonerSearchApi.stubPrisonersInPrison(PRISON, MATCHING_PRISONER_NUMBER)
-    val first = UUID.randomUUID().also { hmctsSubcriptionApi.stubFile(it) }
-    val second = UUID.randomUUID().also { hmctsSubcriptionApi.stubFile(it) }
-    sendSubscriptionNotification(MATCHING_CORE_PERSON, documentId = first)
-    sendSubscriptionNotification(MATCHING_CORE_PERSON, documentId = second)
-    awaitAtMost30Secs untilCallTo {
-      courtDocumentRepository.countByMasterDefendantId(MATCHING_CORE_PERSON)
-    } matches { it == 2L }
+    sendTwoDocuments(first = "A remand warrant".toByteArray(), second = "A court register".toByteArray())
 
     val day = day()
 
     assertThat(day.hearings.single().documents).hasSize(2)
     assertThat(day.prisonerNumbers).containsExactly(MATCHING_PRISONER_NUMBER)
+  }
+
+  @Test
+  fun `a document sent twice is shown once, as it is on the documents tab`() {
+    prisonerSearchApi.stubPrisonersInPrison(PRISON, MATCHING_PRISONER_NUMBER)
+    val sameFile = "The same warrant".toByteArray()
+    sendTwoDocuments(first = sameFile, second = sameFile)
+
+    assertThat(day().hearings.single().documents).hasSize(1)
+    assertThat(week().totalDocuments).isEqualTo(1)
   }
 
   @Test
@@ -193,6 +197,17 @@ class PrisonCourtDocumentControllerTest : IntegrationTestBase() {
       getRequestedFor(urlPathEqualTo("/prisoner-search/prison/$PRISON"))
         .withHeader("Content-Type", equalTo("application/json")),
     )
+  }
+
+  /** Waits for both to be hashed, since the hash is what decides whether they are the same. */
+  private fun sendTwoDocuments(first: ByteArray, second: ByteArray) {
+    val firstId = UUID.randomUUID().also { hmctsSubcriptionApi.stubFile(it, first) }
+    val secondId = UUID.randomUUID().also { hmctsSubcriptionApi.stubFile(it, second) }
+    sendSubscriptionNotification(MATCHING_CORE_PERSON, documentId = firstId)
+    sendSubscriptionNotification(MATCHING_CORE_PERSON, documentId = secondId)
+    awaitAtMost30Secs untilCallTo {
+      courtDocumentRepository.findAll().count { it.downloadedFileSha256 != null }
+    } matches { it == 2 }
   }
 
   private fun weekUri(date: LocalDate = LocalDate.now()) = "/court-document/prison/$PRISON/week?date=$date"
