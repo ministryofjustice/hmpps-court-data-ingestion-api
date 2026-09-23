@@ -28,15 +28,38 @@ jobs:
     secrets: inherit
     with:
       environment: ${{ inputs.environment }}
-  # TODO (CDIA-337): Add "can I deploy" job here
+  pact_can_i_deploy:
+    name: pact check can I deploy
+    needs:
+      - helm_lint
+    uses: ministryofjustice/hmpps-github-actions/.github/workflows/pact_can_i_deploy.yml@v2
+    with:
+      pacticipant: hmpps-my-consumer-service
+      version: ${{ github.sha }}
+      to_environment: ${{ inputs.environment }}
+    secrets:
+      PACT_BROKER_URL: ${{ secrets.PACT_BROKER_URL }}
+      HMPPS_PACT_BROKER_USERNAME: ${{ secrets.HMPPS_PACT_BROKER_USERNAME }}
+      HMPPS_PACT_BROKER_PASSWORD: ${{ secrets.HMPPS_PACT_BROKER_PASSWORD }}
   deploy_env:
     name: Deploy to environment
     needs:
-      - helm_lint
+      - pact_can_i_deploy
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/deploy_env.yml@v2 # WORKFLOW_VERSION
     secrets: inherit
     with:
       environment: ${{ inputs.environment }}
       app_version: ${{ inputs.version }}
       slack_notification: 'false' # if 'true', it needs a valid (NON)PROD_RELEASES_SLACK_CHANNEL variable to be set
-  #  TODO (CDIA-337): Add "record deployment" job after deploy
+  pact_record_deployment:
+    name: Pact record deployment
+    needs:
+      - deploy_env
+    uses: ministryofjustice/hmpps-github-actions/.github/workflows/pact_record_deployment.yml@v2
+    with:
+      app_version: ${{ inputs.version }}
+      environment: ${{ inputs.environment }}
+    secrets:
+      PACT_BROKER_URL: ${{ secrets.PACT_BROKER_URL }}
+      HMPPS_PACT_BROKER_USERNAME: ${{ secrets.HMPPS_PACT_BROKER_USERNAME }}
+      HMPPS_PACT_BROKER_PASSWORD: ${{ secrets.HMPPS_PACT_BROKER_PASSWORD }}
