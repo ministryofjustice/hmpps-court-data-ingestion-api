@@ -34,13 +34,10 @@ jobs:
       - helm_lint
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/pact_can_i_deploy.yml@v2
     with:
-      pacticipant: hmpps-my-consumer-service
+      pacticipant: hmpps-court-data-ingestion-api
       version: ${{ github.sha }}
       to_environment: ${{ inputs.environment }}
-    secrets:
-      PACT_BROKER_URL: ${{ secrets.PACT_BROKER_URL }}
-      HMPPS_PACT_BROKER_USERNAME: ${{ secrets.HMPPS_PACT_BROKER_USERNAME }}
-      HMPPS_PACT_BROKER_PASSWORD: ${{ secrets.HMPPS_PACT_BROKER_PASSWORD }}
+    secrets: inherit
   deploy_env:
     name: Deploy to environment
     needs:
@@ -57,9 +54,7 @@ jobs:
       - deploy_env
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/pact_record_deployment.yml@v2
     with:
+      pacticipant: hmpps-court-data-ingestion-api
       app_version: ${{ inputs.version }}
       environment: ${{ inputs.environment }}
-    secrets:
-      PACT_BROKER_URL: ${{ secrets.PACT_BROKER_URL }}
-      HMPPS_PACT_BROKER_USERNAME: ${{ secrets.HMPPS_PACT_BROKER_USERNAME }}
-      HMPPS_PACT_BROKER_PASSWORD: ${{ secrets.HMPPS_PACT_BROKER_PASSWORD }}
+    secrets: inherit
