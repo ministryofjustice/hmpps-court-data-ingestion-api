@@ -57,12 +57,25 @@ jobs:
       java-version: "25"
     needs:
       - app_version
+  pact_publish:
+    name: Publish Pact contracts to broker
+    needs:
+      - app_version
+      - gradle_verify
+    uses: ministryofjustice/hmpps-github-actions/.github/workflows/gradle_verify.yml@v2 # WORKFLOW_VERSION
+    secrets: inherit
+    with:
+      gradle-command: 'HMPPS_PACT_BROKER_USERNAME=${{ secrets.HMPPS_PACT_BROKER_USERNAME }} HMPPS_PACT_BROKER_PASSWORD=${{ secrets.HMPPS_PACT_BROKER_PASSWORD }} GITHUB_BRANCH=${{ github.ref_name }} ./gradlew pactTest pactPublish'
+      java-version: "25"
+      upload-test-artifacts: false
+      upload-build-artifacts: false
   build:
     name: Build docker image from hmpps-github-actions
     if: github.ref == 'refs/heads/main'
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/docker_build.yml@v2 # WORKFLOW_VERSION
     needs:
       - gradle_verify
+      - pact_publish
     with:
       docker_registry: 'ghcr.io'
       registry_org: 'ministryofjustice'
@@ -70,6 +83,7 @@ jobs:
       push: ${{ inputs.push || inputs.push == null }}
       docker_multiplatform: false
       download_build_artifacts: true
+  # TODO (CDIA-337): move the call to common deploy_env action to a local deploy_env version which should include can_i_deply, deploy and record_deploy call to the hmpps common ones
   deploy_dev:
     name: Deploy to the development environment
     needs:
@@ -81,6 +95,17 @@ jobs:
       environment: 'dev'
       app_version: '${{ needs.build.outputs.app_version }}'
       slack_notification: 'false' # if 'true', it needs a valid NONPROD_RELEASES_SLACK_CHANNEL variable to be set
+  # TODO (CDIA-337): This will go away along with deploy_dev as par to of new local deploy_env
+  pact_record_deployment_dev:
+    name: Pact record deployment
+    needs:
+      - deploy_dev
+    uses: ministryofjustice/hmpps-github-actions/.github/workflows/pact_record_deployment.yml@v2
+    with:
+      pacticipant: hmpps-court-data-ingestion-api
+      app_version: ${{ inputs.version }}
+      environment: 'dev'
+    secrets: inherit
   deploy_preprod:
      name: Deploy to pre-production environment
      needs:
