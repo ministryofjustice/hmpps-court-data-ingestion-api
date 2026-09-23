@@ -2,10 +2,28 @@ plugins {
   id("uk.gov.justice.hmpps.gradle-spring-boot") version "10.5.7"
   kotlin("plugin.spring") version "2.4.10"
   kotlin("plugin.jpa") version "2.4.10"
+  id("au.com.dius.pact") version "4.6.5"
 }
 
 configurations {
   testImplementation { exclude(group = "org.junit.vintage") }
+}
+
+// Matches the conventions used by the hmpps-person-record provider (see its
+// pact_provider_verification.yml / record_deployment.yml on add-pact-record-deployment-step):
+// - broker auth via username/password secrets, not a bearer token
+// - pacticipant version pinned to the commit SHA so it lines up with "deployed"/"mainBranch" selectors
+// - branch recorded via GITHUB_BRANCH so provider verification can target a specific consumer branch
+pact {
+  publish {
+    pactDirectory = layout.buildDirectory.dir("pacts").get().asFile
+    pactBrokerUrl = System.getenv("PACT_BROKER_URL") ?: "https://pact-broker-prod.apps.live-1.cloud-platform.service.justice.gov.uk"
+    pactBrokerUsername = System.getenv("HMPPS_PACT_BROKER_USERNAME")
+    pactBrokerPassword = System.getenv("HMPPS_PACT_BROKER_PASSWORD")
+    consumerVersion = System.getenv("GITHUB_SHA") ?: "local"
+    consumerBranch = System.getenv("GITHUB_BRANCH") ?: "local"
+    tags = listOfNotNull(System.getenv("GITHUB_BRANCH"))
+  }
 }
 
 dependencies {
@@ -43,6 +61,7 @@ dependencies {
   testImplementation("io.jsonwebtoken:jjwt-impl:0.13.0")
   testImplementation("io.jsonwebtoken:jjwt-jackson:0.13.0")
   testImplementation("org.wiremock:wiremock-standalone:3.13.2")
+  testImplementation("au.com.dius.pact.consumer:junit5:4.7.0")
   testImplementation("org.awaitility:awaitility-kotlin:4.3.0")
   testImplementation("org.testcontainers:testcontainers:2.0.5")
   testImplementation("org.testcontainers:localstack:1.21.4")
@@ -83,5 +102,18 @@ tasks.register<Test>("localTest") {
     includeTags("local")
   }
   System.getProperty("extractionSampleDir")?.let { systemProperty("extractionSampleDir", it) }
+  shouldRunAfter("test")
+}
+
+tasks.register<Test>("pactTest") {
+  description = "Runs consumer-side Pact tests"
+  group = "verification"
+  testClassesDirs = sourceSets["test"].output.classesDirs
+  classpath = sourceSets["test"].runtimeClasspath
+  useJUnitPlatform()
+  filter {
+    includeTestsMatching("*PactTest")
+    isFailOnNoMatchingTests = false
+  }
   shouldRunAfter("test")
 }
