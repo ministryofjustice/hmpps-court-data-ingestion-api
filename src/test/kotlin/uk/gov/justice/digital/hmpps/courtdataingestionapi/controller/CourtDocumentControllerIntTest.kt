@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumen
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentHearing
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentView
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentViewType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.typeReference
 import java.time.LocalDate
 import java.util.UUID
@@ -23,7 +24,7 @@ import java.util.UUID
 class CourtDocumentControllerIntTest : IntegrationTestBase() {
 
   @Nested
-  @DisplayName("View court document tests")
+  @DisplayName("GET court document tests")
   inner class GetCourtDocumentsTests {
 
     @Test
@@ -87,6 +88,39 @@ class CourtDocumentControllerIntTest : IntegrationTestBase() {
           TestUtil.objectMapper().writeValueAsString(
             CourtDocumentView(
               username = TEST_USERNAME,
+            ),
+          ),
+        )
+        .exchange()
+        .expectStatus()
+        .isOk
+
+      courtDocument = courtDocumentRepository.findAll()[0]
+
+      assertThat(courtDocument.courtDocumentViews).hasSize(1)
+      assertThat(courtDocument.courtDocumentViews[0].username).isEqualTo(TEST_USERNAME)
+      HmppsCourtCasesReleaseDatesApiExtension.hmppsCourtCasesReleaseDatesApi.verifyEvictCache()
+
+      verifyUpdateMetadataIsUnread(courtDocument.prisonDocumentId, false)
+    }
+
+    @Test
+    fun `View warrant processed document ingested`() {
+      sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON)
+
+      var courtDocument = courtDocumentRepository.findAll()[0]
+      webTestClient
+        .post()
+        .uri("/court-document/${courtDocument.prisonDocumentId}/view")
+        .headers {
+          it.contentType = MediaType.APPLICATION_JSON
+        }
+        .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RW")))
+        .bodyValue(
+          TestUtil.objectMapper().writeValueAsString(
+            CourtDocumentView(
+              username = TEST_USERNAME,
+              type = CourtDocumentViewType.DOCUMENT_PROCESSED,
             ),
           ),
         )
