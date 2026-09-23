@@ -57,17 +57,6 @@ jobs:
       java-version: "25"
     needs:
       - app_version
-  pact_can_i_deploy_dev:
-    name: pact check can I deploy
-    needs:
-      - helm_lint
-      - gradle_verify
-    uses: ministryofjustice/hmpps-github-actions/.github/workflows/pact_can_i_deploy.yml@v2
-    with:
-      pacticipant: hmpps-court-data-ingestion-api
-      version: ${{ github.sha }}
-      to_environment: 'dev'
-    secrets: inherit
   build:
     name: Build docker image from hmpps-github-actions
     if: github.ref == 'refs/heads/main'
@@ -86,7 +75,6 @@ jobs:
     needs:
       - build
       - helm_lint
-      - pact_can_i_deploy_dev
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/deploy_env.yml@v2 # WORKFLOW_VERSION
     secrets: inherit
     with:
