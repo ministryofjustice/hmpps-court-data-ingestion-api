@@ -17,7 +17,7 @@ class PrisonDocumentNotificationService(
 ) {
   fun isUnread(document: CourtDocumentEntity, unreadDocumentDateFrom: LocalDateTime): Boolean {
     when (document.courtDocumentViews.maxByOrNull { it.occurredAt }?.eventType) {
-      CourtDocumentViewEventType.VIEWED -> return false
+      CourtDocumentViewEventType.VIEWED, CourtDocumentViewEventType.WARRANT_PROCESSED -> return false
       CourtDocumentViewEventType.MARKED_NEW -> return true
       null -> {}
     }
