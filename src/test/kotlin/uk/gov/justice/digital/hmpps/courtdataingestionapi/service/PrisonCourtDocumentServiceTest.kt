@@ -154,7 +154,7 @@ class PrisonCourtDocumentServiceTest {
     ).thenReturn(documents(2))
 
     assertThat(service.week("LEI", LocalDate.now()).totalDocuments).isEqualTo(2)
- }
+  }
 
   @Test
   fun `the day names the people it covers, from the roll`() {
