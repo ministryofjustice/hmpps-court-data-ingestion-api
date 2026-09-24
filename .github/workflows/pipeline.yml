@@ -56,7 +56,7 @@ jobs:
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/gradle_verify.yml@v2 # WORKFLOW_VERSION
     secrets: inherit
     with:
-      gradle-command: 'BUILD_NUMBER=${{ needs.app_version.outputs.version}} ./gradlew assemble check'
+      gradle-command: 'HMPPS_PACT_BROKER_USERNAME=$HMPPS_PACT_BROKER_USERNAME HMPPS_PACT_BROKER_PASSWORD=$HMPPS_PACT_BROKER_PASSWORD GITHUB_BRANCH=${{ github.ref_name }} BUILD_NUMBER=${{ needs.app_version.outputs.version}} ./gradlew assemble check'
       upload-build-artifacts: ${{ github.ref == 'refs/heads/main' }}
       java-version: "25"
     needs:
