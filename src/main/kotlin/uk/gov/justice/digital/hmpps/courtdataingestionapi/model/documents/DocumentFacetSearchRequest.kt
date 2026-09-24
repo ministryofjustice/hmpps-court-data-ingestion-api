@@ -1,7 +1,5 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents
 
-import com.fasterxml.jackson.annotation.JsonIgnore
-
 data class DocumentFacetSearchRequest(
 
   val documentTypes: List<DocumentApiType>?,
