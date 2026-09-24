@@ -157,7 +157,7 @@ class HmppsDocumentManagementApi(
   fun search(facetSearchRequest: DocumentFacetSearchRequest): DocumentSearchResult {
     log.info("Searching for documents {}", facetSearchRequest)
     return webClient.post()
-      .uri("/documents/search")
+      .uri("/documents/facet/search")
       .header("Service-Name", appName)
       .header("Username", SYSTEM_USERNAME)
       .accept(MediaType.APPLICATION_JSON)
