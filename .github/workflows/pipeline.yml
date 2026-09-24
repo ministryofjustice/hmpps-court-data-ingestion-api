@@ -84,6 +84,7 @@ jobs:
       docker_multiplatform: false
       download_build_artifacts: true
   # TODO (CDIA-337): move the call to common deploy_env action to a local deploy_env version which should include can_i_deply, deploy and record_deploy call to the hmpps common ones
+  # TODO (CDIA-337): Waiting for can_i_deploy and record_deployment to be added to deploy_env common action
   deploy_dev:
     name: Deploy to the development environment
     needs:
