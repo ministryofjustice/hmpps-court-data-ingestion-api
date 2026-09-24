@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api
 
+import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -42,11 +43,18 @@ data class PrisonCourtDocumentWeek(
   val nextWeek: LocalDate?,
 )
 
+@Schema(description = "Someone the day's documents are for")
+data class PrisonCourtPerson(
+  val prisonerNumber: String,
+  val firstName: String?,
+  val lastName: String?,
+)
+
 data class PrisonCourtDocumentDay(
   val prisonCode: String,
   val date: LocalDate,
   val rollSize: Int,
   val hearings: List<PrisonCourtHearing>,
   val documentsWithoutAHearing: List<PrisonCourtDocument>,
-  val prisonerNumbers: List<String>,
+  val people: List<PrisonCourtPerson>,
 )

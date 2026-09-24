@@ -99,5 +99,5 @@ class PrisonerSearchApiMockServer : WireMockServer(WIREMOCK_PORT) {
     )
   }
 
-  private fun prisonerRecord(prisonerNumber: String, prisonId: String? = "Mock01") = Prisoner(prisonerNumber, prisonId)
+  private fun prisonerRecord(prisonerNumber: String, prisonId: String? = "Mock01") = Prisoner(prisonerNumber, prisonId, firstName = "Robin", lastName = "Blackbird")
 }

@@ -126,7 +126,7 @@ class PrisonCourtDocumentControllerTest : IntegrationTestBase() {
     val day = day()
 
     assertThat(day.hearings.single().documents).hasSize(2)
-    assertThat(day.prisonerNumbers).containsExactly(MATCHING_PRISONER_NUMBER)
+    assertThat(day.people.map { it.prisonerNumber }).containsExactly(MATCHING_PRISONER_NUMBER)
   }
 
   @Test
