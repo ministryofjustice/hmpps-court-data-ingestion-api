@@ -24,14 +24,14 @@ class PrisonerSearchServiceTest {
     whenever(prisonerSearchApiClient.getPrisonersInPrison("LEI", 0, 1000)).thenReturn(page("A1111AA", last = false))
     whenever(prisonerSearchApiClient.getPrisonersInPrison("LEI", 1, 1000)).thenReturn(page("A2222AA"))
 
-    assertThat(service.getPrisonerNumbersInPrison("LEI")).containsExactly("A1111AA", "A2222AA")
+    assertThat(service.getPrisonersInPrison("LEI").map { it.prisonerNumber }).containsExactly("A1111AA", "A2222AA")
   }
 
   @Test
   fun `stops at the page cap if the last page is never reported`() {
     whenever(prisonerSearchApiClient.getPrisonersInPrison(eq("LEI"), any(), any())).thenReturn(page("A1111AA", last = false))
 
-    service.getPrisonerNumbersInPrison("LEI")
+    service.getPrisonersInPrison("LEI")
 
     verify(prisonerSearchApiClient, times(10)).getPrisonersInPrison(eq("LEI"), any(), any())
   }
