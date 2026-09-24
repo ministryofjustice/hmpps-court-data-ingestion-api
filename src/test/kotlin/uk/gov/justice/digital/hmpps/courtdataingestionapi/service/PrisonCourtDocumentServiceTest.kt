@@ -63,7 +63,7 @@ class PrisonCourtDocumentServiceTest {
       downloadedFileSha256 = "file-2"
       ingestionAt = LocalDateTime.now().minusHours(1)
     }
-    whenever(prisonerSearchService.getPrisonerNumbersInPrison("LEI")).thenReturn(listOf("A1111AA"))
+    whenever(prisonerSearchService.getPrisonersInPrison("LEI")).thenReturn(listOf(prisoner()))
     whenever(
       courtDocumentRepository.findByPrisonerNumberInAndIngestionAtGreaterThanEqualAndIngestionAtLessThanOrderByIngestionAtDesc(
         any(),
@@ -83,7 +83,7 @@ class PrisonCourtDocumentServiceTest {
 
   @Test
   fun `a document with no hearing is kept apart from the hearings`() {
-    whenever(prisonerSearchService.getPrisonerNumbersInPrison("LEI")).thenReturn(listOf("A1111AA"))
+    whenever(prisonerSearchService.getPrisonersInPrison("LEI")).thenReturn(listOf(prisoner()))
     whenever(
       courtDocumentRepository.findByPrisonerNumberInAndIngestionAtGreaterThanEqualAndIngestionAtLessThanOrderByIngestionAtDesc(
         any(),
@@ -135,7 +135,7 @@ class PrisonCourtDocumentServiceTest {
       downloadedFileSha256 = "file-2"
       ingestionAt = LocalDateTime.now().minusHours(1)
     }
-    whenever(prisonerSearchService.getPrisonerNumbersInPrison("LEI")).thenReturn(listOf("A1111AA"))
+    whenever(prisonerSearchService.getPrisonersInPrison("LEI")).thenReturn(listOf(prisoner()))
     whenever(
       courtDocumentRepository.findByPrisonerNumberInAndIngestionAtGreaterThanEqualAndIngestionAtLessThanOrderByIngestionAtDesc(any(), any(), any()),
     ).thenReturn(listOf(c, b, a))
@@ -148,7 +148,7 @@ class PrisonCourtDocumentServiceTest {
 
   @Test
   fun `documents with no hash are never treated as copies of each other`() {
-    whenever(prisonerSearchService.getPrisonerNumbersInPrison("LEI")).thenReturn(listOf("A1111AA"))
+    whenever(prisonerSearchService.getPrisonersInPrison("LEI")).thenReturn(listOf(prisoner()))
     whenever(
       courtDocumentRepository.findByPrisonerNumberInAndIngestionAtGreaterThanEqualAndIngestionAtLessThanOrderByIngestionAtDesc(any(), any(), any()),
     ).thenReturn(documents(2))
