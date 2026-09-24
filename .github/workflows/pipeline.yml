@@ -79,7 +79,7 @@ jobs:
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/docker_build.yml@v2 # WORKFLOW_VERSION
     needs:
       - gradle_verify
-      - pact_publish
+#      - pact_publish
     with:
       docker_registry: 'ghcr.io'
       registry_org: 'ministryofjustice'
