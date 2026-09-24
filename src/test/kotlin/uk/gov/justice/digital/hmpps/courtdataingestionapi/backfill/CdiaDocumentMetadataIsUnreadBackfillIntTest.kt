@@ -38,7 +38,7 @@ class CdiaDocumentMetadataIsUnreadBackfillIntTest : IntegrationTestBase() {
 
     val document = copyDocument(courtDocument.prisonDocumentId)
     val pageOneResults = mutableListOf(document)
-    HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.stubSearch(
+    HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.stubFacetSearch(
       0,
       objectMapper.writeValueAsString(
         DocumentSearchResult(
