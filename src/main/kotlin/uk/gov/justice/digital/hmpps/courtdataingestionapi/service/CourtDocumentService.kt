@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentVi
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocument
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentHearing
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentView
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentViewType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Document
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import java.time.LocalDateTime
@@ -28,7 +29,11 @@ class CourtDocumentService(
 ) {
 
   @Transactional
-  fun recordDocumentView(prisonDocumentId: UUID, courtDocumentView: CourtDocumentView) = recordEvent(prisonDocumentId, courtDocumentView, CourtDocumentViewEventType.VIEWED)
+  fun recordDocumentView(prisonDocumentId: UUID, courtDocumentView: CourtDocumentView) = recordEvent(
+    prisonDocumentId,
+    courtDocumentView,
+    if (courtDocumentView.type == CourtDocumentViewType.DOCUMENT_PROCESSED) CourtDocumentViewEventType.WARRANT_PROCESSED else CourtDocumentViewEventType.VIEWED,
+  )
 
   @Transactional
   fun recordMarkAsNew(prisonDocumentId: UUID, courtDocumentView: CourtDocumentView) = recordEvent(prisonDocumentId, courtDocumentView, CourtDocumentViewEventType.MARKED_NEW)

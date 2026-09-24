@@ -25,7 +25,7 @@ object ToDoScenarioEngine {
   }
 
   private fun isUnread(document: ScenarioDocument, cutoff: LocalDateTime): Boolean = when (latestEventType(document)) {
-    CourtDocumentViewEventType.VIEWED -> false
+    CourtDocumentViewEventType.VIEWED, CourtDocumentViewEventType.WARRANT_PROCESSED -> false
     CourtDocumentViewEventType.MARKED_NEW -> true
     null -> document.ingestedAt.isAfter(cutoff)
   }
