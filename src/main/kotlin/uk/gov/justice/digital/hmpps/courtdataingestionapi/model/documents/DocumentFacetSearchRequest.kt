@@ -17,17 +17,7 @@ data class MetadataFilter(
   val field: String,
   val operator: FilterOperator = FilterOperator.EQUALS,
   val values: List<String> = emptyList(),
-) {
-  val value: String
-    @JsonIgnore
-    get() {
-      if (values.size == 1) {
-        return values.first()
-      } else {
-        error("Expected only one value for the filter operation $operator")
-      }
-    }
-}
+)
 
 enum class FilterOperator {
   EQUALS,

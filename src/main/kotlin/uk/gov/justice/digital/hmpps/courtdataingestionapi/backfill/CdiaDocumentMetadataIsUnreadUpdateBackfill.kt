@@ -30,6 +30,7 @@ class CdiaDocumentMetadataIsUnreadUpdateBackfill(
   override fun selectBatch(cursor: String, batchSize: Int): BackfillBatch<Document> {
     if (cursor.isEmpty()) documentsAttempted.clear()
 
+    val page = parseCursorInt(cursor)
     val searchRequest = DocumentFacetSearchRequest(
       documentTypes = DocumentApiType.entries,
       metadataFilters = listOf(
@@ -38,6 +39,7 @@ class CdiaDocumentMetadataIsUnreadUpdateBackfill(
         MetadataFilter("prisonerId", FilterOperator.EXISTS),
         MetadataFilter("isUnread", values = listOf("true")),
       ),
+      page = page,
       pageSize = batchSize,
     )
     val results = try {
@@ -59,7 +61,8 @@ class CdiaDocumentMetadataIsUnreadUpdateBackfill(
     }
 
     documentsNotPreviouslyAttempted.forEach { documentsAttempted.add(it.documentUuid) }
-    return BackfillBatch(documentsNotPreviouslyAttempted, CURSOR)
+    val nextCursor = (page + 1).toString()
+    return BackfillBatch(documentsNotPreviouslyAttempted, nextCursor)
   }
 
   override fun process(item: Document) {
