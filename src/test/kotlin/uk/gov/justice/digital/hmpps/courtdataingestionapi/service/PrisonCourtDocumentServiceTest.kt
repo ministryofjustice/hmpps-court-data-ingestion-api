@@ -6,6 +6,7 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtHearingEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.prisonersearch.Prisoner
@@ -20,7 +21,7 @@ class PrisonCourtDocumentServiceTest {
   private val prisonerSearchService: PrisonerSearchService = mock()
   private val service = PrisonCourtDocumentService(courtDocumentRepository, prisonerSearchService)
 
-  private fun prisoner(prisonerNumber: String = "A1111AA") = Prisoner(prisonerNumber, "LEI", firstName = "Chappel", lastName = "House")
+  private fun prisoner(prisonerNumber: String = "A1111AA") = Prisoner(prisonerNumber, "LEI", firstName = "Robin", lastName = "Smith")
 
   private fun documents(count: Int) = (1..count).map {
     CourtDocumentEntity(
@@ -35,6 +36,66 @@ class PrisonCourtDocumentServiceTest {
       ingestionAt = LocalDateTime.now(),
       prisonerNumber = "A1111AA",
     )
+  }
+
+  private fun hearing() = CourtHearingEntity(
+    hmctsCourtId = UUID.randomUUID(),
+    courtName = "Leeds Crown Court",
+    hearingType = "First hearing",
+    hearingDate = LocalDate.now(),
+    hmctsCourtHearingId = UUID.randomUUID(),
+    courtDocuments = mutableListOf(),
+    courtCharges = mutableListOf(),
+    nextCourtHearings = mutableListOf(),
+  )
+
+  @Test
+  fun `documents on one hearing are one entry, with the newest arrival as its time`() {
+    val onOneHearing = hearing()
+    val (earlier, later) = documents(2)
+    earlier.apply {
+      courtHearing = onOneHearing
+      downloadedFileSha256 = "file-1"
+      ingestionAt = LocalDateTime.now().minusHours(2)
+    }
+    later.apply {
+      courtHearing = onOneHearing
+      downloadedFileSha256 = "file-2"
+      ingestionAt = LocalDateTime.now().minusHours(1)
+    }
+    whenever(prisonerSearchService.getPrisonersInPrison("LEI")).thenReturn(listOf(prisoner()))
+    whenever(
+      courtDocumentRepository.findByPrisonerNumberInAndIngestionAtGreaterThanEqualAndIngestionAtLessThanOrderByIngestionAtDesc(
+        any(),
+        any(),
+        any(),
+      ),
+    ).thenReturn(listOf(later, earlier))
+
+    val day = service.day("LEI", LocalDate.now())
+
+    assertThat(day.hearings).hasSize(1)
+    assertThat(day.hearings.single().documents).hasSize(2)
+    assertThat(day.hearings.single().courtName).isEqualTo("Leeds Crown Court")
+    assertThat(day.hearings.single().receivedAt).isEqualTo(later.ingestionAt)
+    assertThat(day.documentsWithoutAHearing).isEmpty()
+  }
+
+  @Test
+  fun `a document with no hearing is kept apart from the hearings`() {
+    whenever(prisonerSearchService.getPrisonersInPrison("LEI")).thenReturn(listOf(prisoner()))
+    whenever(
+      courtDocumentRepository.findByPrisonerNumberInAndIngestionAtGreaterThanEqualAndIngestionAtLessThanOrderByIngestionAtDesc(
+        any(),
+        any(),
+        any(),
+      ),
+    ).thenReturn(documents(1))
+
+    val day = service.day("LEI", LocalDate.now())
+
+    assertThat(day.hearings).isEmpty()
+    assertThat(day.documentsWithoutAHearing).hasSize(1)
   }
 
   @Test
@@ -57,6 +118,45 @@ class PrisonCourtDocumentServiceTest {
   }
 
   @Test
+  fun `repeat copies are dropped, following a chain of shared hashes, keeping the oldest`() {
+    val (a, b, c) = documents(3)
+    a.apply {
+      extractedTextSha256 = "text-1"
+      downloadedFileSha256 = "file-1"
+      ingestionAt = LocalDateTime.now().minusHours(3)
+    }
+    b.apply {
+      extractedTextSha256 = "text-1"
+      downloadedFileSha256 = "file-2"
+      ingestionAt = LocalDateTime.now().minusHours(2)
+    }
+    c.apply {
+      extractedTextSha256 = "text-3"
+      downloadedFileSha256 = "file-2"
+      ingestionAt = LocalDateTime.now().minusHours(1)
+    }
+    whenever(prisonerSearchService.getPrisonersInPrison("LEI")).thenReturn(listOf(prisoner()))
+    whenever(
+      courtDocumentRepository.findByPrisonerNumberInAndIngestionAtGreaterThanEqualAndIngestionAtLessThanOrderByIngestionAtDesc(any(), any(), any()),
+    ).thenReturn(listOf(c, b, a))
+
+    val week = service.week("LEI", LocalDate.now())
+
+    assertThat(week.totalDocuments).isEqualTo(1)
+    assertThat(week.documents!!.single().prisonDocumentId).isEqualTo(a.prisonDocumentId)
+  }
+
+  @Test
+  fun `documents with no hash are never treated as copies of each other`() {
+    whenever(prisonerSearchService.getPrisonersInPrison("LEI")).thenReturn(listOf(prisoner()))
+    whenever(
+      courtDocumentRepository.findByPrisonerNumberInAndIngestionAtGreaterThanEqualAndIngestionAtLessThanOrderByIngestionAtDesc(any(), any(), any()),
+    ).thenReturn(documents(2))
+
+    assertThat(service.week("LEI", LocalDate.now()).totalDocuments).isEqualTo(2)
+  }
+
+  @Test
   fun `the day names the people it covers, from the roll`() {
     whenever(prisonerSearchService.getPrisonersInPrison("LEI")).thenReturn(listOf(prisoner()))
     whenever(
@@ -70,7 +170,7 @@ class PrisonCourtDocumentServiceTest {
     val person = service.day("LEI", LocalDate.now()).people.single()
 
     assertThat(person.prisonerNumber).isEqualTo("A1111AA")
-    assertThat(person.firstName).isEqualTo("Chappel")
-    assertThat(person.lastName).isEqualTo("House")
+    assertThat(person.firstName).isEqualTo("Robin")
+    assertThat(person.lastName).isEqualTo("Smith")
   }
 }

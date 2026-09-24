@@ -113,20 +113,15 @@ class PrisonCourtDocumentControllerTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `two documents on one hearing are one hearing`() {
+  fun `a document sent twice is shown once, as it is on the documents tab`() {
     prisonerSearchApi.stubPrisonersInPrison(PRISON, MATCHING_PRISONER_NUMBER)
-    val first = UUID.randomUUID().also { hmctsSubcriptionApi.stubFile(it) }
-    val second = UUID.randomUUID().also { hmctsSubcriptionApi.stubFile(it) }
-    sendSubscriptionNotification(MATCHING_CORE_PERSON, documentId = first)
-    sendSubscriptionNotification(MATCHING_CORE_PERSON, documentId = second)
-    awaitAtMost30Secs untilCallTo {
-      courtDocumentRepository.countByMasterDefendantId(MATCHING_CORE_PERSON)
-    } matches { it == 2L }
+    sendTwoDocuments()
 
     val day = day()
 
-    assertThat(day.hearings.single().documents).hasSize(2)
+    assertThat(day.hearings.single().documents).hasSize(1)
     assertThat(day.people.map { it.prisonerNumber }).containsExactly(MATCHING_PRISONER_NUMBER)
+    assertThat(week().totalDocuments).isEqualTo(1)
   }
 
   @Test
@@ -193,6 +188,22 @@ class PrisonCourtDocumentControllerTest : IntegrationTestBase() {
       getRequestedFor(urlPathEqualTo("/prisoner-search/prison/$PRISON"))
         .withHeader("Content-Type", equalTo("application/json")),
     )
+  }
+
+  /**
+   * Two notifications, which become two documents of the same file: the document store mocks
+   * return one upload id and one file for every document, so nothing here can make them differ.
+   * Waits for both to be hashed and linked to their hearing, which enrichment writes after the
+   * row first appears.
+   */
+  private fun sendTwoDocuments() {
+    val firstId = UUID.randomUUID().also { hmctsSubcriptionApi.stubFile(it) }
+    val secondId = UUID.randomUUID().also { hmctsSubcriptionApi.stubFile(it) }
+    sendSubscriptionNotification(MATCHING_CORE_PERSON, documentId = firstId)
+    sendSubscriptionNotification(MATCHING_CORE_PERSON, documentId = secondId)
+    awaitAtMost30Secs untilCallTo {
+      courtDocumentRepository.findAll().count { it.downloadedFileSha256 != null && it.courtHearing != null }
+    } matches { it == 2 }
   }
 
   private fun weekUri(date: LocalDate = LocalDate.now()) = "/court-document/prison/$PRISON/week?date=$date"
