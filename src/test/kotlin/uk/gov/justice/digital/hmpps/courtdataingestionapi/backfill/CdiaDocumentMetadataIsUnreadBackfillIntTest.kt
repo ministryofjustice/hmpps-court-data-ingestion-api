@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.backfill
 
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -26,6 +27,11 @@ class CdiaDocumentMetadataIsUnreadBackfillIntTest : IntegrationTestBase() {
   @BeforeEach
   fun setup() {
     courtDocumentRepository.deleteAll()
+    notificationConfigRepository.deleteAll()
+  }
+
+  @AfterEach
+  fun resetSetup() {
     notificationConfigRepository.deleteAll()
   }
 
