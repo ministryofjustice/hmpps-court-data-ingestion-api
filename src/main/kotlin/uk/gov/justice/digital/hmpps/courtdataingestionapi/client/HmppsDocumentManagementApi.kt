@@ -139,6 +139,7 @@ class HmppsDocumentManagementApi(
     .block()
     ?: error("No documents returned")
 
+  @Deprecated("Use search(DocumentFacetSearchRequest) instead")
   fun search(searchRequest: DocumentSearchRequest): DocumentSearchResult {
     log.info("Searching for documents {}", searchRequest)
     return webClient.post()
@@ -153,7 +154,7 @@ class HmppsDocumentManagementApi(
       ?: error("Error in search")
   }
 
-  fun facetSearch(facetSearchRequest: DocumentFacetSearchRequest): DocumentSearchResult {
+  fun search(facetSearchRequest: DocumentFacetSearchRequest): DocumentSearchResult {
     log.info("Searching for documents {}", facetSearchRequest)
     return webClient.post()
       .uri("/documents/search")

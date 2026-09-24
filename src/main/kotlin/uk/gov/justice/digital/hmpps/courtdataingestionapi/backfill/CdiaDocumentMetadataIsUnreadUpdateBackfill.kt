@@ -41,7 +41,7 @@ class CdiaDocumentMetadataIsUnreadUpdateBackfill(
       pageSize = batchSize,
     )
     val results = try {
-      documentManagementApi.facetSearch(searchRequest)
+      documentManagementApi.search(searchRequest)
     } catch (e: Exception) {
       log.error("Error while searching document", e)
       return BackfillBatch(emptyList(), CURSOR)
