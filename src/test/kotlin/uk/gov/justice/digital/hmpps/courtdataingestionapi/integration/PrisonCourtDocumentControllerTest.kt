@@ -117,7 +117,8 @@ class PrisonCourtDocumentControllerTest : IntegrationTestBase() {
     prisonerSearchApi.stubPrisonersInPrison(PRISON, MATCHING_PRISONER_NUMBER)
     sendTwoDocuments()
 
-    assertThat(day().hearings.single().documents).hasSize(1)
+    assertThat(day.hearings.single().documents).hasSize(1)
+    assertThat(day.people.map { it.prisonerNumber }).containsExactly(MATCHING_PRISONER_NUMBER)
     assertThat(week().totalDocuments).isEqualTo(1)
   }
 

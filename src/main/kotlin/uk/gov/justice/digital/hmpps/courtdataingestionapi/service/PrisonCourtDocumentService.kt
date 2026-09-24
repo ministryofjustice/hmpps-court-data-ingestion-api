@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.PrisonCourtD
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.PrisonCourtDocumentDayCount
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.PrisonCourtDocumentWeek
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.PrisonCourtHearing
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.PrisonCourtPerson
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -25,8 +26,8 @@ class PrisonCourtDocumentService(
     val thisWeek = LocalDate.now().with(DayOfWeek.MONDAY)
     if (from.isAfter(thisWeek)) throw ValidationException("That week has not happened yet")
 
-    val roll = prisonerSearchService.getPrisonerNumbersInPrison(prisonCode)
-    val documents = received(roll, from, from.plusDays(7))
+    val roll = prisonerSearchService.getPrisonersInPrison(prisonCode)
+    val documents = received(roll.map { it.prisonerNumber }, from, from.plusDays(7))
     val byDay = documents.groupBy { it.ingestionAt.toLocalDate() }
 
     return PrisonCourtDocumentWeek(
@@ -49,8 +50,8 @@ class PrisonCourtDocumentService(
   fun day(prisonCode: String, date: LocalDate): PrisonCourtDocumentDay {
     if (date.isAfter(LocalDate.now())) throw ValidationException("That day has not happened yet")
 
-    val roll = prisonerSearchService.getPrisonerNumbersInPrison(prisonCode)
-    val documents = received(roll, date, date.plusDays(1))
+    val roll = prisonerSearchService.getPrisonersInPrison(prisonCode)
+    val documents = received(roll.map { it.prisonerNumber }, date, date.plusDays(1))
     val (withHearing, withoutHearing) = documents.partition { it.courtHearing != null }
 
     return PrisonCourtDocumentDay(
@@ -73,7 +74,10 @@ class PrisonCourtDocumentService(
           )
         },
       documentsWithoutAHearing = withoutHearing.map { it.toApi() },
-      prisonerNumbers = documents.mapNotNull { it.prisonerNumber }.distinct(),
+      people = documents.mapNotNull { it.prisonerNumber }.distinct().map { prisonerNumber ->
+        val prisoner = roll.first { it.prisonerNumber == prisonerNumber }
+        PrisonCourtPerson(prisonerNumber, prisoner.firstName, prisoner.lastName)
+      },
     )
   }
 

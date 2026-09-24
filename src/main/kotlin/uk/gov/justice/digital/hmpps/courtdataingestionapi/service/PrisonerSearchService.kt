@@ -24,14 +24,14 @@ class PrisonerSearchService(
     }
   }
 
-  fun getPrisonerNumbersInPrison(prisonId: String): List<String> {
-    val prisonerNumbers = mutableListOf<String>()
+  fun getPrisonersInPrison(prisonId: String): List<Prisoner> {
+    val prisoners = mutableListOf<Prisoner>()
     var page = 0
     do {
       val response = prisonerSearchApiClient.getPrisonersInPrison(prisonId, page++, PAGE_SIZE)
-      prisonerNumbers += response.content.map { it.prisonerNumber }
+      prisoners += response.content
     } while (!response.last && page < MAX_PAGES)
-    return prisonerNumbers
+    return prisoners
   }
 
   private companion object {
