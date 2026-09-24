@@ -21,7 +21,7 @@ class PrisonCourtDocumentServiceTest {
   private val prisonerSearchService: PrisonerSearchService = mock()
   private val service = PrisonCourtDocumentService(courtDocumentRepository, prisonerSearchService)
 
-  private fun prisoner(prisonerNumber: String = "A1111AA") = Prisoner(prisonerNumber, "LEI", firstName = "Chappel", lastName = "House")
+  private fun prisoner(prisonerNumber: String = "A1111AA") = Prisoner(prisonerNumber, "LEI", firstName = "Robin", lastName = "Smith")
 
   private fun documents(count: Int) = (1..count).map {
     CourtDocumentEntity(
