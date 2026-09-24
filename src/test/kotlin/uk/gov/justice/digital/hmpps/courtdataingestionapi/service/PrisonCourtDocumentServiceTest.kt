@@ -8,6 +8,7 @@ import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.prisonersearch.Prisoner
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -18,6 +19,8 @@ class PrisonCourtDocumentServiceTest {
   private val courtDocumentRepository: CourtDocumentRepository = mock()
   private val prisonerSearchService: PrisonerSearchService = mock()
   private val service = PrisonCourtDocumentService(courtDocumentRepository, prisonerSearchService)
+
+  private fun prisoner(prisonerNumber: String = "A1111AA") = Prisoner(prisonerNumber, "LEI", firstName = "Chappel", lastName = "House")
 
   private fun documents(count: Int) = (1..count).map {
     CourtDocumentEntity(
@@ -36,7 +39,7 @@ class PrisonCourtDocumentServiceTest {
 
   @Test
   fun `lists the week when it is small enough to read`() {
-    whenever(prisonerSearchService.getPrisonerNumbersInPrison("LEI")).thenReturn(listOf("A1111AA"))
+    whenever(prisonerSearchService.getPrisonersInPrison("LEI")).thenReturn(listOf(prisoner()))
     whenever(courtDocumentRepository.findByPrisonerNumberInAndIngestionAtGreaterThanEqualAndIngestionAtLessThanOrderByIngestionAtDesc(any(), any(), any())).thenReturn(documents(100))
 
     assertThat(service.week("LEI", LocalDate.now()).documents).hasSize(100)
@@ -44,12 +47,30 @@ class PrisonCourtDocumentServiceTest {
 
   @Test
   fun `gives counts only when the week is too big to list`() {
-    whenever(prisonerSearchService.getPrisonerNumbersInPrison("LEI")).thenReturn(listOf("A1111AA"))
+    whenever(prisonerSearchService.getPrisonersInPrison("LEI")).thenReturn(listOf(prisoner()))
     whenever(courtDocumentRepository.findByPrisonerNumberInAndIngestionAtGreaterThanEqualAndIngestionAtLessThanOrderByIngestionAtDesc(any(), any(), any())).thenReturn(documents(101))
 
     val week = service.week("LEI", LocalDate.now())
 
     assertThat(week.documents).isNull()
     assertThat(week.totalDocuments).isEqualTo(101)
+  }
+
+  @Test
+  fun `the day names the people it covers, from the roll`() {
+    whenever(prisonerSearchService.getPrisonersInPrison("LEI")).thenReturn(listOf(prisoner()))
+    whenever(
+      courtDocumentRepository.findByPrisonerNumberInAndIngestionAtGreaterThanEqualAndIngestionAtLessThanOrderByIngestionAtDesc(
+        any(),
+        any(),
+        any(),
+      ),
+    ).thenReturn(documents(1))
+
+    val person = service.day("LEI", LocalDate.now()).people.single()
+
+    assertThat(person.prisonerNumber).isEqualTo("A1111AA")
+    assertThat(person.firstName).isEqualTo("Chappel")
+    assertThat(person.lastName).isEqualTo("House")
   }
 }
