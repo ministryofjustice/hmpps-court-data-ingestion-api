@@ -11,6 +11,7 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.bodyToMono
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Document
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentApiType
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentFacetSearchRequest
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentSearchRequest
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentSearchResult
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsFile
@@ -148,6 +149,20 @@ class HmppsDocumentManagementApi(
       .bodyValue(searchRequest)
       .retrieve()
       .bodyToMono(DocumentSearchResult::class.java)
+      .block()
+      ?: error("Error in search")
+  }
+
+  fun facetSearch(facetSearchRequest: DocumentFacetSearchRequest): DocumentSearchResult {
+    log.info("Searching for documents {}", facetSearchRequest)
+    return webClient.post()
+      .uri("/documents/search")
+      .header("Service-Name", appName)
+      .header("Username", SYSTEM_USERNAME)
+      .accept(MediaType.APPLICATION_JSON)
+      .bodyValue(facetSearchRequest)
+      .retrieve()
+      .bodyToMono<DocumentSearchResult>()
       .block()
       ?: error("Error in search")
   }
