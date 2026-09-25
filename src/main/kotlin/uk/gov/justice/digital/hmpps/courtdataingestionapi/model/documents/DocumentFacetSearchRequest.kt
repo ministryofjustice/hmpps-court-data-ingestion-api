@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents
 data class DocumentFacetSearchRequest(
 
   val documentTypes: List<DocumentApiType>?,
+  val canonical: Boolean? = null,
 
   val page: Int = 0,
   val pageSize: Int = 10,

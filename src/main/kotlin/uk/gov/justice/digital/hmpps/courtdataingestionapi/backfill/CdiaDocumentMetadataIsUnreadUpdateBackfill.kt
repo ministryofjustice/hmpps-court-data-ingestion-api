@@ -33,11 +33,11 @@ class CdiaDocumentMetadataIsUnreadUpdateBackfill(
     val page = parseCursorInt(cursor)
     val searchRequest = DocumentFacetSearchRequest(
       documentTypes = DocumentApiType.entries,
+      canonical = true,
       metadataFilters = listOf(
         MetadataFilter("source", values = listOf(HmppsDocumentManagementApi.COURT_DATA_DOCUMENT_SOURCE)),
         MetadataFilter("status", values = listOf(DocumentMetadataStatus.ACTIVE.name)),
         MetadataFilter("prisonerId", FilterOperator.EXISTS),
-//        MetadataFilter("isUnread", values = listOf("true")),
       ),
       page = page,
       pageSize = batchSize,
@@ -82,10 +82,7 @@ class CdiaDocumentMetadataIsUnreadUpdateBackfill(
     }
 
     if (courtDocuments.first().isUnread) {
-      log.debug("Backfill {} : document {} isUnread=TRUE, court document isUnread=TRUE, no changes",
-        id,
-        item.documentUuid,
-      )
+      log.debug("Backfill {} : document {} isUnread=TRUE, court document isUnread=TRUE, no changes", id, item.documentUuid)
       return
     }
 

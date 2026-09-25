@@ -40,14 +40,14 @@ class CdiaDocumentMetadataIsUnreadBackfillIntTest : IntegrationTestBase() {
   fun `Documents related to a prison with no date set, should NOT be updated and remain as isUnread TRUE`(newDocumentDateFrom: LocalDateTime?, expected: Int) {
     // Setup
     sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON)
-    val unreadCourtDocument = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
-    val unreadDocument = copyDocument(unreadCourtDocument.prisonDocumentId)
+    val newCourtDocument = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
+    val newDocument = copyDocument(newCourtDocument.prisonDocumentId)
 
     sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON)
     val readCourtDocument = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
-    val readDocument = copyDocument(readCourtDocument.prisonDocumentId, true)
+    val readDocument = copyDocument(readCourtDocument.prisonDocumentId, false)
 
-    val pageOneResults = mutableListOf(unreadDocument, readDocument)
+    val pageOneResults = mutableListOf(newDocument, readDocument)
     HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.stubFacetSearch(
       0,
       objectMapper.writeValueAsString(
@@ -57,6 +57,7 @@ class CdiaDocumentMetadataIsUnreadBackfillIntTest : IntegrationTestBase() {
         ),
       ),
     )
+    HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.stubMergeMetadata(newDocument.documentUuid)
     HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.stubMergeMetadata(readDocument.documentUuid)
 
     newDocumentDateFrom?.let {
