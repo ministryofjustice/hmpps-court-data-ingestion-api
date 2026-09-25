@@ -28,10 +28,10 @@ class CorePersonApiClientPactTest {
   fun `get person by common platform ID`(mockServer: MockServer) {
     val client = createCorePersonApiClientMock(mockServer.getUrl())
 
-    val person = client.getPersonByCommonPlatformId(DEFENDANT_ID)
+    val person = client.getPersonByCommonPlatformId(UUID.fromString(DEFENDANT_ID))
 
     assertThat(person.identifiers.defendantIds).isNotEmpty()
-    assertThat(person.identifiers.defendantIds.first()).isEqualTo(DEFENDANT_ID.toString())
+    assertThat(person.identifiers.defendantIds.first()).isEqualTo(DEFENDANT_ID)
     assertThat(person.identifiers.prisonNumbers).isNotEmpty()
     assertThat(person.identifiers.prisonNumbers.first()).isEqualTo(PRISONER_NUMBER)
   }
@@ -48,7 +48,7 @@ class CorePersonApiClientPactTest {
 
     person?.identifiers.let {
       assertThat(it?.defendantIds).isNotEmpty()
-      assertThat(it?.defendantIds?.first()).isEqualTo(DEFENDANT_ID.toString())
+      assertThat(it?.defendantIds?.first()).isEqualTo(DEFENDANT_ID)
       assertThat(it?.prisonNumbers).isNotEmpty()
       assertThat(it?.prisonNumbers?.first()).isEqualTo(PRISONER_NUMBER)
     }
@@ -80,7 +80,7 @@ class CorePersonApiClientPactTest {
 
   companion object {
     const val PRISONER_NUMBER = "OFF900"
-    private val DEFENDANT_ID = UUID.randomUUID()
+    const val DEFENDANT_ID = "32d21920-969a-48d6-95aa-db401e556d05"
     private val JSON_HEADERS = mapOf("Content-Type" to "application/json")
 
     private fun createCorePersonApiClientMock(baseUrl: String): CorePersonProvider {
@@ -107,7 +107,7 @@ class CorePersonApiClientPactTest {
         identifiers.array("defendantIds") { defendantIds ->
           defendantIds.pactDslJsonArray.valueFromProviderState(
             "\${defendantId}",
-            DEFENDANT_ID.toString(),
+            DEFENDANT_ID
           )
         }
       }
