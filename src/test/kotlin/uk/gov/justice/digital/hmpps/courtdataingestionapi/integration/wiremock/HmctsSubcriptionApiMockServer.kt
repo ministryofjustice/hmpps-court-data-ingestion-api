@@ -87,14 +87,17 @@ class HmctsSubcriptionApiMockServer : WireMockServer(WIREMOCK_PORT) {
     )
   }
 
-  fun stubFile(documentId: UUID = IntegrationTestBase.COURT_DOCUMENT_ID) {
+  fun stubFile(
+    documentId: UUID = IntegrationTestBase.COURT_DOCUMENT_ID,
+    body: ByteArray = ClassPathResource("test.txt").contentAsByteArray,
+  ) {
     stubFor(
       get(urlEqualTo("/client-subscriptions/$TEST_SUBSCRIPTION_ID/documents/$documentId"))
         .willReturn(
           aResponse()
             .withHeader("Content-Type", "text/plain")
             .withStatus(200)
-            .withBody(ClassPathResource("test.txt").contentAsByteArray)
+            .withBody(body)
             .withHeader("Content-Disposition", "attachment; filename=\"test.txt\""),
         ),
     )
