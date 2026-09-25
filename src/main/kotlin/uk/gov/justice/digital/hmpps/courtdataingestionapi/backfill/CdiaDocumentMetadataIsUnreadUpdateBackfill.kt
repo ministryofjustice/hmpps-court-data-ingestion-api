@@ -11,8 +11,6 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Docume
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.FilterOperator
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.MetadataFilter
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtDocumentService
-import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Fetches documents from document-management-api and backfills the corrected isUnread metadata for documents uploaded in cdia
