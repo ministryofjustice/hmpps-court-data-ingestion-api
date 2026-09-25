@@ -38,4 +38,4 @@ jobs:
       environment: ${{ inputs.environment }}
       app_version: ${{ inputs.version }}
       slack_notification: 'false' # if 'true', it needs a valid (NON)PROD_RELEASES_SLACK_CHANNEL variable to be set
-      pact_consumer_deployment: false # TODO (CDIA-337): Change back to true once the plugin is available on the pact broker
+      pact_consumer_deployment: true
