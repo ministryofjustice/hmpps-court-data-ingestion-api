@@ -25,11 +25,7 @@ class CdiaDocumentMetadataIsUnreadUpdateBackfill(
 
   override val id = "cdia-document-is-unread"
 
-  private val documentsAttempted: MutableSet<UUID> = ConcurrentHashMap.newKeySet()
-
   override fun selectBatch(cursor: String, batchSize: Int): BackfillBatch<Document> {
-    if (cursor.isEmpty()) documentsAttempted.clear()
-
     val page = parseCursorInt(cursor)
     val searchRequest = DocumentFacetSearchRequest(
       documentTypes = DocumentApiType.entries,
@@ -49,20 +45,8 @@ class CdiaDocumentMetadataIsUnreadUpdateBackfill(
       return BackfillBatch(emptyList(), CURSOR)
     }
 
-    val documentsNotPreviouslyAttempted = results.results.filterNot { documentsAttempted.contains(it.documentUuid) }
-
-    if (documentsNotPreviouslyAttempted.isEmpty() && results.results.isNotEmpty()) {
-      log.error(
-        "Backfill {} made no progress: {} document(s) still marked as New and all already attempted",
-        id,
-        results.results.size,
-      )
-      return BackfillBatch(emptyList(), CURSOR)
-    }
-
-    documentsNotPreviouslyAttempted.forEach { documentsAttempted.add(it.documentUuid) }
     val nextCursor = (page + 1).toString()
-    return BackfillBatch(documentsNotPreviouslyAttempted, nextCursor)
+    return BackfillBatch(results.results, nextCursor)
   }
 
   override fun process(item: Document) {
