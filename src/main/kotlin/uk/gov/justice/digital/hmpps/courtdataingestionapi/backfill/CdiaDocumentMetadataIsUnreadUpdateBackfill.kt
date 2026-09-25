@@ -1,0 +1,79 @@
+package uk.gov.justice.digital.hmpps.courtdataingestionapi.backfill
+
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Component
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsDocumentManagementApi
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Document
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentApiType
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentFacetSearchRequest
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentMetadataStatus
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.FilterOperator
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.MetadataFilter
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtDocumentService
+
+/**
+ * Fetches documents from document-management-api and backfills the corrected isUnread metadata for documents uploaded in cdia
+ */
+@Component
+class CdiaDocumentMetadataIsUnreadUpdateBackfill(
+  private val documentManagementApi: HmppsDocumentManagementApi,
+  private val courtDocumentService: CourtDocumentService,
+) : Backfill<Document> {
+
+  override val id = "cdia-document-is-unread"
+
+  override fun selectBatch(cursor: String, batchSize: Int): BackfillBatch<Document> {
+    val page = parseCursorInt(cursor)
+    val searchRequest = DocumentFacetSearchRequest(
+      documentTypes = DocumentApiType.entries,
+      canonical = true,
+      metadataFilters = listOf(
+        MetadataFilter("source", values = listOf(HmppsDocumentManagementApi.COURT_DATA_DOCUMENT_SOURCE)),
+        MetadataFilter("status", values = listOf(DocumentMetadataStatus.ACTIVE.name)),
+        MetadataFilter("prisonerId", FilterOperator.EXISTS),
+      ),
+      page = page,
+      pageSize = batchSize,
+    )
+    val results = try {
+      documentManagementApi.search(searchRequest)
+    } catch (e: Exception) {
+      log.error("Error while searching document", e)
+      return BackfillBatch(emptyList(), CURSOR)
+    }
+
+    val nextCursor = (page + 1).toString()
+    return BackfillBatch(results.results, nextCursor)
+  }
+
+  override fun process(item: Document) {
+    if (!item.metadata["isUnread"].asBoolean()) {
+      log.debug("Backfill {} : document {}, isUnread=FALSE, no changes", id, item.documentUuid)
+      return
+    }
+
+    val courtDocuments = courtDocumentService.getCourtDocumentsByPersonIdAndPrisonDocumentIds(
+      item.metadata["prisonerId"].asString(),
+      listOf(item.documentUuid),
+    )
+
+    if (courtDocuments.isEmpty()) {
+      log.error("Backfill {} : failed to get court document by prisonDocumentId: {} ", id, item.documentUuid)
+      return
+    }
+
+    if (courtDocuments.first().isUnread) {
+      log.debug("Backfill {} : document {} isUnread=TRUE, court document isUnread=TRUE, no changes", id, item.documentUuid)
+      return
+    }
+
+    log.info("Backfill {} : document {} update isUnread=FALSE, was TRUE ", id, item.documentUuid)
+    documentManagementApi.mergeMetadata(item.documentUuid, metadata = mapOf("isUnread" to false))
+  }
+
+  companion object {
+    private val log: Logger = LoggerFactory.getLogger(CdiaDocumentMetadataIsUnreadUpdateBackfill::class.java)
+    private const val CURSOR = "0"
+  }
+}
