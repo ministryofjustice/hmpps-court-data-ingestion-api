@@ -95,13 +95,20 @@ class CorePersonApiClientPactTest {
       return proxyFactory.createClient<CorePersonProvider>()
     }
 
-    private fun buildCorePersonApiResponseBody(prisonerNumber: String = PRISONER_NUMBER, defendantId: UUID = DEFENDANT_ID) = newJsonBody { body ->
+    private fun buildCorePersonApiResponseBody() = newJsonBody { body ->
       body.`object`("identifiers") { identifiers ->
         identifiers.array("prisonNumbers") { prisonNumbers ->
-          prisonNumbers.stringType(prisonerNumber)
+          prisonNumbers.pactDslJsonArray.valueFromProviderState(
+            "\${prisonerNumber}",
+            PRISONER_NUMBER,
+          )
         }
+
         identifiers.array("defendantIds") { defendantIds ->
-          defendantIds.stringType(defendantId.toString())
+          defendantIds.pactDslJsonArray.valueFromProviderState(
+            "\${defendantId}",
+            DEFENDANT_ID.toString(),
+          )
         }
       }
     }.build()
