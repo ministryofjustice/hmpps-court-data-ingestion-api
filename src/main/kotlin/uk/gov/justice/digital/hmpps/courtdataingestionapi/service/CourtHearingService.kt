@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.config.FeatureToggles
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.config.TimezoneConfig
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtChargeEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtChargeResultEntity
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtChargeResultTextEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtHearingEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtNextHearingEntity
@@ -126,11 +127,17 @@ class CourtHearingService(
             wording = offence.title,
             code = offence.code,
             sortOrder = chargeOrder,
-            results = offence.results.map {
-              val (code, description) = it.resultDescription.split(" - ", limit = 2)
+            results = offence.results.map { result ->
+              val (code, description) = result.resultDescription.split(" - ", limit = 2)
               CourtChargeResultEntity(
                 resultCode = code,
                 resultDescription = description,
+                resultTexts = result.resultTexts.map { resultText ->
+                  CourtChargeResultTextEntity(
+                    key = resultText.label,
+                    value = resultText.value,
+                  )
+                },
               )
             },
           )
