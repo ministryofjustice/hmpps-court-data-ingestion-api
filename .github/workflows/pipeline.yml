@@ -56,31 +56,24 @@ jobs:
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/gradle_verify.yml@v2 # WORKFLOW_VERSION
     secrets: inherit
     with:
-      gradle-command: 'HMPPS_PACT_BROKER_USERNAME=$HMPPS_PACT_BROKER_USERNAME HMPPS_PACT_BROKER_PASSWORD=$HMPPS_PACT_BROKER_PASSWORD GITHUB_BRANCH=${{ github.ref_name }} BUILD_NUMBER=${{ needs.app_version.outputs.version}} ./gradlew assemble check'
+      gradle-command: 'BUILD_NUMBER=${{ needs.app_version.outputs.version}} ./gradlew assemble check'
       upload-build-artifacts: ${{ github.ref == 'refs/heads/main' }}
       java-version: "25"
     needs:
       - app_version
-    # TODO (CDIA-337): Waiting for plugin to be available
-#  pact_publish:
-#    name: Publish Pact contracts to broker
-#    needs:
-#      - app_version
-#      - gradle_verify
-#    uses: ministryofjustice/hmpps-github-actions/.github/workflows/gradle_verify.yml@v2 # WORKFLOW_VERSION
-#    secrets: inherit
-#    with:
-#      gradle-command: 'HMPPS_PACT_BROKER_USERNAME=$HMPPS_PACT_BROKER_USERNAME HMPPS_PACT_BROKER_PASSWORD=$HMPPS_PACT_BROKER_PASSWORD GITHUB_BRANCH=${{ github.ref_name }} ./gradlew pactTest pactPublish'
-#      java-version: "25"
-#      upload-test-artifacts: false
-#      upload-build-artifacts: false
+  pact_test_publish:
+    name: Publish Pact contracts to broker
+    needs:
+      - app_version
+      - gradle_verify
+    uses: ./.github/workflows/pact_test_publish.yml
+    secrets: inherit
   build:
     name: Build docker image from hmpps-github-actions
     if: github.ref == 'refs/heads/main'
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/docker_build.yml@v2 # WORKFLOW_VERSION
     needs:
-      - gradle_verify
-#      - pact_publish
+      - pact_test_publish
     with:
       docker_registry: 'ghcr.io'
       registry_org: 'ministryofjustice'
@@ -88,49 +81,39 @@ jobs:
       push: ${{ inputs.push || inputs.push == null }}
       docker_multiplatform: false
       download_build_artifacts: true
-  # TODO (CDIA-337): move the call to common deploy_env action to a local deploy_env version which should include can_i_deply, deploy and record_deploy call to the hmpps common ones
-  # TODO (CDIA-337): Waiting for can_i_deploy and record_deployment to be added to deploy_env common action
   deploy_dev:
     name: Deploy to the development environment
     needs:
       - build
       - helm_lint
-    uses: ministryofjustice/hmpps-github-actions/.github/workflows/deploy_env.yml@v2 # WORKFLOW_VERSION
+    uses: ministryofjustice/hmpps-github-actions/.github/workflows/pact_deploy_env.yml@v2 # WORKFLOW_VERSION
     secrets: inherit
     with:
       environment: 'dev'
       app_version: '${{ needs.build.outputs.app_version }}'
       slack_notification: 'false' # if 'true', it needs a valid NONPROD_RELEASES_SLACK_CHANNEL variable to be set
-  # TODO (CDIA-337): This will go away along with deploy_dev as par to of new local deploy_env
-  pact_record_deployment_dev:
-    name: Pact record deployment
-    needs:
-      - deploy_dev
-    uses: ministryofjustice/hmpps-github-actions/.github/workflows/pact_record_deployment.yml@v2
-    with:
-      pacticipant: hmpps-court-data-ingestion-api
-      app_version: ${{ inputs.version }}
-      environment: 'dev'
-    secrets: inherit
+      pact_consumer_deployment: true
   deploy_preprod:
      name: Deploy to pre-production environment
      needs:
        - build
        - deploy_dev
-     uses: ministryofjustice/hmpps-github-actions/.github/workflows/deploy_env.yml@v2 # WORKFLOW_VERSION
+     uses: ministryofjustice/hmpps-github-actions/.github/workflows/pact_deploy_env.yml@v2 # WORKFLOW_VERSION
      secrets: inherit
      with:
        environment: 'preprod'
        app_version: '${{ needs.build.outputs.app_version }}'
        slack_notification: 'false' # if 'true', it needs a valid NONPROD_RELEASES_SLACK_CHANNEL variable to be set
+       pact_consumer_deployment: true
   deploy_prod:
      name: Deploy to production environment
      needs:
        - build
        - deploy_preprod
-     uses: ministryofjustice/hmpps-github-actions/.github/workflows/deploy_env.yml@v2 # WORKFLOW_VERSION
+     uses: ministryofjustice/hmpps-github-actions/.github/workflows/pact_deploy_env.yml@v2 # WORKFLOW_VERSION
      secrets: inherit
      with:
        environment: 'prod'
        app_version: '${{ needs.build.outputs.app_version }}'
        slack_notification: 'false' # if 'true', it needs a valid PROD_RELEASES_SLACK_CHANNEL variable to be set
+       pact_consumer_deployment: true

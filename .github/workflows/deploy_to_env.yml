@@ -28,33 +28,14 @@ jobs:
     secrets: inherit
     with:
       environment: ${{ inputs.environment }}
-#  pact_can_i_deploy:
-#    name: pact check can I deploy
-#    needs:
-#      - helm_lint
-#    uses: ministryofjustice/hmpps-github-actions/.github/workflows/pact_can_i_deploy.yml@v2
-#    with:
-#      pacticipant: hmpps-court-data-ingestion-api
-#      version: ${{ github.sha }}
-#      to_environment: ${{ inputs.environment }}
-#    secrets: inherit
   deploy_env:
     name: Deploy to environment
     needs:
       - helm_lint
-    uses: ministryofjustice/hmpps-github-actions/.github/workflows/deploy_env.yml@v2 # WORKFLOW_VERSION
+    uses: ministryofjustice/hmpps-github-actions/.github/workflows/pact_deploy_env.yml@v2 # WORKFLOW_VERSION
     secrets: inherit
     with:
       environment: ${{ inputs.environment }}
       app_version: ${{ inputs.version }}
       slack_notification: 'false' # if 'true', it needs a valid (NON)PROD_RELEASES_SLACK_CHANNEL variable to be set
-  pact_record_deployment:
-    name: Pact record deployment
-    needs:
-      - deploy_env
-    uses: ministryofjustice/hmpps-github-actions/.github/workflows/pact_record_deployment.yml@v2
-    with:
-      pacticipant: hmpps-court-data-ingestion-api
-      app_version: ${{ inputs.version }}
-      environment: ${{ inputs.environment }}
-    secrets: inherit
+      pact_consumer_deployment: true
