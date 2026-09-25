@@ -107,7 +107,7 @@ class CorePersonApiClientPactTest {
         identifiers.array("defendantIds") { defendantIds ->
           defendantIds.pactDslJsonArray.valueFromProviderState(
             "\${defendantId}",
-            DEFENDANT_ID
+            DEFENDANT_ID,
           )
         }
       }
