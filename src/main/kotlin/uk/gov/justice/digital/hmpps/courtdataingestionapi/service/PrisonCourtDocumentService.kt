@@ -60,10 +60,10 @@ class PrisonCourtDocumentService(
       rollSize = roll.size,
       hearings = withHearing
         .groupBy { it.courtHearing!!.id }
-        .map { (hearingId, onHearing) ->
+        .map { (_, onHearing) ->
           val hearing = onHearing.first().courtHearing!!
           PrisonCourtHearing(
-            courtHearingId = hearingId,
+            courtHearingId = hearing.hmctsCourtHearingId,
             prisonerNumber = onHearing.first().prisonerNumber!!,
             hearingDate = hearing.hearingDate,
             hearingType = hearing.hearingType,
