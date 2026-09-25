@@ -28,15 +28,14 @@ jobs:
     secrets: inherit
     with:
       environment: ${{ inputs.environment }}
-  # TODO (CDIA-337): Add "can I deploy" job here
   deploy_env:
     name: Deploy to environment
     needs:
       - helm_lint
-    uses: ministryofjustice/hmpps-github-actions/.github/workflows/deploy_env.yml@v2 # WORKFLOW_VERSION
+    uses: ministryofjustice/hmpps-github-actions/.github/workflows/pact_deploy_env.yml@v2 # WORKFLOW_VERSION
     secrets: inherit
     with:
       environment: ${{ inputs.environment }}
       app_version: ${{ inputs.version }}
       slack_notification: 'false' # if 'true', it needs a valid (NON)PROD_RELEASES_SLACK_CHANNEL variable to be set
-  #  TODO (CDIA-337): Add "record deployment" job after deploy
+      pact_consumer_deployment: true
