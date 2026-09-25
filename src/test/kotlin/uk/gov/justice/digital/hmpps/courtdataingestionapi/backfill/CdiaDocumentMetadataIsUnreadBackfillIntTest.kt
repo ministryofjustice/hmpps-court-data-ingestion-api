@@ -7,6 +7,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.beans.factory.annotation.Autowired
+import tools.jackson.databind.JsonNode
 import tools.jackson.module.kotlin.jacksonObjectMapper
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsDocumentManagementApi
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.PrisonDocNotificationConfigEntity
@@ -109,36 +110,27 @@ class CdiaDocumentMetadataIsUnreadBackfillIntTest : IntegrationTestBase() {
       fileHash = "hash",
       fileContentHash = "content-hash",
       mimeType = "application/pdf",
-      metadata = objectMapper.valueToTree(
-        mapOf(
-          "source" to HmppsDocumentManagementApi.COURT_DATA_DOCUMENT_SOURCE,
-          "status" to "LIVE",
-          "prisonerId" to MATCHING_PRISONER_NUMBER,
-          "isUnread" to true,
-        ),
-      ),
+      metadata = buildDocumentMetadata(),
       createdTime = LocalDateTime.now(),
       createdByServiceName = "My Service",
       createdByUsername = "My user",
       duplicateOf = null,
     )
 
-    private fun copyDocument(documentUuid: UUID = UUID.randomUUID(), isUnread: Boolean = true): Document {
-      val document: Document = document.copy(documentUuid = documentUuid)
-
-      if (document.metadata["isUnread"].asBoolean() != isUnread) {
-        document.metadata = objectMapper.valueToTree(
-          mapOf(
-            "source" to HmppsDocumentManagementApi.COURT_DATA_DOCUMENT_SOURCE,
-            "status" to "LIVE",
-            "prisonerId" to MATCHING_PRISONER_NUMBER,
-            "isUnread" to isUnread,
-          ),
-        )
-      }
-
-      return document
+    private fun copyDocument(documentUuid: UUID = UUID.randomUUID(), isUnread: Boolean = true): Document = if (document.metadata["isUnread"].asBoolean() == isUnread) {
+      document.copy(documentUuid = documentUuid)
+    } else {
+      document.copy(documentUuid = documentUuid, metadata = buildDocumentMetadata(isUnread))
     }
+
+    private fun buildDocumentMetadata(isUnread: Boolean = true): JsonNode = objectMapper.valueToTree(
+      mapOf(
+        "source" to HmppsDocumentManagementApi.COURT_DATA_DOCUMENT_SOURCE,
+        "status" to "LIVE",
+        "prisonerId" to MATCHING_PRISONER_NUMBER,
+        "isUnread" to isUnread,
+      ),
+    )
 
     @JvmStatic
     fun getRunBackfillTestParameters() = listOf(
