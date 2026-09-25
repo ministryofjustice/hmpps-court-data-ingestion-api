@@ -14,7 +14,7 @@ data class Document(
   val fileHash: String,
   val fileContentHash: String? = null,
   val mimeType: String,
-  val metadata: JsonNode,
+  var metadata: JsonNode,
   val createdTime: LocalDateTime,
   val createdByServiceName: String,
   val createdByUsername: String?,

@@ -40,20 +40,24 @@ class CdiaDocumentMetadataIsUnreadBackfillIntTest : IntegrationTestBase() {
   fun `Documents related to a prison with no date set, should NOT be updated and remain as isUnread TRUE`(newDocumentDateFrom: LocalDateTime?, expected: Int) {
     // Setup
     sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON)
-    val courtDocument = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
+    val unreadCourtDocument = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
+    val unreadDocument = copyDocument(unreadCourtDocument.prisonDocumentId)
 
-    val document = copyDocument(courtDocument.prisonDocumentId)
-    val pageOneResults = mutableListOf(document)
+    sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON)
+    val readCourtDocument = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
+    val readDocument = copyDocument(readCourtDocument.prisonDocumentId, true)
+
+    val pageOneResults = mutableListOf(unreadDocument, readDocument)
     HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.stubFacetSearch(
       0,
       objectMapper.writeValueAsString(
         DocumentSearchResult(
           pageOneResults,
-          totalResultsCount = 1,
+          totalResultsCount = 2,
         ),
       ),
     )
-    HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.stubMergeMetadata(document.documentUuid)
+    HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.stubMergeMetadata(readDocument.documentUuid)
 
     newDocumentDateFrom?.let {
       notificationConfigRepository.save(
@@ -65,7 +69,7 @@ class CdiaDocumentMetadataIsUnreadBackfillIntTest : IntegrationTestBase() {
     runBackfill("cdia-document-is-unread")
 
     // Check results
-    HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.verifyMergeMetadata(expected, document.documentUuid.toString(), mapOf("isUnread" to false))
+    HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.verifyMergeMetadata(expected, readDocument.documentUuid.toString(), mapOf("isUnread" to false))
   }
 
   @Test
@@ -92,9 +96,8 @@ class CdiaDocumentMetadataIsUnreadBackfillIntTest : IntegrationTestBase() {
 
   companion object {
     const val MATCHING_PRISON_ID: String = "Mock01"
-
     private val objectMapper = jacksonObjectMapper()
-    private fun copyDocument(documentUuid: UUID = UUID.randomUUID()): Document = document.copy(documentUuid = documentUuid)
+
     private val document: Document = Document(
       documentUuid = UUID.randomUUID(),
       documentType = DocumentApiType.HMCTS_WARRANT,
@@ -118,6 +121,23 @@ class CdiaDocumentMetadataIsUnreadBackfillIntTest : IntegrationTestBase() {
       createdByUsername = "My user",
       duplicateOf = null,
     )
+
+    private fun copyDocument(documentUuid: UUID = UUID.randomUUID(), isUnread: Boolean = true): Document {
+      val document: Document = document.copy(documentUuid = documentUuid)
+
+      if (document.metadata["isUnread"].asBoolean() != isUnread) {
+        document.metadata = objectMapper.valueToTree(
+          mapOf(
+            "source" to HmppsDocumentManagementApi.COURT_DATA_DOCUMENT_SOURCE,
+            "status" to "LIVE",
+            "prisonerId" to MATCHING_PRISONER_NUMBER,
+            "isUnread" to isUnread,
+          ),
+        )
+      }
+
+      return document
+    }
 
     @JvmStatic
     fun getRunBackfillTestParameters() = listOf(

@@ -37,7 +37,7 @@ class CdiaDocumentMetadataIsUnreadUpdateBackfill(
         MetadataFilter("source", values = listOf(HmppsDocumentManagementApi.COURT_DATA_DOCUMENT_SOURCE)),
         MetadataFilter("status", values = listOf(DocumentMetadataStatus.ACTIVE.name)),
         MetadataFilter("prisonerId", FilterOperator.EXISTS),
-        MetadataFilter("isUnread", values = listOf("true")),
+//        MetadataFilter("isUnread", values = listOf("true")),
       ),
       page = page,
       pageSize = batchSize,
@@ -66,22 +66,30 @@ class CdiaDocumentMetadataIsUnreadUpdateBackfill(
   }
 
   override fun process(item: Document) {
-    log.info("Backfilling document ${item.documentUuid} revisiting isUnread value, currently TRUE")
+    if (!item.metadata["isUnread"].asBoolean()) {
+      log.debug("Backfill {} : document {}, isUnread=FALSE, no changes", id, item.documentUuid)
+      return
+    }
+
     val courtDocuments = courtDocumentService.getCourtDocumentsByPersonIdAndPrisonDocumentIds(
       item.metadata["prisonerId"].asString(),
       listOf(item.documentUuid),
     )
 
     if (courtDocuments.isEmpty()) {
-      log.error("Backfill {} failed to get court document by prisonDocumentId: {} ", id, item.documentUuid)
+      log.error("Backfill {} : failed to get court document by prisonDocumentId: {} ", id, item.documentUuid)
       return
     }
 
     if (courtDocuments.first().isUnread) {
+      log.debug("Backfill {} : document {} isUnread=TRUE, court document isUnread=TRUE, no changes",
+        id,
+        item.documentUuid,
+      )
       return
     }
 
-    log.info("Backfill {} updating document {} isUnread status to FALSE, was TRUE ", id, item.documentUuid)
+    log.info("Backfill {} : document {} update isUnread=FALSE, was TRUE ", id, item.documentUuid)
     documentManagementApi.mergeMetadata(item.documentUuid, metadata = mapOf("isUnread" to false))
   }
 
