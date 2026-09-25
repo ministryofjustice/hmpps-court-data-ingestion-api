@@ -9,6 +9,7 @@ import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.Test
 import org.springframework.test.web.reactive.server.expectBody
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsSubcriptionApiExtension.Companion.hmctsSubcriptionApi
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsSubcriptionApiMockServer
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.PrisonerSearchApiExtension.Companion.prisonerSearchApi
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.PrisonCourtDocumentDay
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.PrisonCourtDocumentWeek
@@ -107,6 +108,7 @@ class PrisonCourtDocumentControllerTest : IntegrationTestBase() {
     val hearing = day().hearings.single()
 
     assertThat(hearing.prisonerNumber).isEqualTo(MATCHING_PRISONER_NUMBER)
+    assertThat(hearing.courtHearingId).isEqualTo(UUID.fromString(HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID))
     assertThat(hearing.hearingType).isEqualTo("First hearing")
     assertThat(hearing.courtName).isEqualTo("Central London County Court")
     assertThat(hearing.caseReferences).containsExactly(CASE_REFERENCE)
@@ -190,12 +192,6 @@ class PrisonCourtDocumentControllerTest : IntegrationTestBase() {
     )
   }
 
-  /**
-   * Two notifications, which become two documents of the same file: the document store mocks
-   * return one upload id and one file for every document, so nothing here can make them differ.
-   * Waits for both to be hashed and linked to their hearing, which enrichment writes after the
-   * row first appears.
-   */
   private fun sendTwoDocuments() {
     val firstId = UUID.randomUUID().also { hmctsSubcriptionApi.stubFile(it) }
     val secondId = UUID.randomUUID().also { hmctsSubcriptionApi.stubFile(it) }
