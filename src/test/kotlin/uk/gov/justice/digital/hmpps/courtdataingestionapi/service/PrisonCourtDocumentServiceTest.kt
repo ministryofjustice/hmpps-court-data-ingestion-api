@@ -173,4 +173,23 @@ class PrisonCourtDocumentServiceTest {
     assertThat(person.firstName).isEqualTo("Robin")
     assertThat(person.lastName).isEqualTo("Smith")
   }
+
+  @Test
+  fun `a hearing is identified by its HMCTS id, which is what remand and sentencing knows it by`() {
+    val onHearing = hearing()
+    val document = documents(1).single().apply { courtHearing = onHearing }
+    whenever(prisonerSearchService.getPrisonersInPrison("LEI")).thenReturn(listOf(prisoner()))
+    whenever(
+      courtDocumentRepository.findByPrisonerNumberInAndIngestionAtGreaterThanEqualAndIngestionAtLessThanOrderByIngestionAtDesc(
+        any(),
+        any(),
+        any(),
+      ),
+    ).thenReturn(listOf(document))
+
+    val hearing = service.day("LEI", LocalDate.now()).hearings.single()
+
+    assertThat(hearing.courtHearingId).isEqualTo(onHearing.hmctsCourtHearingId)
+    assertThat(hearing.courtHearingId).isNotEqualTo(onHearing.id)
+  }
 }
