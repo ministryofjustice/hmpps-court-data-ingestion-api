@@ -197,9 +197,26 @@ class HmppsDocumentManagementApiMockServer : WireMockServer(WIREMOCK_PORT) {
     )
   }
 
+  @Deprecated("Use stubFacetSearch instead. Remove after all uses have been migrated")
   fun stubSearch(page: Int, response: String) {
     stubFor(
       post(urlPathMatching("/documents/search"))
+        .withHeader("Service-Name", equalTo(SERVICE_NAME))
+        .withHeader("Username", equalTo(USERNAME))
+        .withRequestBody(matchingJsonPath("$.page", equalTo(page.toString())))
+        .willReturn(
+          aResponse()
+            .withHeader(CONTENT_TYPE, APPLICATION_JSON)
+            .withBody(response)
+            .withStatus(200),
+        ),
+    )
+  }
+
+  // TODO (): This can be renamed to stubSearch after the original version is removed
+  fun stubFacetSearch(page: Int, response: String) {
+    stubFor(
+      post(urlPathMatching("/documents/facet/search"))
         .withHeader("Service-Name", equalTo(SERVICE_NAME))
         .withHeader("Username", equalTo(USERNAME))
         .withRequestBody(matchingJsonPath("$.page", equalTo(page.toString())))

@@ -1,0 +1,39 @@
+package uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents
+
+data class DocumentFacetSearchRequest(
+
+  val documentTypes: List<DocumentApiType>?,
+  val canonical: Boolean? = null,
+
+  val page: Int = 0,
+  val pageSize: Int = 10,
+
+  val metadataFilters: List<MetadataFilter> = emptyList(),
+  val facets: List<FacetRequest> = emptyList(),
+)
+
+data class MetadataFilter(
+  val field: String,
+  val operator: FilterOperator = FilterOperator.EQUALS,
+  val values: List<String> = emptyList(),
+)
+
+enum class FilterOperator {
+  EQUALS,
+  NOT_EQUALS,
+  IN,
+  JSON_ARRAY_CONTAINS,
+  EXISTS,
+  NOT_EXISTS,
+}
+
+data class FacetRequest(
+  val field: String,
+  val type: FacetType,
+  val filter: MetadataFilter? = null,
+)
+
+enum class FacetType {
+  VALUE,
+  ARRAY,
+}
