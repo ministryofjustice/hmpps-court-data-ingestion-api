@@ -32,6 +32,7 @@ class CdiaDocumentMetadataIsUnreadUpdateBackfill(
         MetadataFilter("source", values = listOf(HmppsDocumentManagementApi.COURT_DATA_DOCUMENT_SOURCE)),
         MetadataFilter("status", values = listOf(DocumentMetadataStatus.ACTIVE.name)),
         MetadataFilter("prisonerId", FilterOperator.EXISTS),
+        MetadataFilter("isUnread", FilterOperator.EXISTS),
       ),
       page = page,
       pageSize = batchSize,
