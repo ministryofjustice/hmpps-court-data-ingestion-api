@@ -25,7 +25,7 @@ generic-service:
     HMCTS_SUBSCRIPTION_ENABLED: true
     ENVIRONMENT_NAME: prod
     HMCTS_RATE_LIMIT: 0.4
-    OFFENCE_DATA_ENABLED: false
+    OFFENCE_DATA_ENABLED: true
 
   postgresDatabaseRestore:
     enabled: true

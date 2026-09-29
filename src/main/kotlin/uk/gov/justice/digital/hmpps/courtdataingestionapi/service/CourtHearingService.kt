@@ -21,7 +21,9 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtNextHearin
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtHearing
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.courtregister.CourtRegister
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtCaseDefendantRepository
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtChargeRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtHearingRepository
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtNextHearingRepository
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -36,6 +38,8 @@ class CourtHearingService(
   private val pcrApiClient: HmctsPcrApiClient,
   private val defendantRepository: CourtCaseDefendantRepository,
   private val objectMapper: ObjectMapper,
+  private val courtNextHearingRepository: CourtNextHearingRepository,
+  private val courtChargeRepository: CourtChargeRepository,
 ) {
 
   companion object {
@@ -63,6 +67,7 @@ class CourtHearingService(
     }
 
     val existing = courtHearingRepository.findFirstByHmctsCourtHearingId(courtDocumentEntity.hmctsCourtHearingId!!)
+    removeChargesAndNextHearingsToBeOverwritten(existing, courtDocumentEntity)
     if (existing != null) {
       courtHearing = courtHearing.copy(
         id = existing.id,
@@ -71,6 +76,20 @@ class CourtHearingService(
     }
     courtHearing.updatedAt = LocalDateTime.now()
     courtDocumentEntity.courtHearing = courtHearingRepository.save(courtHearing)
+  }
+
+  /*
+   * Delete any next hearings and charges for the given defendant which will be overwritten on ingestion. Importantly,
+   * this leaves any data for other people already attached to the hearing.
+   */
+  private fun removeChargesAndNextHearingsToBeOverwritten(
+    existing: CourtHearingEntity?,
+    courtDocumentEntity: CourtDocumentEntity,
+  ) {
+    val existingCharges = existing?.courtCharges?.filter { it.masterDefendantId == courtDocumentEntity.masterDefendantId } ?: emptyList()
+    val existingNextAppearances = existing?.nextCourtHearings?.filter { it.masterDefendantId == courtDocumentEntity.masterDefendantId } ?: emptyList()
+    existingCharges.forEach { courtChargeRepository.deleteById(it.id) }
+    existingNextAppearances.forEach { courtNextHearingRepository.deleteById(it.id) }
   }
 
   private fun fetchHearingAndOffenceData(courtDocumentEntity: CourtDocumentEntity): CourtHearingEntity? {
