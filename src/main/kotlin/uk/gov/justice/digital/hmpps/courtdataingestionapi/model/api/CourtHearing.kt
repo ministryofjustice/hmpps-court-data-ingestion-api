@@ -40,7 +40,12 @@ data class CourtCharge(
 data class CourtResult(
   val code: String,
   val description: String,
+  val keyValuePairs: List<ResultKeyValue>,
+)
 
+data class ResultKeyValue(
+  val key: String,
+  val value: String?,
 )
 
 data class NextCourtHearing(

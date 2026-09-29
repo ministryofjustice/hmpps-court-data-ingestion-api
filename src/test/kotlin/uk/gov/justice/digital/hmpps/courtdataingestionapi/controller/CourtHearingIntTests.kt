@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtCharge
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtHearing
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtResult
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.NextCourtHearing
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.ResultKeyValue
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.DefendantDetails
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsCourt
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsCourtDetails
@@ -28,7 +29,6 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsOf
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsPcr
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsResult
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsResultText
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtHearingRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.typeReference
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -45,14 +45,9 @@ class CourtHearingIntTests : IntegrationTestBase() {
   @Autowired
   private lateinit var objectMapper: ObjectMapper
 
-  @Autowired
-  private lateinit var courtHearingRepository: CourtHearingRepository
-
   @Nested
   @DisplayName("Get court hearing test")
   inner class GetCourtHearingTests {
-    // TODO what data changes per each defendant?
-
     @Test
     @Transactional(readOnly = true)
     fun `Get court hearing for matching hearing`() {
@@ -101,6 +96,52 @@ class CourtHearingIntTests : IntegrationTestBase() {
               CourtResult(
                 code = "RIB",
                 description = "Remanded in custody with bail direction",
+                keyValuePairs = listOf(
+                  ResultKeyValue(
+                    key = "Bail exception",
+                    value = "Breach of bail",
+                  ),
+                  ResultKeyValue(
+                    key = "Next hearing in magistrates' court",
+                    value = "Date of hearing:15/08/2026\nTime of hearing:10:00\nCourthouse organisation name:Lavender Hill Magistrates' Court\nCourthouse address line 1:176A Lavender Hill\nCourthouse address line 2:London\nCourthouse post code:SW11 1JU\nCourtroom:Courtroom 01\nHearing type:Appeal\nEstimated duration:30 MINUTES\nBooking reference:e2a6187c-26a0-4862-8041-beeb37e4b83a",
+                  ),
+                  ResultKeyValue(
+                    key = "Prison organisation name",
+                    value = "HMP Ashfield",
+                  ),
+                  ResultKeyValue(
+                    key = "Prison email address 1",
+                    value = "yoiashfield.premiercustody@premier-serco.cjsm.net",
+                  ),
+                  ResultKeyValue(
+                    key = "Prison email address 2",
+                    value = "yoiashfield.premiercustody@premier-serco.cjsm.net",
+                  ),
+                  ResultKeyValue(
+                    key = "Conveyor / custodian name organisation name",
+                    value = "Lavender Hill Magistrates' Court: PECS",
+                  ),
+                  ResultKeyValue(
+                    key = "Conveyor / custodian name email address 1",
+                    value = "periodicwarrants@geoamey.co.uk",
+                  ),
+                  ResultKeyValue(
+                    key = "Remand basis",
+                    value = "Charged with a violent or sexual offence",
+                  ),
+                  ResultKeyValue(
+                    key = "Bail exception reason",
+                    value = "Broken bail conditions",
+                  ),
+                  ResultKeyValue(
+                    key = "To attend or a warrant to issue",
+                    value = "",
+                  ),
+                  ResultKeyValue(
+                    key = "Adjournment reasons",
+                    value = "",
+                  ),
+                ),
               ),
             ),
           ),
@@ -115,12 +156,6 @@ class CourtHearingIntTests : IntegrationTestBase() {
           hearingId = hearing.nextHearing!!.hearingId,
         ),
       )
-
-      val dbHearing = courtHearingRepository.findFirstByHmctsCourtHearingId(hearingId)!!
-      val resultTextMap = dbHearing.courtCharges.first().results.first().resultTexts.associate { it.key to it.value }
-      assertThat(resultTextMap).containsEntry("Bail exception reason", "Broken bail conditions")
-      assertThat(resultTextMap).containsEntry("Remand basis", "Charged with a violent or sexual offence")
-      assertThat(resultTextMap.size).isEqualTo(11)
     }
 
     @Test
@@ -259,6 +294,43 @@ class CourtHearingIntTests : IntegrationTestBase() {
         .exchange()
         .expectStatus()
         .isNotFound
+    }
+
+    @Test
+    fun `Ingestion of hearing including multiple defendants`() {
+      val masterDefendantOne = UUID.randomUUID()
+      val defendantOne = UUID.randomUUID()
+      val prisonerNumberOne = "123ABC"
+      val masterDefendantTwo = UUID.randomUUID()
+      val defendantTwo = UUID.randomUUID()
+      val prisonerNumberTwo = "456DEF"
+      val hearingId = UUID.randomUUID()
+      HmctsCourtDefendantApiExtension.hmctsCourtDefendantApi.stubDefendants(
+        CASE_REFERENCE,
+        listOf(
+          DefendantDetails(defendantOne, masterDefendantOne),
+          DefendantDetails(defendantTwo, masterDefendantTwo),
+        ),
+      )
+      CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantOne, listOf(prisonerNumberOne))
+      CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantTwo, listOf(prisonerNumberTwo))
+      HmctsPcrApiExtension.hmctsPcrApiMockServer.stubGetPcr(
+        CASE_REFERENCE,
+        hearingId,
+        defendantOne,
+      )
+      HmctsPcrApiExtension.hmctsPcrApiMockServer.stubGetPcr(
+        CASE_REFERENCE,
+        hearingId,
+        defendantTwo,
+      )
+      sendSubscriptionNotificationWaitForRecordToBeCreated(masterDefendantOne, hearingId = hearingId)
+      sendSubscriptionNotificationWaitForRecordToBeCreated(masterDefendantTwo, hearingId = hearingId)
+
+      val hearingForPrisonerOne = getCourtHearing(prisonerNumberOne, hearingId.toString())
+      assertThat(hearingForPrisonerOne.charges.size).isEqualTo(1)
+      val hearingForPrisonerTwo = getCourtHearing(prisonerNumberTwo, hearingId.toString())
+      assertThat(hearingForPrisonerTwo.charges.size).isEqualTo(1)
     }
 
     @Test

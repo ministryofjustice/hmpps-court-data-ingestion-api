@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtHearing
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtHearingDocument
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtResult
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.NextCourtHearing
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.ResultKeyValue
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -30,9 +31,9 @@ data class CourtHearingEntity(
   var hmctsCourtHearingId: UUID,
   @OneToMany(mappedBy = "courtHearing")
   var courtDocuments: MutableList<CourtDocumentEntity>,
-  @OneToMany(mappedBy = "courtHearing", cascade = [CascadeType.ALL], orphanRemoval = true)
+  @OneToMany(mappedBy = "courtHearing", cascade = [CascadeType.ALL])
   var courtCharges: MutableList<CourtChargeEntity>,
-  @OneToMany(mappedBy = "courtHearing", cascade = [CascadeType.ALL], orphanRemoval = true)
+  @OneToMany(mappedBy = "courtHearing", cascade = [CascadeType.ALL])
   var nextCourtHearings: MutableList<CourtNextHearingEntity>,
   var createdAt: LocalDateTime = LocalDateTime.now(),
   var updatedAt: LocalDateTime = LocalDateTime.now(),
@@ -87,6 +88,9 @@ data class CourtHearingEntity(
               CourtResult(
                 code = result.resultCode,
                 description = result.resultDescription,
+                keyValuePairs = result.resultTexts.map { resultText ->
+                  ResultKeyValue(resultText.key, resultText.value)
+                },
               )
             },
           )
