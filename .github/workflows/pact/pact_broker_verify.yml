@@ -1,0 +1,34 @@
+name: Pact broker verify
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      app_version:
+        description: version to be deployed to the environment - must already exist.
+        required: true
+        default: ''
+        type: string
+    secrets:
+      GRADLE_CACHE_ENCRYPTION_KEY:
+        required: false
+      PACT_BROKER_URL:
+        required: true
+      HMPPS_PACT_BROKER_USERNAME:
+        required: true
+      HMPPS_PACT_BROKER_PASSWORD:
+        required: true
+
+jobs:
+  pact_test_publish:
+    name: Pact consumer test and publish
+    uses: ./.github/workflows/pact/pact_test_publish.yml
+    secrets: inherit
+  trigger_pact_verification:
+    name: Trigger pact verification workflow
+    needs:
+      - pact_test_publish
+    uses: ./.github/workflows/pact/pact_provider_verification_trigger.yml
+    with:
+      app_version: '${{ inputs.app_version }}'
+    secrets: inherit
