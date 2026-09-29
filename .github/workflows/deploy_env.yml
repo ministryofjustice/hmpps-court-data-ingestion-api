@@ -14,7 +14,6 @@ on:
         required: true
         default: ''
         type: string
-    secrets: inherit
 jobs:
   deploy_to_env:
     name: Deploy to environment
