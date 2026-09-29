@@ -22,13 +22,13 @@ on:
 jobs:
   pact_test_publish:
     name: Pact consumer test and publish
-    uses: ./.github/workflows/pact/pact_test_publish.yml
+    uses: ./.github/workflows/pact_test_publish.yml
     secrets: inherit
   trigger_pact_verification:
     name: Trigger pact verification workflow
     needs:
       - pact_test_publish
-    uses: ./.github/workflows/pact/pact_provider_verification_trigger.yml
+    uses: ./.github/workflows/pact_provider_verification_trigger.yml
     with:
       app_version: '${{ inputs.app_version }}'
     secrets: inherit

@@ -62,7 +62,7 @@ jobs:
     needs:
       - app_version
       - gradle_verify
-    uses: ./.github/workflows/pact/pact_broker_verify.yml
+    uses: ./.github/workflows/pact_broker_verify.yml
     secrets: inherit
     with:
       app_version: '${{ needs.app_version.outputs.version }}'
