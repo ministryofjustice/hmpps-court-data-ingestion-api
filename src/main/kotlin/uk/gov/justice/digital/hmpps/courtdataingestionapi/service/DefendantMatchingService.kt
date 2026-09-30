@@ -32,8 +32,8 @@ class DefendantMatchingService(
 
   fun matchPrisonerForDocument(courtDocumentEntity: CourtDocumentEntity): Boolean {
     val masterDefendantId = courtDocumentEntity.masterDefendantId
-    val defendantId = matchDefendantId(masterDefendantId, caseReferencesOf(listOf(courtDocumentEntity)), populateOnMiss = true)
-    val lookup = lookupPrisoner(defendantId, masterDefendantId)
+    val defendantIds = matchDefendantId(masterDefendantId, caseReferencesOf(listOf(courtDocumentEntity)), populateOnMiss = true)
+    val lookup = lookupPrisoner(defendantIds, masterDefendantId)
 
     val prisonerNumber = lookup.matchedPrisonerNumber
     if (prisonerNumber == null) {
@@ -41,7 +41,7 @@ class DefendantMatchingService(
       return false
     }
 
-    createPrisonerMatch(courtDocumentEntity, prisonerNumber, matchOutcomeFor(defendantId))
+    createPrisonerMatch(courtDocumentEntity, prisonerNumber, matchOutcomeFor(defendantIds))
     return true
   }
 
@@ -49,8 +49,8 @@ class DefendantMatchingService(
     val documents = unmatchedDocumentsFor(masterDefendantId)
     if (documents.isEmpty()) return 0
 
-    val defendantId = matchDefendantId(masterDefendantId, caseReferencesOf(documents), populateOnMiss = true)
-    val lookup = lookupPrisoner(defendantId, masterDefendantId)
+    val defendantIds = matchDefendantId(masterDefendantId, caseReferencesOf(documents), populateOnMiss = true)
+    val lookup = lookupPrisoner(defendantIds, masterDefendantId)
 
     val prisonerNumber = lookup.matchedPrisonerNumber
     if (prisonerNumber == null) {
@@ -59,7 +59,7 @@ class DefendantMatchingService(
       return 0
     }
 
-    documents.forEach { createPrisonerMatch(it, prisonerNumber, matchOutcomeFor(defendantId)) }
+    documents.forEach { createPrisonerMatch(it, prisonerNumber, matchOutcomeFor(defendantIds)) }
     return documents.size
   }
 
@@ -67,10 +67,10 @@ class DefendantMatchingService(
     val documents = unmatchedDocumentsFor(masterDefendantId)
     if (documents.isEmpty()) return null
 
-    val defendantId = matchDefendantId(masterDefendantId, caseReferencesOf(documents), populateOnMiss = false)
-    val lookup = lookupPrisoner(defendantId, masterDefendantId)
+    val defendantIds = matchDefendantId(masterDefendantId, caseReferencesOf(documents), populateOnMiss = false)
+    val lookup = lookupPrisoner(defendantIds, masterDefendantId)
     val outcome = if (lookup.result == PrisonerLookupResult.MATCHED) {
-      matchOutcomeFor(defendantId)
+      matchOutcomeFor(defendantIds)
     } else {
       nonMatchOutcome(lookup)
     }
@@ -93,9 +93,23 @@ class DefendantMatchingService(
       .forEach { createPrisonerMatch(it, prisonerNumber, MatchOutcome.MATCHED_ON_DEFENDANT_ID) }
   }
 
-  private fun lookupPrisoner(defendantId: UUID?, masterDefendantId: UUID): PrisonerLookup = corePersonRecordService.findPrisonerByCommonPlatformId(defendantId ?: masterDefendantId)
+  private fun lookupPrisoner(defendantIds: List<UUID>, masterDefendantId: UUID): PrisonerLookup {
+    if (defendantIds.isEmpty()) {
+      return corePersonRecordService.findPrisonerByCommonPlatformId(masterDefendantId)
+    } else {
+      var lastLookup: PrisonerLookup? = null
+      defendantIds.forEach { defendantId ->
+        val lookup = corePersonRecordService.findPrisonerByCommonPlatformId(defendantId)
+        if (lookup.result == PrisonerLookupResult.MATCHED) {
+          return lookup
+        }
+        lastLookup = lookup
+      }
+      return lastLookup!!
+    }
+  }
 
-  private fun matchOutcomeFor(defendantId: UUID?): MatchOutcome = if (defendantId != null) {
+  private fun matchOutcomeFor(defendantIds: List<UUID>): MatchOutcome = if (defendantIds.isNotEmpty()) {
     MatchOutcome.MATCHED_ON_DEFENDANT_ID
   } else {
     MatchOutcome.MATCHED_ON_MASTER_DEFENDANT_ID
@@ -119,10 +133,10 @@ class DefendantMatchingService(
     masterDefendantId: UUID,
     caseReferences: List<String>,
     populateOnMiss: Boolean,
-  ): UUID? {
-    if (!featureToggles.defendantResolution) return null
+  ): List<UUID> {
+    if (!featureToggles.defendantResolution) return emptyList()
 
-    return caseReferences.firstNotNullOfOrNull {
+    return caseReferences.mapNotNull {
       matchDefendantId(masterDefendantId, it, populateOnMiss)
     }
   }
