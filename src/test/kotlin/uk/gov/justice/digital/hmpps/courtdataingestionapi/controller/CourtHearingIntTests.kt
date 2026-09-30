@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.H
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsPcrApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsSubcriptionApiMockServer.Companion.TEST_HMCTS_COURTHOUSE_ID
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsSubcriptionApiMockServer.Companion.TEST_HMCTS_HEARING_ID
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsCase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtCharge
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtHearing
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtResult
@@ -331,6 +332,44 @@ class CourtHearingIntTests : IntegrationTestBase() {
       assertThat(hearingForPrisonerOne.charges.size).isEqualTo(1)
       val hearingForPrisonerTwo = getCourtHearing(prisonerNumberTwo, hearingId.toString())
       assertThat(hearingForPrisonerTwo.charges.size).isEqualTo(1)
+    }
+
+    @Test
+    fun `Ingestion of hearing including multiple case references`() {
+      val masterDefendant = UUID.randomUUID()
+      val defendantCaseOne = UUID.randomUUID()
+      val caseReferenceOne = "CASE123"
+      val defendantCaseTwo = UUID.randomUUID()
+      val caseReferenceTwo = "CASE456"
+      val prisonerNumber = "123ABC"
+      val hearingId = UUID.randomUUID()
+      HmctsCourtDefendantApiExtension.hmctsCourtDefendantApi.stubDefendants(
+        caseReferenceOne,
+        listOf(
+          DefendantDetails(defendantCaseOne, masterDefendant),
+        ),
+      )
+      HmctsCourtDefendantApiExtension.hmctsCourtDefendantApi.stubDefendants(
+        caseReferenceTwo,
+        listOf(
+          DefendantDetails(defendantCaseTwo, masterDefendant),
+        ),
+      )
+      CorePersonApiExtension.corePersonApi.stubCommonPlatformCorePerson(defendantCaseOne, listOf(prisonerNumber))
+      HmctsPcrApiExtension.hmctsPcrApiMockServer.stubGetPcr(
+        caseReferenceOne,
+        hearingId,
+        defendantCaseOne,
+      )
+      HmctsPcrApiExtension.hmctsPcrApiMockServer.stubGetPcr(
+        caseReferenceTwo,
+        hearingId,
+        defendantCaseTwo,
+      )
+      sendSubscriptionNotificationWaitForRecordToBeCreated(masterDefendant, hearingId = hearingId, hmctsCases = listOf(HmctsCase(caseReferenceOne), HmctsCase(caseReferenceTwo)))
+
+      val hearing = getCourtHearing(prisonerNumber, hearingId.toString())
+      assertThat(hearing.charges.size).isEqualTo(2)
     }
 
     @Test
