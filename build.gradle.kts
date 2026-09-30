@@ -22,7 +22,6 @@ pact {
     pactBrokerPassword = System.getenv("HMPPS_PACT_BROKER_PASSWORD")
     consumerVersion = System.getenv("GITHUB_SHA") ?: "local"
     consumerBranch = System.getenv("GITHUB_BRANCH") ?: "local"
-    tags = listOfNotNull(System.getenv("GITHUB_BRANCH"))
   }
 }
 

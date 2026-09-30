@@ -2,14 +2,6 @@ name: Run
 
 on:
   workflow_call:
-    inputs:
-      app_version:
-        description: |
-          App version used for the Docker image tag / Helm deploy.
-          Not used for Pact Broker lookups - those always use github.sha,
-          matching the version published during provider verification.
-        required: true
-        type: string
 
 permissions:
   contents: read
