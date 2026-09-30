@@ -20,9 +20,8 @@ pact {
     pactBrokerUrl = System.getenv("PACT_BROKER_URL") ?: "https://pact-broker-prod.apps.live-1.cloud-platform.service.justice.gov.uk"
     pactBrokerUsername = System.getenv("HMPPS_PACT_BROKER_USERNAME")
     pactBrokerPassword = System.getenv("HMPPS_PACT_BROKER_PASSWORD")
-    consumerVersion = System.getenv("GITHUB_SHA") ?: "local"
+    consumerVersion = System.getenv("APP_VERSION") ?: "local"
     consumerBranch = System.getenv("GITHUB_BRANCH") ?: "local"
-    tags = listOfNotNull(System.getenv("GITHUB_BRANCH"))
   }
 }
 
@@ -54,7 +53,7 @@ dependencies {
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1")
   // Spatial PDF text extraction for the court-register engine.
   implementation("org.apache.pdfbox:pdfbox:3.0.8")
-  implementation("com.google.guava:guava:33.7.1-jre")
+  implementation("com.google.guava:guava:33.7.2-jre")
 
   testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:3.0.3")
   testImplementation("org.springframework.boot:spring-boot-webtestclient")
