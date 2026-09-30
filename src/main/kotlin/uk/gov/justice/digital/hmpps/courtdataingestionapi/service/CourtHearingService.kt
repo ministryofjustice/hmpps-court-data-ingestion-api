@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.service
 
 import jakarta.persistence.EntityNotFoundException
 import org.slf4j.LoggerFactory
+import org.springframework.data.domain.Limit
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.client.WebClientResponseException
@@ -233,5 +234,5 @@ class CourtHearingService(
     return courtHearing.toCourtHearing(prisonerNumber)
   }
 
-  fun getCourtHearingsByPrisoner(prisonerNumber: String): List<CourtHearing> = courtHearingRepository.findByCourtDocumentsPrisonerNumber(prisonerNumber).map { it.toCourtHearing(prisonerNumber) }
+  fun getCourtHearingsByPrisoner(prisonerNumber: String, limit: Int): List<CourtHearing> = courtHearingRepository.findByCourtDocumentsPrisonerNumberOrderByCourtDocumentsIngestionAtDesc(prisonerNumber, Limit.of(limit)).map { it.toCourtHearing(prisonerNumber) }
 }

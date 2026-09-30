@@ -8,6 +8,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtHearing
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtHearingService
@@ -52,5 +53,10 @@ class CourtHearingController(
   )
   fun getCourtHearingsByPrisoner(
     @PathVariable("prisonerNumber") prisonerNumber: String,
-  ): List<CourtHearing> = courtHearingService.getCourtHearingsByPrisoner(prisonerNumber)
+    @RequestParam(name = "limit", defaultValue = "$DEFAULT_COURT_HEARING_LIMIT", required = false) limit: Int,
+  ): List<CourtHearing> = courtHearingService.getCourtHearingsByPrisoner(prisonerNumber, limit)
+
+  companion object {
+    private const val DEFAULT_COURT_HEARING_LIMIT = 25
+  }
 }
