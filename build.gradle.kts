@@ -20,7 +20,7 @@ pact {
     pactBrokerUrl = System.getenv("PACT_BROKER_URL") ?: "https://pact-broker-prod.apps.live-1.cloud-platform.service.justice.gov.uk"
     pactBrokerUsername = System.getenv("HMPPS_PACT_BROKER_USERNAME")
     pactBrokerPassword = System.getenv("HMPPS_PACT_BROKER_PASSWORD")
-    consumerVersion = System.getenv("GITHUB_SHA") ?: "local"
+    consumerVersion = System.getenv("APP_VERSION") ?: "local"
     consumerBranch = System.getenv("GITHUB_BRANCH") ?: "local"
   }
 }

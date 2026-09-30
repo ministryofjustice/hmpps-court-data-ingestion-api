@@ -3,6 +3,12 @@ name: Pact broker verify
 on:
   workflow_dispatch:
   workflow_call:
+    inputs:
+      app_version:
+        description: version to be deployed to the environment - must already exist.
+        required: true
+        default: ''
+        type: string
     secrets:
       GRADLE_CACHE_ENCRYPTION_KEY:
         required: false
@@ -18,6 +24,8 @@ jobs:
     name: Pact consumer test and publish
     uses: ./.github/workflows/pact_test_publish.yml
     secrets: inherit
+    with:
+      app_version: ${{ inputs.app_version }}
   trigger_pact_verification:
     name: Trigger pact verification workflow
     needs:

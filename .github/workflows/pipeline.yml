@@ -60,9 +60,12 @@ jobs:
   pact_broker_verify:
     name: Verify and publish Pact contracts to broker
     needs:
+      - app_version
       - gradle_verify
     uses: ./.github/workflows/pact_broker_verify.yml
     secrets: inherit
+    with:
+      app_version: '${{ needs.app_version.outputs.version }}'
   build:
     name: Build docker image from hmpps-github-actions
     if: github.ref == 'refs/heads/main'
