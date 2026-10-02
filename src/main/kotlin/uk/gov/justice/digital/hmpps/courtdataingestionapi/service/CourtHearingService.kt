@@ -143,6 +143,7 @@ class CourtHearingService(
             pleaValue = offence.pleaValue,
             startDate = offence.startDate,
             endDate = offence.endDate,
+            convictionDate = offence.convictionDate,
             title = offence.title,
             wording = offence.title,
             code = offence.code,
