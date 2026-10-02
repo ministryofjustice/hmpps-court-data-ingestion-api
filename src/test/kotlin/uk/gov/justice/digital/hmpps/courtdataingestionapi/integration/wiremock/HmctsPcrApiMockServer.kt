@@ -131,6 +131,7 @@ class HmctsPcrApiMockServer : WireMockServer(WIREMOCK_PORT) {
         "offenceLegislation": "Contrary to section 1(1) and 7 of the Theft Act 1968.",
         "pleaDate": "2026-08-15",
         "pleaValue": "NOT_GUILTY",
+        "convictionDate": "2026-08-20",
         "results": [
           {
             "resultDescription": "RIB - Remanded in custody with bail direction",

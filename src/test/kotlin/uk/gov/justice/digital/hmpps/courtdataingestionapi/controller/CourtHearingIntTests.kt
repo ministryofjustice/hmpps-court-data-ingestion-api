@@ -93,6 +93,7 @@ class CourtHearingIntTests : IntegrationTestBase() {
             title = "Theft from the person of another",
             wording = "Theft from the person of another",
             code = "TH68001",
+            convictionDate = LocalDate.of(2026, 8, 20),
             results = listOf(
               CourtResult(
                 code = "RIB",
@@ -513,6 +514,7 @@ class CourtHearingIntTests : IntegrationTestBase() {
           offenceLegislation = "Theft Act 1968",
           pleaDate = LocalDate.now().minusDays(5),
           pleaValue = "Guilty",
+          convictionDate = null,
           results = listOf(
             HmctsResult(
               resultTexts = listOf(

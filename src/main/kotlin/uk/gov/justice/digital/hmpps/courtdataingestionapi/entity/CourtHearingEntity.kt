@@ -84,6 +84,7 @@ data class CourtHearingEntity(
             title = it.title,
             wording = it.wording,
             code = it.code,
+            convictionDate = it.convictionDate,
             results = it.results.map { result ->
               CourtResult(
                 code = result.resultCode,

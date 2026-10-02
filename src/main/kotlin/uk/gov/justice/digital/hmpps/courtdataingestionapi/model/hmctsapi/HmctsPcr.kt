@@ -40,6 +40,7 @@ data class HmctsNextHearing(
 data class HmctsOffence(
   val id: UUID,
   val code: String,
+  val convictionDate: LocalDate?,
   val listingNumber: Int?,
   val offenceLegislation: String?,
   val pleaDate: LocalDate?,

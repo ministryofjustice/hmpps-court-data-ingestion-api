@@ -27,6 +27,7 @@ data class CourtCharge(
   val chargeId: UUID,
   val listingNumber: Int?,
   val offenceLegislation: String?,
+  val convictionDate: LocalDate?,
   val code: String,
   val pleaDate: LocalDate?,
   val pleaValue: String?,
