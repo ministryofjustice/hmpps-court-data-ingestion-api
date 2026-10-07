@@ -230,7 +230,7 @@ class CourtHearingService(
   }
 
   fun getCourtHearing(courtHearingId: UUID, prisonerNumber: String): CourtHearing {
-    val courtHearing = courtHearingRepository.findFirstByHmctsCourtHearingId(courtHearingId)
+    val courtHearing = courtHearingRepository.findFirstWithGraphByHmctsCourtHearingId(courtHearingId)
       ?: throw EntityNotFoundException("Hearing not found $courtHearingId")
     return courtHearing.toCourtHearing(prisonerNumber)
   }
