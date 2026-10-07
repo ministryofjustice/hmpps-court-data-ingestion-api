@@ -4,11 +4,13 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
+import org.mockito.kotlin.anyOrNull
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.DestinationType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
@@ -45,7 +47,19 @@ class MirrorBackfillTest {
   }
 
   @Test
-  fun `process updates metadata version and sets metadataUpdatedAt on full success`() {
+  fun `process marks the metadata version for the organisation it mirrored on full success`() {
+    val item = sampleWarrant(extractedTextSha = "604576bd")
+    whenever(fileService.mirrorEnrichmentToDocumentStore(item))
+      .thenReturn(FileService.MirrorOutcome(contentHashPushed = true, metadataPushed = true))
+    setupCourtDocumentRepositoryMock(item)
+
+    backfill.process(item.id)
+
+    verify(repository).markMirrored(eq(item.id), eq(METADATA_VERSION), any(), eq("PRISON"))
+  }
+
+  @Test
+  fun `process does not save the whole row, so a classification applied meanwhile is not written back`() {
     val item = sampleWarrant(extractedTextSha = "604576bd")
     val initialMetadataVersion = item.metadataVersion
     whenever(fileService.mirrorEnrichmentToDocumentStore(item))
@@ -54,10 +68,8 @@ class MirrorBackfillTest {
 
     backfill.process(item.id)
 
-    assertThat(initialMetadataVersion).isLessThan(METADATA_VERSION)
-    assertThat(item.metadataVersion).isEqualTo(METADATA_VERSION)
-    assertThat(item.metadataUpdatedAt).isNotNull
-    verify(repository).save(item)
+    verify(repository, never()).save(any<CourtDocumentEntity>())
+    assertThat(item.metadataVersion).isEqualTo(initialMetadataVersion)
   }
 
   @Test
@@ -78,15 +90,13 @@ class MirrorBackfillTest {
     assertThat(item.metadataVersion).isLessThan(METADATA_VERSION)
     assertThat(item.metadataVersion).isEqualTo(initialMetadataVersion)
     assertThat(item.metadataUpdatedAt).isNull()
+    verify(repository, never()).markMirrored(any(), any(), any(), anyOrNull())
   }
 
   @Test
   fun `process throws and does not update metadata version or mark on metadata failure even if content hash succeeded`() {
-    // Important: content hash is the dedup-critical call. If it succeeded but metadata failed we
-    // still leave the row unmarked, so a retry will idempotently re-push the content hash (no-op
-    // at doc store) and have another go at metadata. Marking the row done would strand metadata.
     val item = sampleWarrant(extractedTextSha = "604576bd").apply {
-      deliverySource = DestinationType.PECS
+      addressedOrganisation = "PECS"
     }
     val initialMetadataVersion = item.metadataVersion
     val failure = RuntimeException("merge 504")
@@ -103,23 +113,19 @@ class MirrorBackfillTest {
     assertThat(item.metadataVersion).isLessThan(METADATA_VERSION)
     assertThat(item.metadataVersion).isEqualTo(initialMetadataVersion)
     assertThat(item.metadataUpdatedAt).isNull()
+    verify(repository, never()).markMirrored(any(), any(), any(), anyOrNull())
   }
 
   @Test
   fun `process handles rows with no extracted text by treating content hash as already pushed`() {
-    // A row with no extracted_text_sha256 has nothing to push for the content hash, so FileService
-    // returns contentHashPushed=true vacuously. The mirror should still mark the row done.
     val item = sampleWarrant(extractedTextSha = null)
-    val initialMetadataVersion = item.metadataVersion
     whenever(fileService.mirrorEnrichmentToDocumentStore(item))
       .thenReturn(FileService.MirrorOutcome(contentHashPushed = true, metadataPushed = true))
     setupCourtDocumentRepositoryMock(item)
 
     backfill.process(item.id)
 
-    assertThat(initialMetadataVersion).isLessThan(METADATA_VERSION)
-    assertThat(item.metadataVersion).isEqualTo(METADATA_VERSION)
-    assertThat(item.metadataUpdatedAt).isNotNull
+    verify(repository).markMirrored(eq(item.id), eq(METADATA_VERSION), any(), eq("PRISON"))
   }
 
   private fun sampleWarrant(extractedTextSha: String?): CourtDocumentEntity = CourtDocumentEntity(
@@ -134,7 +140,7 @@ class MirrorBackfillTest {
     addressedPrison = "HHI",
     downloadedFileSha256 = "1e8c08ae751bcfb0fd81b3f3abb32659a98a2171c30bc5c8e153791bc7060040",
     extractedTextSha256 = extractedTextSha,
-    deliverySource = DestinationType.PRISON,
+    addressedOrganisation = "PRISON",
   )
 
   private fun setupCourtDocumentRepositoryMock(mockedDocument: CourtDocumentEntity) {

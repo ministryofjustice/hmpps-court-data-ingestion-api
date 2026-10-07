@@ -97,13 +97,31 @@ interface CourtDocumentRepository : JpaRepository<CourtDocumentEntity, UUID> {
     @Param("limit") limit: Int,
   ): List<CourtDocumentEntity>
 
+  @Modifying
+  @Query(
+    value = """
+      UPDATE court_document
+         SET metadata_version = :metadataVersion,
+             metadata_updated_at = :metadataUpdatedAt
+       WHERE id = :id
+         AND addressed_organisation IS NOT DISTINCT FROM CAST(:mirroredOrganisation AS TEXT)
+    """,
+    nativeQuery = true,
+  )
+  fun markMirrored(
+    @Param("id") id: UUID,
+    @Param("metadataVersion") metadataVersion: Int,
+    @Param("metadataUpdatedAt") metadataUpdatedAt: LocalDateTime,
+    @Param("mirroredOrganisation") mirroredOrganisation: String?,
+  ): Int
+
   @Modifying(clearAutomatically = true, flushAutomatically = true)
   @Query(
     value = """
       UPDATE court_document
          SET addressed_prison = :addressedPrison,
              delivery_mapping_id = :deliveryMappingId,
-             delivery_source = COALESCE(CAST(:deliverySource AS TEXT), delivery_source)
+             addressed_organisation = COALESCE(CAST(:addressedOrganisation AS TEXT), addressed_organisation)
        WHERE id = :id
     """,
     nativeQuery = true,
@@ -112,7 +130,7 @@ interface CourtDocumentRepository : JpaRepository<CourtDocumentEntity, UUID> {
     @Param("id") id: UUID,
     @Param("addressedPrison") addressedPrison: String?,
     @Param("deliveryMappingId") deliveryMappingId: UUID,
-    @Param("deliverySource") deliverySource: String?,
+    @Param("addressedOrganisation") addressedOrganisation: String?,
   ): Int
 
   @Query(

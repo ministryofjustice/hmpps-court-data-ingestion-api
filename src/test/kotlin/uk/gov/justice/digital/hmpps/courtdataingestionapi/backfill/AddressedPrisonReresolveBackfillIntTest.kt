@@ -13,6 +13,7 @@ import java.util.UUID
 private const val MAPPED_EMAIL = "omu.leeds@justice.gov.uk"
 private const val YOUTH_EMAIL = "ycs.warrants@justice.gov.uk"
 private const val UNMAPPED_EMAIL = "nobody.knows@justice.gov.uk"
+private const val PECS_EMAIL = "sheffieldcc@geoamey.co.uk"
 
 class AddressedPrisonReresolveBackfillIntTest : IntegrationTestBase() {
 
@@ -30,6 +31,7 @@ class AddressedPrisonReresolveBackfillIntTest : IntegrationTestBase() {
     insertDeliveryCategory("YOUTH_CUSTODY", "Youth custody", requiresPrisonCode = false)
     insertMapping(MAPPED_EMAIL, prisonCode = "LEI", categoryCode = "PRISON")
     insertMapping(YOUTH_EMAIL, prisonCode = null, categoryCode = "YOUTH_CUSTODY")
+    insertMapping(PECS_EMAIL, prisonCode = null, categoryCode = "PECS")
   }
 
   @Test
@@ -39,17 +41,29 @@ class AddressedPrisonReresolveBackfillIntTest : IntegrationTestBase() {
     runBackfill("addressed-prison-reresolve")
 
     assertThat(addressedPrisonOf(id)).isEqualTo("LEI")
+    assertThat(addressedOrganisationOf(id)).isEqualTo("PRISON")
     assertThat(deliveryMappingOf(id)).isEqualTo(mappingIdOf(MAPPED_EMAIL))
   }
 
   @Test
-  fun `a document from an address classified as youth custody keeps a null prison but records the mapping`() {
+  fun `a document from an address classified as youth custody records the organisation and the mapping but no prison`() {
     val id = insertDocument(YOUTH_EMAIL)
 
     runBackfill("addressed-prison-reresolve")
 
     assertThat(addressedPrisonOf(id)).isNull()
+    assertThat(addressedOrganisationOf(id)).isEqualTo("YOUTH_CUSTODY")
     assertThat(deliveryMappingOf(id)).isEqualTo(mappingIdOf(YOUTH_EMAIL))
+  }
+
+  @Test
+  fun `an escort mailbox already recognised as pecs keeps its organisation and gains the mapping`() {
+    val id = insertDocument(PECS_EMAIL, addressedOrganisation = "PECS")
+
+    runBackfill("addressed-prison-reresolve")
+
+    assertThat(addressedOrganisationOf(id)).isEqualTo("PECS")
+    assertThat(deliveryMappingOf(id)).isEqualTo(mappingIdOf(PECS_EMAIL))
   }
 
   @Test
@@ -71,7 +85,7 @@ class AddressedPrisonReresolveBackfillIntTest : IntegrationTestBase() {
 
     val after = jdbcTemplate.queryForMap("SELECT * FROM court_document WHERE id = ?", id)
     val changed = after.filterNot { (key, value) -> before[key] == value }.keys
-    assertThat(changed).containsExactlyInAnyOrder("addressed_prison", "delivery_mapping_id", "delivery_source")
+    assertThat(changed).containsExactlyInAnyOrder("addressed_prison", "delivery_mapping_id", "addressed_organisation")
   }
 
   @Test
@@ -105,14 +119,14 @@ class AddressedPrisonReresolveBackfillIntTest : IntegrationTestBase() {
     )
   }
 
-  private fun insertDocument(email: String): UUID {
+  private fun insertDocument(email: String, addressedOrganisation: String? = null): UUID {
     val id = UUID.randomUUID()
     jdbcTemplate.update(
       """
       INSERT INTO court_document
         (id, master_defendant_id, hmcts_court_document_id, prison_document_id, prison_email_address,
-         event_type, document_generated_timestamp, ingestion_at)
-      VALUES (?, ?, ?, ?, ?, 'PRISON_COURT_REGISTER_GENERATED', ?, ?)
+         event_type, document_generated_timestamp, ingestion_at, addressed_organisation)
+      VALUES (?, ?, ?, ?, ?, 'PRISON_COURT_REGISTER_GENERATED', ?, ?, ?)
       """.trimIndent(),
       id,
       UUID.randomUUID(),
@@ -121,12 +135,16 @@ class AddressedPrisonReresolveBackfillIntTest : IntegrationTestBase() {
       email,
       LocalDateTime.now().minusDays(1),
       LocalDateTime.now().minusDays(1),
+      addressedOrganisation,
     )
     return id
   }
 
   private fun addressedPrisonOf(id: UUID) = jdbcTemplate
     .queryForObject("SELECT addressed_prison FROM court_document WHERE id = ?", String::class.java, id)
+
+  private fun addressedOrganisationOf(id: UUID) = jdbcTemplate
+    .queryForObject("SELECT addressed_organisation FROM court_document WHERE id = ?", String::class.java, id)
 
   private fun deliveryMappingOf(id: UUID) = jdbcTemplate
     .queryForObject("SELECT delivery_mapping_id FROM court_document WHERE id = ?", UUID::class.java, id)

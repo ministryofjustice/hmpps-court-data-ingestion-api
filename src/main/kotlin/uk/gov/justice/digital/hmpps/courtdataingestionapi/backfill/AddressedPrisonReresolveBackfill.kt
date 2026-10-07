@@ -33,7 +33,7 @@ class AddressedPrisonReresolveBackfill(
       id = item.id,
       addressedPrison = resolved.addressedPrison,
       deliveryMappingId = resolved.mappingId,
-      deliverySource = resolved.destinationType?.name,
+      addressedOrganisation = resolved.addressedOrganisation,
     )
 
     log.info(

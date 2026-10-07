@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.transaction.support.TransactionTemplate
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentCaseEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.DestinationType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsDocumentManagementApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
@@ -117,18 +116,10 @@ class ConcatenatedCaseReferencesFixBackfillIntTest : IntegrationTestBase() {
       courtDocumentType = CourtDocumentType.REMAND_WARRANT,
       documentGeneratedTimestamp = LocalDateTime.now(),
       ingestionAt = LocalDateTime.now(),
-//      courtHearing = TODO(),
       courtDocumentCases = mutableListOf(),
       courtDocumentViews = mutableListOf(),
-//      addressedPrison = "mock prison",
-//      downloadedFileSha256 = "hash",
-//      extractedTextSha256 = "hash",
-      deliverySource = DestinationType.PRISON,
+      addressedOrganisation = "PRISON",
       metadataVersion = METADATA_VERSION,
-//      metadataUpdatedAt = TODO(),
-//      prisonerNumber = TODO(),
-//      identifiedAt = TODO(),
-//      matchOutcome = TODO(),
     )
 
     private fun addCourtDocumentCases(courtDocument: CourtDocumentEntity, cases: List<String>) {
@@ -149,7 +140,6 @@ class ConcatenatedCaseReferencesFixBackfillIntTest : IntegrationTestBase() {
       courtDocumentCases = mutableListOf(),
     )
 
-    // list of case references, expected batch
     val CONCATENATED_CASES_2_ALL_DUPLICATED = listOf("case1", "case2", "case1,case2")
     val CONCATENATED_CASES_0 = listOf("case1", "case2")
     val CONCATENATED_CASES_2_SOME_DUPLICATED = listOf("case1", "case1,case2")
@@ -182,7 +172,6 @@ class ConcatenatedCaseReferencesFixBackfillIntTest : IntegrationTestBase() {
       Arguments.of(CONCATENATED_CASES_2_EXTRA_CASE),
     )
 
-    // Remember to add 1 to the total expected after fix because of default case reference added by sendSubscription
     @JvmStatic
     fun getRunBackfillIntegrationTestParameters() = listOf(
       Arguments.of(CONCATENATED_CASES_0, 0, 3),

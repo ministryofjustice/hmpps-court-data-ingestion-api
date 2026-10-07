@@ -34,7 +34,7 @@ class UnclassifiedAddressRepository(
       FROM court_document cd
      WHERE cd.addressed_prison IS NULL
        AND cd.prison_email_address IS NOT NULL
-       AND cd.delivery_source IS DISTINCT FROM 'PECS'
+       AND cd.addressed_organisation IS DISTINCT FROM 'PECS'
        AND NOT EXISTS (
              SELECT 1 FROM prison_email_mapping m WHERE m.email = lower(trim(cd.prison_email_address))
            )

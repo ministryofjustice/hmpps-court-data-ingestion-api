@@ -25,4 +25,9 @@ data class DeliveryCategory(
 
   @Column(name = "created_at")
   val createdAt: LocalDateTime = LocalDateTime.now(),
-)
+) {
+  companion object {
+    const val PRISON = "PRISON"
+    const val PECS = "PECS"
+  }
+}

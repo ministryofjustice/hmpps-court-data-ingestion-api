@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmctsSubscriptionApiClient
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsDocumentManagementApi
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.DeliveryCategory
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Document
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentApiType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.DocumentMetadataStatus
@@ -86,7 +87,12 @@ class FileService(
   }
 
   fun buildMirrorEnrichmentMetadata(document: CourtDocumentEntity): Map<String, Serializable> = buildMap {
-    document.deliverySource?.let { put("deliverySource", it.name) }
+    document.addressedOrganisation?.let { organisation ->
+      put("addressedOrganisation", organisation)
+      if (organisation == DeliveryCategory.PRISON || organisation == DeliveryCategory.PECS) {
+        put("deliverySource", organisation)
+      }
+    }
     put("documentSubType", document.courtDocumentType.name)
     document.courtHearing?.hmppsCourtId?.let { put("courtCode", it) }
     put("caseReferences", document.courtDocumentCases.map { it.caseReference }.toSet().toTypedArray())

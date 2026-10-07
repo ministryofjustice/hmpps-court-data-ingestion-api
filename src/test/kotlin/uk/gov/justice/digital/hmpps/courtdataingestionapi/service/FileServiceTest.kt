@@ -13,7 +13,6 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmppsDocumentMa
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentCaseEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtHearingEntity
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.DestinationType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase.Companion.CASE_REFERENCE
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
@@ -53,7 +52,7 @@ class FileServiceTest {
   @ParameterizedTest
   @MethodSource("getBuildMirrorEnrichmentMetadataTestParameters")
   fun buildMirrorEnrichmentMetadata(
-    deliverySource: DestinationType?,
+    addressedOrganisation: String?,
     courtDocumentType: CourtDocumentType,
     courtCode: String?,
     caseReference: String?,
@@ -62,7 +61,7 @@ class FileServiceTest {
     expectedCourtCode: String,
     expectedCaseReferences: Array<String>,
   ) {
-    val document = sampleWarrant(deliverySource, courtDocumentType, courtCode, caseReference)
+    val document = sampleWarrant(addressedOrganisation, courtDocumentType, courtCode, caseReference)
 
     val result = fileService.buildMirrorEnrichmentMetadata(document)
 
@@ -77,6 +76,21 @@ class FileServiceTest {
     assertThat(resultCaseReferences).isEqualTo(expectedCaseReferences)
   }
 
+  @ParameterizedTest
+  @MethodSource("getAddressedOrganisationMetadataTestParameters")
+  fun `mirrors the addressed organisation, and deliverySource only where it had a value before`(
+    addressedOrganisation: String?,
+    expectedOrganisation: String,
+    expectedLegacySource: String,
+  ) {
+    val document = sampleWarrant(addressedOrganisation, CourtDocumentType.REMAND_WARRANT, COURT_CODE, CASE_REFERENCE)
+
+    val result = fileService.buildMirrorEnrichmentMetadata(document)
+
+    assertThat(result.getOrDefault("addressedOrganisation", "NOT FOUND")).isEqualTo(expectedOrganisation)
+    assertThat(result.getOrDefault("deliverySource", "NOT FOUND")).isEqualTo(expectedLegacySource)
+  }
+
   companion object {
     const val ENV_NAME = "test"
     val COURT_HEARING_ID: UUID = UUID.fromString("509b295e-22d1-4cc0-9925-d5690503ce3c")
@@ -85,9 +99,9 @@ class FileServiceTest {
     const val COURT_CODE = "LND001"
 
     @JvmStatic
-    private fun sampleWarrant(deliverySource: DestinationType?, courtDocumentType: CourtDocumentType, courtCode: String?, caseReference: String?): CourtDocumentEntity {
+    private fun sampleWarrant(addressedOrganisation: String?, courtDocumentType: CourtDocumentType, courtCode: String?, caseReference: String?): CourtDocumentEntity {
       val document = CourtDocumentEntity(
-        deliverySource = deliverySource,
+        addressedOrganisation = addressedOrganisation,
         courtDocumentType = courtDocumentType,
         masterDefendantId = UUID.randomUUID(),
         hmctsCourtDocumentId = UUID.randomUUID(),
@@ -122,16 +136,27 @@ class FileServiceTest {
     }
 
     @JvmStatic
+    fun getAddressedOrganisationMetadataTestParameters() = listOf(
+      Arguments.of("PRISON", "PRISON", "PRISON"),
+      Arguments.of("PECS", "PECS", "PECS"),
+      Arguments.of("PROBATION_SERVICE", "PROBATION_SERVICE", "NOT FOUND"),
+      Arguments.of("YOUTH_CUSTODY", "YOUTH_CUSTODY", "NOT FOUND"),
+      Arguments.of("MANUAL", "MANUAL", "NOT FOUND"),
+      Arguments.of("COURT_ONLY", "COURT_ONLY", "NOT FOUND"),
+      Arguments.of(null, "NOT FOUND", "NOT FOUND"),
+    )
+
+    @JvmStatic
     fun getBuildMirrorEnrichmentMetadataTestParameters() = listOf(
-      Arguments.of(DestinationType.PRISON, CourtDocumentType.REMAND_WARRANT, COURT_CODE, CASE_REFERENCE, "PRISON", "REMAND_WARRANT", COURT_CODE, arrayOf(CASE_REFERENCE)),
-      Arguments.of(DestinationType.PRISON, CourtDocumentType.PRISON_COURT_REGISTER, null, CASE_REFERENCE, "PRISON", "PRISON_COURT_REGISTER", "NOT FOUND", arrayOf(CASE_REFERENCE)),
+      Arguments.of("PRISON", CourtDocumentType.REMAND_WARRANT, COURT_CODE, CASE_REFERENCE, "PRISON", "REMAND_WARRANT", COURT_CODE, arrayOf(CASE_REFERENCE)),
+      Arguments.of("PRISON", CourtDocumentType.PRISON_COURT_REGISTER, null, CASE_REFERENCE, "PRISON", "PRISON_COURT_REGISTER", "NOT FOUND", arrayOf(CASE_REFERENCE)),
       Arguments.of(null, CourtDocumentType.PRISON_COURT_REGISTER, COURT_CODE, CASE_REFERENCE, "NOT FOUND", "PRISON_COURT_REGISTER", COURT_CODE, arrayOf(CASE_REFERENCE)),
       Arguments.of(null, CourtDocumentType.REMAND_WARRANT, null, CASE_REFERENCE, "NOT FOUND", "REMAND_WARRANT", "NOT FOUND", arrayOf(CASE_REFERENCE)),
-      Arguments.of(DestinationType.PRISON, CourtDocumentType.REMAND_WARRANT, COURT_CODE, null, "PRISON", "REMAND_WARRANT", COURT_CODE, emptyArray<String>()),
-      Arguments.of(DestinationType.PRISON, CourtDocumentType.PRISON_COURT_REGISTER, null, null, "PRISON", "PRISON_COURT_REGISTER", "NOT FOUND", emptyArray<String>()),
+      Arguments.of("PRISON", CourtDocumentType.REMAND_WARRANT, COURT_CODE, null, "PRISON", "REMAND_WARRANT", COURT_CODE, emptyArray<String>()),
+      Arguments.of("PRISON", CourtDocumentType.PRISON_COURT_REGISTER, null, null, "PRISON", "PRISON_COURT_REGISTER", "NOT FOUND", emptyArray<String>()),
       Arguments.of(null, CourtDocumentType.PRISON_COURT_REGISTER, COURT_CODE, null, "NOT FOUND", "PRISON_COURT_REGISTER", COURT_CODE, emptyArray<String>()),
       Arguments.of(null, CourtDocumentType.REMAND_WARRANT, null, null, "NOT FOUND", "REMAND_WARRANT", "NOT FOUND", emptyArray<String>()),
-      Arguments.of(DestinationType.PRISON, CourtDocumentType.REMAND_WARRANT, COURT_CODE, "${CASE_REFERENCE},${CASE_REFERENCE_2}", "PRISON", "REMAND_WARRANT", COURT_CODE, arrayOf(CASE_REFERENCE, CASE_REFERENCE_2)),
+      Arguments.of("PRISON", CourtDocumentType.REMAND_WARRANT, COURT_CODE, "${CASE_REFERENCE},${CASE_REFERENCE_2}", "PRISON", "REMAND_WARRANT", COURT_CODE, arrayOf(CASE_REFERENCE, CASE_REFERENCE_2)),
     )
   }
 }

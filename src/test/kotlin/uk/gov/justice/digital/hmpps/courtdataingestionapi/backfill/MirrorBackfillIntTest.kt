@@ -3,12 +3,16 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.backfill
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.transaction.support.TransactionTemplate
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsCourtScheduleApiExtension.Companion.hmctsCourtScheduleApi
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtHearingRepository
+import java.time.LocalDateTime
 
 class MirrorBackfillIntTest : IntegrationTestBase() {
 
@@ -20,6 +24,12 @@ class MirrorBackfillIntTest : IntegrationTestBase() {
 
   @Autowired
   private lateinit var backfill: MirrorBackfill
+
+  @Autowired
+  private lateinit var jdbcTemplate: JdbcTemplate
+
+  @Autowired
+  private lateinit var transactionTemplate: TransactionTemplate
 
   @BeforeEach
   fun setup() {
@@ -74,6 +84,23 @@ class MirrorBackfillIntTest : IntegrationTestBase() {
 
     assertThat(fileAfter.metadataVersion).isEqualTo(expected)
     assertThat(fileAfter.metadataVersion).isGreaterThanOrEqualTo(METADATA_VERSION)
+  }
+
+  @Test
+  fun `marking a mirror only applies while the mirrored organisation is still current`() {
+    sendSubscriptionNotificationWaitForRecordToBeCreated(MATCHING_CORE_PERSON)
+    val document = courtDocumentRepository.findFirstByMasterDefendantIdOrderByIngestionAtDesc(MATCHING_CORE_PERSON)!!
+    jdbcTemplate.update("UPDATE court_document SET addressed_organisation = NULL, metadata_version = 0 WHERE id = ?", document.id)
+
+    jdbcTemplate.update("UPDATE court_document SET addressed_organisation = 'YOUTH_CUSTODY' WHERE id = ?", document.id)
+    val stale = transactionTemplate.execute { courtDocumentRepository.markMirrored(document.id, METADATA_VERSION, LocalDateTime.now(), null) }
+    val current = transactionTemplate.execute { courtDocumentRepository.markMirrored(document.id, METADATA_VERSION, LocalDateTime.now(), "YOUTH_CUSTODY") }
+
+    assertThat(stale).isZero()
+    assertThat(current).isEqualTo(1)
+    val after = jdbcTemplate.queryForMap("SELECT addressed_organisation, metadata_version FROM court_document WHERE id = ?", document.id)
+    assertThat(after["addressed_organisation"]).isEqualTo("YOUTH_CUSTODY")
+    assertThat(after["metadata_version"]).isEqualTo(METADATA_VERSION)
   }
 
   companion object {

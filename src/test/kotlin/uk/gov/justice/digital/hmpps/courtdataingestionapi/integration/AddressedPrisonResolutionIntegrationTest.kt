@@ -27,7 +27,6 @@ class AddressedPrisonResolutionIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `diagnostic - the seeded mapping is readable through the repository`() {
-    // If this fails, the problem is the seed, the table, or the lookup query, not the enricher.
     assertThat(prisonEmailMappingRepository.findMappingByEmail(PRISON_EMAIL)?.prisonCode).isEqualTo(PRISON_CODE_MAPPING)
   }
 
@@ -39,14 +38,15 @@ class AddressedPrisonResolutionIntegrationTest : IntegrationTestBase() {
 
     assertThat(document.prisonEmailAddress).isEqualTo(PRISON_EMAIL)
     assertThat(document.addressedPrison).isEqualTo(PRISON_CODE_MAPPING)
+    assertThat(document.addressedOrganisation).isEqualTo("PRISON")
   }
 
   companion object {
     const val PRISON_CODE_MAPPING: String = "LII"
     const val PRISON_EMAIL_ADD_MAPPING_SQL: String = """
-      INSERT INTO prison_email_mapping (email, prison_code, source_type)
+      INSERT INTO prison_email_mapping (email, prison_code, category_code)
       VALUES (?, ?, ?)
-      ON CONFLICT (email) DO UPDATE SET prison_code = EXCLUDED.prison_code, source_type = EXCLUDED.source_type
+      ON CONFLICT (email) DO UPDATE SET prison_code = EXCLUDED.prison_code, category_code = EXCLUDED.category_code
       """
   }
 }

@@ -32,9 +32,12 @@ class MirrorBackfill(
     val outcome = fileService.mirrorEnrichmentToDocumentStore(document)
 
     if (outcome.fullySuccessful) {
-      document.metadataVersion = metadataVersion
-      document.metadataUpdatedAt = LocalDateTime.now()
-      courtDocumentRepository.save(document)
+      courtDocumentRepository.markMirrored(
+        id = document.id,
+        metadataVersion = metadataVersion,
+        metadataUpdatedAt = LocalDateTime.now(),
+        mirroredOrganisation = document.addressedOrganisation,
+      )
     } else {
       val cause = outcome.contentHashError ?: outcome.metadataError
         ?: IllegalStateException("Mirror failed with no captured cause")

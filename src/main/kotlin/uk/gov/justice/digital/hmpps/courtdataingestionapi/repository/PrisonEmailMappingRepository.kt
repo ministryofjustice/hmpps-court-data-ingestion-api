@@ -8,7 +8,6 @@ data class EmailMapping(
   val id: UUID,
   val email: String,
   val prisonCode: String?,
-  val sourceType: String?,
   val categoryCode: String?,
 )
 
@@ -19,7 +18,7 @@ class PrisonEmailMappingRepository(
 
   fun findMappingByEmail(normalisedEmail: String): EmailMapping? {
     val sql = """
-      SELECT id, email, prison_code, source_type, category_code
+      SELECT id, email, prison_code, category_code
       FROM prison_email_mapping
       WHERE email = :email
     """.trimIndent()
@@ -56,7 +55,6 @@ class PrisonEmailMappingRepository(
     id = rs.getObject("id", UUID::class.java),
     email = rs.getString("email"),
     prisonCode = rs.getString("prison_code"),
-    sourceType = rs.getString("source_type"),
     categoryCode = rs.getString("category_code"),
   )
 }

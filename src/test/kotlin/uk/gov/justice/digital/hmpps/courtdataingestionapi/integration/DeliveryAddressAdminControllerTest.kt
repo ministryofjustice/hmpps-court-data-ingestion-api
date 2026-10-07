@@ -46,7 +46,7 @@ class DeliveryAddressAdminControllerTest : IntegrationTestBase() {
   fun `unclassified addresses are grouped by address, with PECS and mapped addresses excluded`() {
     insertDocument(UNCLASSIFIED, prisonerNumber = "A1111AA")
     insertDocument(UNCLASSIFIED, prisonerNumber = null)
-    insertDocument("pecs.south@geoamey.co.uk", prisonerNumber = "A2222AA", deliverySource = "PECS")
+    insertDocument("pecs.south@geoamey.co.uk", prisonerNumber = "A2222AA", addressedOrganisation = "PECS")
     insertMapping(MAPPED)
     insertDocument(MAPPED, prisonerNumber = "A3333AA")
 
@@ -214,11 +214,11 @@ class DeliveryAddressAdminControllerTest : IntegrationTestBase() {
     email,
   )
 
-  private fun insertDocument(email: String, prisonerNumber: String?, deliverySource: String? = null) = jdbcTemplate.update(
+  private fun insertDocument(email: String, prisonerNumber: String?, addressedOrganisation: String? = null) = jdbcTemplate.update(
     """
       INSERT INTO court_document
         (id, master_defendant_id, hmcts_court_document_id, prison_document_id, prison_email_address,
-         event_type, court_document_type, document_generated_timestamp, ingestion_at, prisoner_number, delivery_source)
+         event_type, court_document_type, document_generated_timestamp, ingestion_at, prisoner_number, addressed_organisation)
       VALUES (?, ?, ?, ?, ?, 'PRISON_COURT_REGISTER_GENERATED', 'PRISON_COURT_REGISTER', ?, ?, ?, ?)
     """.trimIndent(),
     UUID.randomUUID(),
@@ -229,7 +229,7 @@ class DeliveryAddressAdminControllerTest : IntegrationTestBase() {
     LocalDateTime.now().minusDays(1),
     LocalDateTime.now().minusDays(1),
     prisonerNumber,
-    deliverySource,
+    addressedOrganisation,
   )
 
   @Test

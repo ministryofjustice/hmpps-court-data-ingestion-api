@@ -52,9 +52,9 @@ data class CourtDocumentEntity(
   @Column(name = "extracted_text_sha256")
   var extractedTextSha256: String? = null,
 
-  @Enumerated(EnumType.STRING)
-  @Column(name = "delivery_source")
-  var deliverySource: uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.DestinationType? = null,
+  /** The delivery category (delivery_category.code) of the organisation the document was addressed to. */
+  @Column(name = "addressed_organisation")
+  var addressedOrganisation: String? = null,
 
   @Column(name = "metadata_version")
   var metadataVersion: Int = 0,

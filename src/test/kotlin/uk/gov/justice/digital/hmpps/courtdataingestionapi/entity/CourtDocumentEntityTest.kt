@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.courtdataingestionapi.entity
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.DestinationType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
 import java.time.LocalDateTime
@@ -27,7 +26,7 @@ class CourtDocumentEntityTest {
       courtDocumentType = CourtDocumentType.PRISON_COURT_REGISTER,
       documentGeneratedTimestamp = LocalDateTime.now(),
       extractedTextSha256 = "some-hash",
-      deliverySource = DestinationType.PRISON,
+      addressedOrganisation = "PRISON",
     )
 
     val result = entity.toString()

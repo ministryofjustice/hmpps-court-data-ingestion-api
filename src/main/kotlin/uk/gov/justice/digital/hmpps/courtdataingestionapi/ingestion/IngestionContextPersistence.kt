@@ -6,6 +6,6 @@ fun CourtDocumentEntity.applyEnrichment(context: IngestionContext): CourtDocumen
   context.addressedPrison?.let { addressedPrison = it }
   context.downloadedFileSha256?.let { downloadedFileSha256 = it }
   context.extractedTextSha256?.let { extractedTextSha256 = it }
-  context.destinationType?.let { deliverySource = it }
+  context.addressedOrganisation?.let { addressedOrganisation = it }
   context.deliveryMappingId?.let { deliveryMappingId = it }
 }

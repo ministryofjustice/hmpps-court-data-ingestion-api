@@ -13,7 +13,6 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEn
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.extraction.ContentNormalisationProperties
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.extraction.ExtractedTextNormaliser
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.extraction.PdfTextExtractor
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.DestinationType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
@@ -162,7 +161,7 @@ class HashBackfillTest {
     addressedPrison = "HHI",
     downloadedFileSha256 = downloadedFileSha,
     extractedTextSha256 = extractedTextSha,
-    deliverySource = DestinationType.PRISON,
+    addressedOrganisation = "PRISON",
   )
 
   private fun readFixtureBytes(name: String): ByteArray {
