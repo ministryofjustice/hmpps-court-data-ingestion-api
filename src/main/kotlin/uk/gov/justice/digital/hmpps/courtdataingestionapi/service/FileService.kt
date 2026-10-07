@@ -91,11 +91,7 @@ class FileService(
     document.courtHearing?.hmppsCourtId?.let { put("courtCode", it) }
     put("caseReferences", document.courtDocumentCases.map { it.caseReference }.toSet().toTypedArray())
     put("isUnread", documentNotificationService.isUnread(document))
-
-    if (document.prisonerNumber == null) {
-      document.addressedPrison?.let { put("addressedPrisonCode", it) }
-      put("addressedPrisonEmail", document.prisonEmailAddress)
-    }
+    convertAddressedPrison(document)?.let { put("addressedPrison", it) }
   }
 
   fun deleteFileOnTransactionRollback(documentUuid: UUID) {
@@ -113,5 +109,10 @@ class FileService(
 
   companion object {
     private val log = LoggerFactory.getLogger(FileService::class.java)
+
+    private fun convertAddressedPrison(document: CourtDocumentEntity) : String? {
+      document.addressedPrison?.let { return it }
+      return document.deliverySource?.name
+    }
   }
 }

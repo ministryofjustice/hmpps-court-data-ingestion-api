@@ -61,6 +61,7 @@ class FileServiceTest {
     expectedSubType: String,
     expectedCourtCode: String,
     expectedCaseReferences: Array<String>,
+    expectedAddressedPrison: String?,
   ) {
     val document = sampleWarrant(deliverySource, courtDocumentType, courtCode, caseReference, PRISONER_NUMBER)
 
@@ -76,8 +77,7 @@ class FileServiceTest {
     assertThat(resultCaseReferences).hasSize(expectedCaseReferences.size)
     assertThat(resultCaseReferences).isEqualTo(expectedCaseReferences)
 
-    assertThat(result["addressedPrisonCode"]).isNull()
-    assertThat(result["addressedPrisonEmail"]).isNull()
+    assertThat(result["addressedPrison"]).isEqualTo(expectedAddressedPrison)
   }
 
   @ParameterizedTest
@@ -91,8 +91,8 @@ class FileServiceTest {
     expectedSubType: String,
     expectedCourtCode: String,
     expectedCaseReferences: Array<String>,
+    expectedAddressedPrison: String?,
   ) {
-    val expectedPrisonCode = PRISON_CODE
     val document = sampleWarrant(deliverySource, courtDocumentType, courtCode, caseReference)
 
     val result = fileService.buildMirrorEnrichmentMetadata(document)
@@ -107,8 +107,7 @@ class FileServiceTest {
     assertThat(resultCaseReferences).hasSize(expectedCaseReferences.size)
     assertThat(resultCaseReferences).isEqualTo(expectedCaseReferences)
 
-    assertThat(result["addressedPrisonCode"]).isEqualTo(expectedPrisonCode)
-    assertThat(result["addressedPrisonEmail"]).isNotNull()
+    assertThat(result["addressedPrison"]).isEqualTo(expectedAddressedPrison)
   }
 
   companion object {
@@ -133,7 +132,7 @@ class FileServiceTest {
         eventType = HmctsEventType.WEE_SendingToCrownCourtForTrial,
         prisonerNumber = prisonerNumber,
         documentGeneratedTimestamp = LocalDateTime.now(),
-        addressedPrison = PRISON_CODE,
+        addressedPrison = if (deliverySource == DestinationType.PRISON) { PRISON_CODE } else { null },
         downloadedFileSha256 = "1e8c08ae751bcfb0fd81b3f3abb32659a98a2171c30bc5c8e153791bc7060040",
         extractedTextSha256 = "1e8c08ae751bcfb0fd81b3f3abb32659a98a2171c30bc5c8e153791bc7060040",
       )
@@ -160,15 +159,17 @@ class FileServiceTest {
 
     @JvmStatic
     fun getBuildMirrorEnrichmentMetadataTestParameters() = listOf(
-      Arguments.of(DestinationType.PRISON, CourtDocumentType.REMAND_WARRANT, COURT_CODE, CASE_REFERENCE, "PRISON", "REMAND_WARRANT", COURT_CODE, arrayOf(CASE_REFERENCE)),
-      Arguments.of(DestinationType.PRISON, CourtDocumentType.PRISON_COURT_REGISTER, null, CASE_REFERENCE, "PRISON", "PRISON_COURT_REGISTER", "NOT FOUND", arrayOf(CASE_REFERENCE)),
-      Arguments.of(null, CourtDocumentType.PRISON_COURT_REGISTER, COURT_CODE, CASE_REFERENCE, "NOT FOUND", "PRISON_COURT_REGISTER", COURT_CODE, arrayOf(CASE_REFERENCE)),
-      Arguments.of(null, CourtDocumentType.REMAND_WARRANT, null, CASE_REFERENCE, "NOT FOUND", "REMAND_WARRANT", "NOT FOUND", arrayOf(CASE_REFERENCE)),
-      Arguments.of(DestinationType.PRISON, CourtDocumentType.REMAND_WARRANT, COURT_CODE, null, "PRISON", "REMAND_WARRANT", COURT_CODE, emptyArray<String>()),
-      Arguments.of(DestinationType.PRISON, CourtDocumentType.PRISON_COURT_REGISTER, null, null, "PRISON", "PRISON_COURT_REGISTER", "NOT FOUND", emptyArray<String>()),
-      Arguments.of(null, CourtDocumentType.PRISON_COURT_REGISTER, COURT_CODE, null, "NOT FOUND", "PRISON_COURT_REGISTER", COURT_CODE, emptyArray<String>()),
-      Arguments.of(null, CourtDocumentType.REMAND_WARRANT, null, null, "NOT FOUND", "REMAND_WARRANT", "NOT FOUND", emptyArray<String>()),
-      Arguments.of(DestinationType.PRISON, CourtDocumentType.REMAND_WARRANT, COURT_CODE, "${CASE_REFERENCE},${CASE_REFERENCE_2}", "PRISON", "REMAND_WARRANT", COURT_CODE, arrayOf(CASE_REFERENCE, CASE_REFERENCE_2)),
+      Arguments.of(DestinationType.PRISON, CourtDocumentType.REMAND_WARRANT, COURT_CODE, CASE_REFERENCE, "PRISON", "REMAND_WARRANT", COURT_CODE, arrayOf(CASE_REFERENCE), PRISON_CODE),
+      Arguments.of(DestinationType.PRISON, CourtDocumentType.PRISON_COURT_REGISTER, null, CASE_REFERENCE, "PRISON", "PRISON_COURT_REGISTER", "NOT FOUND", arrayOf(CASE_REFERENCE), PRISON_CODE),
+      Arguments.of(DestinationType.PECS, CourtDocumentType.PRISON_COURT_REGISTER, COURT_CODE, CASE_REFERENCE, "PECS", "PRISON_COURT_REGISTER", COURT_CODE, arrayOf(CASE_REFERENCE), "PECS"),
+      Arguments.of(null, CourtDocumentType.PRISON_COURT_REGISTER, COURT_CODE, CASE_REFERENCE, "NOT FOUND", "PRISON_COURT_REGISTER", COURT_CODE, arrayOf(CASE_REFERENCE), null),
+      Arguments.of(null, CourtDocumentType.REMAND_WARRANT, null, CASE_REFERENCE, "NOT FOUND", "REMAND_WARRANT", "NOT FOUND", arrayOf(CASE_REFERENCE), null),
+      Arguments.of(DestinationType.PRISON, CourtDocumentType.REMAND_WARRANT, COURT_CODE, null, "PRISON", "REMAND_WARRANT", COURT_CODE, emptyArray<String>(), PRISON_CODE),
+      Arguments.of(DestinationType.PRISON, CourtDocumentType.PRISON_COURT_REGISTER, null, null, "PRISON", "PRISON_COURT_REGISTER", "NOT FOUND", emptyArray<String>(), PRISON_CODE),
+      Arguments.of(null, CourtDocumentType.PRISON_COURT_REGISTER, COURT_CODE, null, "NOT FOUND", "PRISON_COURT_REGISTER", COURT_CODE, emptyArray<String>(), null),
+      Arguments.of(DestinationType.PECS, CourtDocumentType.PRISON_COURT_REGISTER, COURT_CODE, null, "PECS", "PRISON_COURT_REGISTER", COURT_CODE, emptyArray<String>(), "PECS"),
+      Arguments.of(null, CourtDocumentType.REMAND_WARRANT, null, null, "NOT FOUND", "REMAND_WARRANT", "NOT FOUND", emptyArray<String>(), null),
+      Arguments.of(DestinationType.PRISON, CourtDocumentType.REMAND_WARRANT, COURT_CODE, "${CASE_REFERENCE},${CASE_REFERENCE_2}", "PRISON", "REMAND_WARRANT", COURT_CODE, arrayOf(CASE_REFERENCE, CASE_REFERENCE_2), PRISON_CODE),
     )
   }
 }
