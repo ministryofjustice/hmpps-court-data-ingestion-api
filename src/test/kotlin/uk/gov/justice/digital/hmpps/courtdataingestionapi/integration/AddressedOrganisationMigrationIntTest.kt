@@ -262,6 +262,6 @@ class AddressedOrganisationMigrationIntTest : IntegrationTestBase() {
   private fun mappingIdOf(email: String) = jdbcTemplate
     .queryForObject("SELECT id FROM prison_email_mapping WHERE email = ?", UUID::class.java, email)
 
-  private fun <T> column(id: UUID, name: String, type: Class<T>): T? = jdbcTemplate
+  private fun <T : Any> column(id: UUID, name: String, type: Class<T>): T? = jdbcTemplate
     .queryForObject("SELECT $name FROM court_document WHERE id = ?", type, id)
 }
