@@ -135,9 +135,10 @@ class DeliveryAddressAdminControllerTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `classifying an address creates the mapping and reports the documents it will re-resolve`() {
+  fun `classifying an address saves the mapping and leaves existing documents for the backfill`() {
     insertDocument(UNCLASSIFIED, prisonerNumber = "A1111AA")
     insertDocument(UNCLASSIFIED, prisonerNumber = "A2222AA")
+    val runsBefore = jdbcTemplate.queryForObject("SELECT count(*) FROM backfill_run", Int::class.java)
 
     webTestClient.post().uri("/admin/delivery-addresses")
       .headers(setAuthorisation(roles = listOf(SUPPORT_ROLE)))
@@ -146,9 +147,61 @@ class DeliveryAddressAdminControllerTest : IntegrationTestBase() {
       .exchange()
       .expectStatus().isOk
       .expectBody()
-      .jsonPath("$.documentsQueued").isEqualTo(2)
+      .jsonPath("$.backfillOutcome").isEqualTo("pending")
 
     assertThat(mappedPrisonFor(UNCLASSIFIED)).isEqualTo("LEI")
+    assertThat(
+      jdbcTemplate.queryForObject(
+        "SELECT count(*) FROM court_document WHERE prison_email_address = ? AND delivery_mapping_id IS NOT NULL",
+        Int::class.java,
+        UNCLASSIFIED,
+      ),
+    ).isZero()
+    assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM backfill_run", Int::class.java)).isEqualTo(runsBefore)
+  }
+
+  @Test
+  fun `previewing a classification reports the category without counting documents`() {
+    insertDocument(UNCLASSIFIED, prisonerNumber = "A1111AA")
+
+    webTestClient.post().uri("/admin/delivery-addresses/preview")
+      .headers(setAuthorisation(roles = listOf(SUPPORT_ROLE)))
+      .contentType(MediaType.APPLICATION_JSON)
+      .bodyValue(mapOf("emailAddress" to UNCLASSIFIED, "categoryCode" to "PRISON", "prisonCode" to "LEI"))
+      .exchange()
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.emailAddress").isEqualTo(UNCLASSIFIED)
+      .jsonPath("$.category.code").isEqualTo("PRISON")
+      .jsonPath("$.prisonCode").isEqualTo("LEI")
+      .jsonPath("$.replacesExisting").isEqualTo(false)
+      .jsonPath("$.documentsAffected").doesNotExist()
+      .jsonPath("$.peopleAffected").doesNotExist()
+      .jsonPath("$.currentLocations").doesNotExist()
+  }
+
+  @Test
+  fun `previewing a classification flags an address that already has a mapping`() {
+    insertMapping(MAPPED)
+
+    webTestClient.post().uri("/admin/delivery-addresses/preview")
+      .headers(setAuthorisation(roles = listOf(SUPPORT_ROLE)))
+      .contentType(MediaType.APPLICATION_JSON)
+      .bodyValue(mapOf("emailAddress" to MAPPED, "categoryCode" to "PRISON", "prisonCode" to "LEI"))
+      .exchange()
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.replacesExisting").isEqualTo(true)
+  }
+
+  @Test
+  fun `previewing an unknown category is not found`() {
+    webTestClient.post().uri("/admin/delivery-addresses/preview")
+      .headers(setAuthorisation(roles = listOf(SUPPORT_ROLE)))
+      .contentType(MediaType.APPLICATION_JSON)
+      .bodyValue(mapOf("emailAddress" to UNCLASSIFIED, "categoryCode" to "NO_SUCH_CATEGORY"))
+      .exchange()
+      .expectStatus().isNotFound
   }
 
   private fun categoryCodes() = jdbcTemplate.queryForList("SELECT code FROM delivery_category", String::class.java)
