@@ -132,7 +132,10 @@ class FileServiceTest {
         eventType = HmctsEventType.WEE_SendingToCrownCourtForTrial,
         prisonerNumber = prisonerNumber,
         documentGeneratedTimestamp = LocalDateTime.now(),
-        addressedPrison = if (deliverySource == DestinationType.PRISON) { PRISON_CODE } else { null },
+        addressedPrison = when (deliverySource) {
+          DestinationType.PRISON -> PRISON_CODE
+          else -> null
+        },
         downloadedFileSha256 = "1e8c08ae751bcfb0fd81b3f3abb32659a98a2171c30bc5c8e153791bc7060040",
         extractedTextSha256 = "1e8c08ae751bcfb0fd81b3f3abb32659a98a2171c30bc5c8e153791bc7060040",
       )

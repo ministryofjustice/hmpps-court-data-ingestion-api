@@ -110,7 +110,7 @@ class FileService(
   companion object {
     private val log = LoggerFactory.getLogger(FileService::class.java)
 
-    private fun convertAddressedPrison(document: CourtDocumentEntity) : String? {
+    private fun convertAddressedPrison(document: CourtDocumentEntity): String? {
       document.addressedPrison?.let { return it }
       return document.deliverySource?.name
     }
