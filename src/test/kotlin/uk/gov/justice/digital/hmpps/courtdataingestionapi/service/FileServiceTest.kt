@@ -62,6 +62,37 @@ class FileServiceTest {
     expectedCourtCode: String,
     expectedCaseReferences: Array<String>,
   ) {
+    val document = sampleWarrant(deliverySource, courtDocumentType, courtCode, caseReference, PRISONER_NUMBER)
+
+    val result = fileService.buildMirrorEnrichmentMetadata(document)
+
+    assertThat(result).isNotEmpty()
+    assertThat(result.getOrDefault("deliverySource", "NOT FOUND")).isEqualTo(expectedSource)
+    assertThat(result["documentSubType"]).isEqualTo(expectedSubType)
+    assertThat(result.getOrDefault("courtCode", "NOT FOUND")).isEqualTo(expectedCourtCode)
+
+    assertThat(result["caseReferences"]).hasSameClassAs(expectedCaseReferences)
+    val resultCaseReferences = result["caseReferences"] as Array<String>
+    assertThat(resultCaseReferences).hasSize(expectedCaseReferences.size)
+    assertThat(resultCaseReferences).isEqualTo(expectedCaseReferences)
+
+    assertThat(result["addressedPrisonCode"]).isNull()
+    assertThat(result["addressedPrisonEmail"]).isNull()
+  }
+
+  @ParameterizedTest
+  @MethodSource("getBuildMirrorEnrichmentMetadataTestParameters")
+  fun testBuildMirrorEnrichmentMetadataForUnmatchedDocuments(
+    deliverySource: DestinationType?,
+    courtDocumentType: CourtDocumentType,
+    courtCode: String?,
+    caseReference: String?,
+    expectedSource: String,
+    expectedSubType: String,
+    expectedCourtCode: String,
+    expectedCaseReferences: Array<String>,
+  ) {
+    val expectedPrisonCode = PRISON_CODE
     val document = sampleWarrant(deliverySource, courtDocumentType, courtCode, caseReference)
 
     val result = fileService.buildMirrorEnrichmentMetadata(document)
@@ -75,6 +106,9 @@ class FileServiceTest {
     val resultCaseReferences = result["caseReferences"] as Array<String>
     assertThat(resultCaseReferences).hasSize(expectedCaseReferences.size)
     assertThat(resultCaseReferences).isEqualTo(expectedCaseReferences)
+
+    assertThat(result["addressedPrisonCode"]).isEqualTo(expectedPrisonCode)
+    assertThat(result["addressedPrisonEmail"]).isNotNull()
   }
 
   companion object {
@@ -83,9 +117,11 @@ class FileServiceTest {
     val COURT_ID: UUID = UUID.fromString("d569ce3c-4cc0-9925-22d1-509b295e0503")
     const val CASE_REFERENCE_2 = "CASE789012"
     const val COURT_CODE = "LND001"
+    const val PRISONER_NUMBER = "OFF900"
+    const val PRISON_CODE = "HHI"
 
     @JvmStatic
-    private fun sampleWarrant(deliverySource: DestinationType?, courtDocumentType: CourtDocumentType, courtCode: String?, caseReference: String?): CourtDocumentEntity {
+    private fun sampleWarrant(deliverySource: DestinationType?, courtDocumentType: CourtDocumentType, courtCode: String?, caseReference: String?, prisonerNumber: String? = null): CourtDocumentEntity {
       val document = CourtDocumentEntity(
         deliverySource = deliverySource,
         courtDocumentType = courtDocumentType,
@@ -95,8 +131,9 @@ class FileServiceTest {
         hmctsCourtHearingId = COURT_HEARING_ID,
         prisonEmailAddress = "OMU.HolmeHouse@justice.gov.uk",
         eventType = HmctsEventType.WEE_SendingToCrownCourtForTrial,
+        prisonerNumber = prisonerNumber,
         documentGeneratedTimestamp = LocalDateTime.now(),
-        addressedPrison = "HHI",
+        addressedPrison = PRISON_CODE,
         downloadedFileSha256 = "1e8c08ae751bcfb0fd81b3f3abb32659a98a2171c30bc5c8e153791bc7060040",
         extractedTextSha256 = "1e8c08ae751bcfb0fd81b3f3abb32659a98a2171c30bc5c8e153791bc7060040",
       )

@@ -91,6 +91,11 @@ class FileService(
     document.courtHearing?.hmppsCourtId?.let { put("courtCode", it) }
     put("caseReferences", document.courtDocumentCases.map { it.caseReference }.toSet().toTypedArray())
     put("isUnread", documentNotificationService.isUnread(document))
+
+    if (document.prisonerNumber == null) {
+      document.addressedPrison?.let { put("addressedPrisonCode", it) }
+      put("addressedPrisonEmail", document.prisonEmailAddress)
+    }
   }
 
   fun deleteFileOnTransactionRollback(documentUuid: UUID) {
