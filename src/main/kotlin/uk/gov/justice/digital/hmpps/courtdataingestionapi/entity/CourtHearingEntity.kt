@@ -4,6 +4,9 @@ import jakarta.persistence.CascadeType
 import jakarta.persistence.Entity
 import jakarta.persistence.EntityNotFoundException
 import jakarta.persistence.Id
+import jakarta.persistence.NamedAttributeNode
+import jakarta.persistence.NamedEntityGraph
+import jakarta.persistence.NamedSubgraph
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import org.hibernate.annotations.JdbcTypeCode
@@ -20,6 +23,34 @@ import java.util.UUID
 
 @Entity
 @Table(name = "court_hearing")
+@NamedEntityGraph(
+  name = "CourtHearing.full",
+  attributeNodes = [
+    NamedAttributeNode("courtDocuments"),
+    NamedAttributeNode("nextCourtHearings"),
+    NamedAttributeNode(
+      value = "courtCharges",
+      subgraph = "courtCharges",
+    ),
+  ],
+  subgraphs = [
+    NamedSubgraph(
+      name = "courtCharges",
+      attributeNodes = [
+        NamedAttributeNode(
+          value = "results",
+          subgraph = "results",
+        ),
+      ],
+    ),
+    NamedSubgraph(
+      name = "results",
+      attributeNodes = [
+        NamedAttributeNode("resultTexts"),
+      ],
+    ),
+  ],
+)
 data class CourtHearingEntity(
   @Id
   val id: UUID = UUID.randomUUID(),
