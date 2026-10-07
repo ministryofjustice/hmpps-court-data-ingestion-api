@@ -64,34 +64,6 @@ class UnclassifiedAddressRepository(
     ::map,
   )
 
-  fun countDocumentsFor(normalisedEmail: String): Int = jdbcTemplate.queryForObject(
-    "SELECT count(*) FROM court_document WHERE lower(trim(prison_email_address)) = :email AND addressed_prison IS NULL",
-    mapOf("email" to normalisedEmail),
-    Int::class.java,
-  ) ?: 0
-
-  fun prisonerNumbersFor(normalisedEmail: String, limit: Int): List<String> = jdbcTemplate.query(
-    """
-    SELECT DISTINCT prisoner_number
-      FROM court_document
-     WHERE lower(trim(prison_email_address)) = :email
-       AND addressed_prison IS NULL
-       AND prisoner_number IS NOT NULL
-     LIMIT :limit
-    """.trimIndent(),
-    MapSqlParameterSource().addValue("email", normalisedEmail).addValue("limit", limit),
-  ) { rs, _ -> rs.getString("prisoner_number") }
-
-  fun countDistinctPeopleFor(normalisedEmail: String): Int = jdbcTemplate.queryForObject(
-    """
-    SELECT count(DISTINCT prisoner_number)
-      FROM court_document
-     WHERE lower(trim(prison_email_address)) = :email AND addressed_prison IS NULL AND prisoner_number IS NOT NULL
-    """.trimIndent(),
-    mapOf("email" to normalisedEmail),
-    Int::class.java,
-  ) ?: 0
-
   private fun map(rs: java.sql.ResultSet, @Suppress("UNUSED_PARAMETER") rowNum: Int) = UnclassifiedAddress(
     emailAddress = rs.getString("email_address"),
     categoryCode = rs.getString("category_code"),
