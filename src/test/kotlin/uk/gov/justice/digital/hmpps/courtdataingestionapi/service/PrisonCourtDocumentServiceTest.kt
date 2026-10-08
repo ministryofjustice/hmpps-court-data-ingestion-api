@@ -4,17 +4,15 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
-import org.mockito.kotlin.never
-import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtHearingEntity
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.DeliveryCategory
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.DeliveryMappingEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.prisonersearch.Prisoner
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.MappedDestination
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.PrisonEmailMappingRepository
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -23,8 +21,7 @@ class PrisonCourtDocumentServiceTest {
 
   private val courtDocumentRepository: CourtDocumentRepository = mock()
   private val prisonerSearchService: PrisonerSearchService = mock()
-  private val prisonEmailMappingRepository: PrisonEmailMappingRepository = mock()
-  private val service = PrisonCourtDocumentService(courtDocumentRepository, prisonerSearchService, prisonEmailMappingRepository)
+  private val service = PrisonCourtDocumentService(courtDocumentRepository, prisonerSearchService)
 
   private fun prisoner(prisonerNumber: String = "A1111AA") = Prisoner(prisonerNumber, "LEI", firstName = "Robin", lastName = "Smith")
 
@@ -104,37 +101,30 @@ class PrisonCourtDocumentServiceTest {
   }
 
   @Test
-  fun `the addressed prison comes from the document's mapping, falling back to the old column only without one`() {
-    val mappingId = UUID.randomUUID()
-    val (mapped, unmapped) = documents(2)
-    mapped.apply {
-      deliveryMappingId = mappingId
-      addressedPrison = "OLD"
-      downloadedFileSha256 = "file-1"
-    }
-    unmapped.apply {
-      addressedPrison = "OLD"
-      downloadedFileSha256 = "file-2"
-    }
+  fun `the addressed prison comes from the document's mapping, and there is none without one`() {
+    val youthCustody = DeliveryCategory(code = "YOUTH_CUSTODY", name = "Youth custody", requiresPrisonCode = false)
+    val prison = DeliveryCategory(code = "PRISON", name = "Prison", requiresPrisonCode = true)
+    val (first, second, third) = documents(3)
+    val mapped = first.copy(
+      deliveryMapping = DeliveryMappingEntity(UUID.randomUUID(), "omu.leeds@justice.gov.uk", "LEI", prison),
+      downloadedFileSha256 = "file-1",
+    )
+    val youth = second.copy(
+      deliveryMapping = DeliveryMappingEntity(UUID.randomUUID(), "ycs@justice.gov.uk", "WYI", youthCustody),
+      downloadedFileSha256 = "file-2",
+    )
+    val unmapped = third.copy(downloadedFileSha256 = "file-3")
     whenever(prisonerSearchService.getPrisonersInPrison("LEI")).thenReturn(listOf(prisoner()))
-    whenever(courtDocumentRepository.findByPrisonerNumberInAndIngestionAtGreaterThanEqualAndIngestionAtLessThanOrderByIngestionAtDesc(any(), any(), any())).thenReturn(listOf(mapped, unmapped))
-    whenever(prisonEmailMappingRepository.findDestinations(setOf(mappingId)))
-      .thenReturn(mapOf(mappingId to MappedDestination(categoryCode = "PRISON", prisonCode = "LEI")))
+    whenever(courtDocumentRepository.findByPrisonerNumberInAndIngestionAtGreaterThanEqualAndIngestionAtLessThanOrderByIngestionAtDesc(any(), any(), any()))
+      .thenReturn(listOf(mapped, youth, unmapped))
 
     val day = service.day("LEI", LocalDate.now())
 
-    assertThat(day.documentsWithoutAHearing.map { it.prisonDocumentId to it.addressedPrison })
-      .containsExactlyInAnyOrder(mapped.prisonDocumentId to "LEI", unmapped.prisonDocumentId to "OLD")
-  }
-
-  @Test
-  fun `the week only looks up mappings when it lists documents`() {
-    whenever(prisonerSearchService.getPrisonersInPrison("LEI")).thenReturn(listOf(prisoner()))
-    whenever(courtDocumentRepository.findByPrisonerNumberInAndIngestionAtGreaterThanEqualAndIngestionAtLessThanOrderByIngestionAtDesc(any(), any(), any())).thenReturn(documents(101))
-
-    service.week("LEI", LocalDate.now())
-
-    verify(prisonEmailMappingRepository, never()).findDestinations(any())
+    assertThat(day.documentsWithoutAHearing.map { it.prisonDocumentId to it.addressedPrison }).containsExactlyInAnyOrder(
+      mapped.prisonDocumentId to "LEI",
+      youth.prisonDocumentId to null,
+      unmapped.prisonDocumentId to null,
+    )
   }
 
   @Test

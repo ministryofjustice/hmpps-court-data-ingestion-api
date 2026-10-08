@@ -6,8 +6,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.io.ClassPathResource
 import org.springframework.jdbc.core.JdbcTemplate
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.MappedDestination
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.PrisonEmailMappingRepository
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -15,9 +13,6 @@ class DeliveryMappingIntTest : IntegrationTestBase() {
 
   @Autowired
   private lateinit var jdbcTemplate: JdbcTemplate
-
-  @Autowired
-  private lateinit var prisonEmailMappingRepository: PrisonEmailMappingRepository
 
   @BeforeEach
   fun setUp() {
@@ -89,15 +84,13 @@ class DeliveryMappingIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `gives an escort mailbox recognised only by the fallback a pecs mapping, and attaches it`() {
+  fun `leaves an escort mailbox with no mapping unattached, to be classified`() {
     val id = insertDocument("SheffieldCC@geoamey.co.uk", deliverySource = "PECS")
 
     applyMigration()
 
-    val mapping = jdbcTemplate.queryForMap("SELECT id, category_code, prison_code FROM prison_email_mapping WHERE email = ?", "sheffieldcc@geoamey.co.uk")
-    assertThat(mapping["category_code"]).isEqualTo("PECS")
-    assertThat(mapping["prison_code"]).isNull()
-    assertThat(mappingOf(id)).isEqualTo(mapping["id"])
+    assertThat(mappingOf(id)).isNull()
+    assertThat(mappingCount()).isZero()
   }
 
   @Test
@@ -115,30 +108,38 @@ class DeliveryMappingIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `a mapping's destination is its category, and its prison only where the category uses one`() {
+  fun `a loaded document carries its mapping, giving the prison only where the category uses one`() {
     insertMapping("omu.leeds@justice.gov.uk", prisonCode = "LEI", categoryCode = "PRISON")
     insertMapping("ycs.warrants@justice.gov.uk", prisonCode = "WYI", categoryCode = "YOUTH_CUSTODY")
-    val prison = mappingIdOf("omu.leeds@justice.gov.uk")!!
-    val youth = mappingIdOf("ycs.warrants@justice.gov.uk")!!
+    val prison = insertDocument("omu.leeds@justice.gov.uk", mappingId = mappingIdOf("omu.leeds@justice.gov.uk"))
+    val youth = insertDocument("ycs.warrants@justice.gov.uk", mappingId = mappingIdOf("ycs.warrants@justice.gov.uk"))
+    val unmapped = insertDocument("nobody.knows@justice.gov.uk")
 
-    val destinations = prisonEmailMappingRepository.findDestinations(setOf(prison, youth, UUID.randomUUID()))
+    val prisonMapping = courtDocumentRepository.findById(prison).get().deliveryMapping
+    val youthMapping = courtDocumentRepository.findById(youth).get().deliveryMapping
 
-    assertThat(destinations).containsExactlyInAnyOrderEntriesOf(
-      mapOf(
-        prison to MappedDestination(categoryCode = "PRISON", prisonCode = "LEI"),
-        youth to MappedDestination(categoryCode = "YOUTH_CUSTODY", prisonCode = null),
-      ),
-    )
+    assertThat(prisonMapping?.category?.code).isEqualTo("PRISON")
+    assertThat(prisonMapping?.destinationPrison).isEqualTo("LEI")
+    assertThat(youthMapping?.category?.code).isEqualTo("YOUTH_CUSTODY")
+    assertThat(youthMapping?.destinationPrison).isNull()
+    assertThat(courtDocumentRepository.findById(unmapped).get().deliveryMapping).isNull()
   }
 
   @Test
-  fun `looking up no mappings asks the database nothing`() {
-    assertThat(prisonEmailMappingRepository.findDestinations(emptySet())).isEmpty()
+  fun `saving a document does not write its mapping`() {
+    insertMapping("omu.leeds@justice.gov.uk", prisonCode = "LEI", categoryCode = "PRISON")
+    val id = insertDocument("omu.leeds@justice.gov.uk", mappingId = mappingIdOf("omu.leeds@justice.gov.uk"))
+    val document = courtDocumentRepository.findById(id).get()
+
+    courtDocumentRepository.save(document.apply { metadataVersion = 7 })
+
+    assertThat(mappingOf(id)).isEqualTo(mappingIdOf("omu.leeds@justice.gov.uk"))
+    assertThat(jdbcTemplate.queryForObject("SELECT prison_code FROM prison_email_mapping WHERE email = ?", String::class.java, "omu.leeds@justice.gov.uk")).isEqualTo("LEI")
   }
 
   private fun applyMigration() {
     jdbcTemplate.execute(
-      ClassPathResource("migration/postgres/V41__delivery_mapping_source_of_truth.sql").getContentAsString(Charsets.UTF_8),
+      ClassPathResource("migration/postgres/V42__delivery_mapping_source_of_truth.sql").getContentAsString(Charsets.UTF_8),
     )
   }
 

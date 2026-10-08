@@ -71,9 +71,9 @@ class AddressedPrisonReresolveBackfillIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `a document with a prison but no mapping is given its mapping`() {
+  fun `a document with no mapping is given one, whatever the deprecated columns hold`() {
     val id = insertDocument(MAPPED_EMAIL)
-    jdbcTemplate.update("UPDATE court_document SET addressed_prison = 'LEI' WHERE id = ?", id)
+    jdbcTemplate.update("UPDATE court_document SET addressed_prison = 'BRI', delivery_source = 'PECS' WHERE id = ?", id)
 
     runBackfill("addressed-prison-reresolve")
 
