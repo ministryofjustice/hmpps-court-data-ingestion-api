@@ -19,9 +19,6 @@ class AddressedPrisonReresolveBackfillIntTest : IntegrationTestBase() {
   @Autowired
   private lateinit var jdbcTemplate: JdbcTemplate
 
-  @Autowired
-  override lateinit var courtDocumentRepository: CourtDocumentRepository
-
   @BeforeEach
   fun setUp() {
     courtDocumentRepository.deleteAll()
@@ -72,6 +69,16 @@ class AddressedPrisonReresolveBackfillIntTest : IntegrationTestBase() {
     val after = jdbcTemplate.queryForMap("SELECT * FROM court_document WHERE id = ?", id)
     val changed = after.filterNot { (key, value) -> before[key] == value }.keys
     assertThat(changed).containsExactlyInAnyOrder("addressed_prison", "delivery_mapping_id", "delivery_source")
+  }
+
+  @Test
+  fun `a document with a prison but no mapping is given its mapping`() {
+    val id = insertDocument(MAPPED_EMAIL)
+    jdbcTemplate.update("UPDATE court_document SET addressed_prison = 'LEI' WHERE id = ?", id)
+
+    runBackfill("addressed-prison-reresolve")
+
+    assertThat(deliveryMappingOf(id)).isEqualTo(mappingIdOf(MAPPED_EMAIL))
   }
 
   @Test

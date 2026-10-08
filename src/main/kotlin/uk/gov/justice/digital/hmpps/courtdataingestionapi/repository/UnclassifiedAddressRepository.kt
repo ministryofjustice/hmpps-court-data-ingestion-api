@@ -32,9 +32,8 @@ class UnclassifiedAddressRepository(
            max(cd.ingestion_at)                                            AS last_seen,
            string_agg(DISTINCT cd.court_document_type, ',')                AS document_types
       FROM court_document cd
-     WHERE cd.addressed_prison IS NULL
+     WHERE cd.delivery_mapping_id IS NULL
        AND cd.prison_email_address IS NOT NULL
-       AND cd.delivery_source IS DISTINCT FROM 'PECS'
        AND NOT EXISTS (
              SELECT 1 FROM prison_email_mapping m WHERE m.email = lower(trim(cd.prison_email_address))
            )
@@ -43,6 +42,7 @@ class UnclassifiedAddressRepository(
     """.trimIndent(),
     ::map,
   )
+
   fun findClassified(categoryCode: String?): List<UnclassifiedAddress> = jdbcTemplate.query(
     """
     SELECT m.email                                                         AS email_address,
@@ -55,7 +55,7 @@ class UnclassifiedAddressRepository(
            string_agg(DISTINCT cd.court_document_type, ',')                AS document_types
       FROM prison_email_mapping m
       LEFT JOIN court_document cd
-             ON lower(trim(cd.prison_email_address)) = m.email
+             ON cd.delivery_mapping_id = m.id
      WHERE (CAST(:categoryCode AS TEXT) IS NULL OR m.category_code = CAST(:categoryCode AS TEXT))
      GROUP BY m.email, m.category_code, m.prison_code
      ORDER BY document_count DESC

@@ -11,14 +11,18 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.PrisonCourtD
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.PrisonCourtHearing
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.PrisonCourtPerson
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.MappedDestination
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.PrisonEmailMappingRepository
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.util.UUID
 
 @Service
 @Transactional(readOnly = true)
 class PrisonCourtDocumentService(
   private val courtDocumentRepository: CourtDocumentRepository,
   private val prisonerSearchService: PrisonerSearchService,
+  private val prisonEmailMappingRepository: PrisonEmailMappingRepository,
 ) {
 
   fun week(prisonCode: String, date: LocalDate): PrisonCourtDocumentWeek {
@@ -41,7 +45,10 @@ class PrisonCourtDocumentService(
         PrisonCourtDocumentDayCount(day, onDay.size, onDay.mapNotNull { it.prisonerNumber }.distinct().size)
       },
       totalDocuments = documents.size,
-      documents = documents.takeIf { it.size <= WEEK_LIST_LIMIT }?.map { it.toApi() },
+      documents = documents.takeIf { it.size <= WEEK_LIST_LIMIT }?.let { listed ->
+        val destinations = destinationsFor(listed)
+        listed.map { it.toPrisonCourtDocument(destinations) }
+      },
       previousWeek = from.minusWeeks(1),
       nextWeek = from.plusWeeks(1).takeUnless { it.isAfter(thisWeek) },
     )
@@ -52,6 +59,7 @@ class PrisonCourtDocumentService(
 
     val roll = prisonerSearchService.getPrisonersInPrison(prisonCode)
     val documents = received(roll.map { it.prisonerNumber }, date, date.plusDays(1))
+    val destinations = destinationsFor(documents)
     val (withHearing, withoutHearing) = documents.partition { it.courtHearing != null }
 
     return PrisonCourtDocumentDay(
@@ -70,10 +78,10 @@ class PrisonCourtDocumentService(
             courtName = hearing.courtName,
             caseReferences = onHearing.flatMap { it.caseReferences() }.distinct(),
             receivedAt = onHearing.first().ingestionAt,
-            documents = onHearing.map { it.toApi() },
+            documents = onHearing.map { it.toPrisonCourtDocument(destinations) },
           )
         },
-      documentsWithoutAHearing = withoutHearing.map { it.toApi() },
+      documentsWithoutAHearing = withoutHearing.map { it.toPrisonCourtDocument(destinations) },
       people = documents.mapNotNull { it.prisonerNumber }.distinct().map { prisonerNumber ->
         val prisoner = roll.first { it.prisonerNumber == prisonerNumber }
         PrisonCourtPerson(prisonerNumber, prisoner.firstName, prisoner.lastName)
@@ -108,12 +116,14 @@ class PrisonCourtDocumentService(
 
   private fun CourtDocumentEntity.caseReferences() = courtDocumentCases.map { it.caseReference }
 
-  private fun CourtDocumentEntity.toApi() = PrisonCourtDocument(
+  private fun destinationsFor(documents: List<CourtDocumentEntity>): Map<UUID, MappedDestination> = prisonEmailMappingRepository.findDestinations(documents.mapNotNull { it.deliveryMappingId }.toSet())
+
+  private fun CourtDocumentEntity.toPrisonCourtDocument(destinations: Map<UUID, MappedDestination>) = PrisonCourtDocument(
     prisonDocumentId = prisonDocumentId,
     prisonerNumber = prisonerNumber!!,
     documentType = courtDocumentType,
     caseReferences = caseReferences(),
-    addressedPrison = addressedPrison,
+    addressedPrison = if (deliveryMappingId != null) destinations[deliveryMappingId]?.prisonCode else addressedPrison,
     receivedAt = ingestionAt,
   )
 

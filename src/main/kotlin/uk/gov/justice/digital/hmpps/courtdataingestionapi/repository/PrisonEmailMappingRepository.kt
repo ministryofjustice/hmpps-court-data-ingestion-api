@@ -12,6 +12,11 @@ data class EmailMapping(
   val categoryCode: String?,
 )
 
+data class MappedDestination(
+  val categoryCode: String?,
+  val prisonCode: String?,
+)
+
 @Repository
 class PrisonEmailMappingRepository(
   private val jdbcTemplate: NamedParameterJdbcTemplate,
@@ -50,6 +55,27 @@ class PrisonEmailMappingRepository(
       ),
     )
     return findMappingByEmail(normalisedEmail)!!
+  }
+
+  fun findDestinations(mappingIds: Collection<UUID>): Map<UUID, MappedDestination> = if (mappingIds.isEmpty()) {
+    emptyMap()
+  } else {
+    jdbcTemplate.query(
+      """
+      SELECT m.id,
+             m.category_code,
+             CASE WHEN c.requires_prison_code IS FALSE THEN NULL ELSE m.prison_code END AS prison_code
+        FROM prison_email_mapping m
+        LEFT JOIN delivery_category c ON c.code = m.category_code
+       WHERE m.id IN (:ids)
+      """.trimIndent(),
+      mapOf("ids" to mappingIds),
+    ) { rs, _ ->
+      rs.getObject("id", UUID::class.java) to MappedDestination(
+        categoryCode = rs.getString("category_code"),
+        prisonCode = rs.getString("prison_code"),
+      )
+    }.toMap()
   }
 
   private fun map(rs: java.sql.ResultSet, @Suppress("UNUSED_PARAMETER") rowNum: Int) = EmailMapping(
