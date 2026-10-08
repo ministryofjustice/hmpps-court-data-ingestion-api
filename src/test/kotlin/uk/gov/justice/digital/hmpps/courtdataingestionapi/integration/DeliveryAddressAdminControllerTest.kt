@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.jdbc.core.JdbcTemplate
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -18,9 +17,6 @@ class DeliveryAddressAdminControllerTest : IntegrationTestBase() {
 
   @Autowired
   private lateinit var jdbcTemplate: JdbcTemplate
-
-  @Autowired
-  override lateinit var courtDocumentRepository: CourtDocumentRepository
 
   @BeforeEach
   fun setUp() {
@@ -43,12 +39,14 @@ class DeliveryAddressAdminControllerTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `unclassified addresses are grouped by address, with PECS and mapped addresses excluded`() {
+  fun `unclassified addresses are grouped by address, with mapped addresses excluded`() {
     insertDocument(UNCLASSIFIED, prisonerNumber = "A1111AA")
     insertDocument(UNCLASSIFIED, prisonerNumber = null)
+    insertMapping("pecs.south@geoamey.co.uk", prisonCode = null, categoryCode = "PECS")
     insertDocument("pecs.south@geoamey.co.uk", prisonerNumber = "A2222AA", deliverySource = "PECS")
     insertMapping(MAPPED)
     insertDocument(MAPPED, prisonerNumber = "A3333AA")
+    insertDocument(MAPPED, prisonerNumber = "A4444AA", mappingId = mappingIdOf(MAPPED))
 
     webTestClient.get().uri("/admin/delivery-addresses?classified=false")
       .headers(setAuthorisation(roles = listOf(SUPPORT_ROLE)))
@@ -209,17 +207,23 @@ class DeliveryAddressAdminControllerTest : IntegrationTestBase() {
   private fun mappedPrisonFor(email: String) = jdbcTemplate
     .queryForObject("SELECT prison_code FROM prison_email_mapping WHERE email = ?", String::class.java, email)
 
-  private fun insertMapping(email: String) = jdbcTemplate.update(
-    "INSERT INTO prison_email_mapping (email, prison_code, category_code) VALUES (?, 'LEI', 'PRISON')",
+  private fun insertMapping(email: String, prisonCode: String? = "LEI", categoryCode: String = "PRISON") = jdbcTemplate.update(
+    "INSERT INTO prison_email_mapping (email, prison_code, category_code) VALUES (?, ?, ?)",
     email,
+    prisonCode,
+    categoryCode,
   )
 
-  private fun insertDocument(email: String, prisonerNumber: String?, deliverySource: String? = null) = jdbcTemplate.update(
+  private fun mappingIdOf(email: String) = jdbcTemplate
+    .queryForObject("SELECT id FROM prison_email_mapping WHERE email = ?", UUID::class.java, email)
+
+  private fun insertDocument(email: String, prisonerNumber: String?, deliverySource: String? = null, mappingId: UUID? = null) = jdbcTemplate.update(
     """
       INSERT INTO court_document
         (id, master_defendant_id, hmcts_court_document_id, prison_document_id, prison_email_address,
-         event_type, court_document_type, document_generated_timestamp, ingestion_at, prisoner_number, delivery_source)
-      VALUES (?, ?, ?, ?, ?, 'PRISON_COURT_REGISTER_GENERATED', 'PRISON_COURT_REGISTER', ?, ?, ?, ?)
+         event_type, court_document_type, document_generated_timestamp, ingestion_at, prisoner_number, delivery_source,
+         delivery_mapping_id)
+      VALUES (?, ?, ?, ?, ?, 'PRISON_COURT_REGISTER_GENERATED', 'PRISON_COURT_REGISTER', ?, ?, ?, ?, ?)
     """.trimIndent(),
     UUID.randomUUID(),
     UUID.randomUUID(),
@@ -230,12 +234,40 @@ class DeliveryAddressAdminControllerTest : IntegrationTestBase() {
     LocalDateTime.now().minusDays(1),
     prisonerNumber,
     deliverySource,
+    mappingId,
   )
+
+  @Test
+  fun `an escort mailbox with no mapping is listed, so it can be classified`() {
+    insertDocument("pecs.north@geoamey.co.uk", prisonerNumber = "A2222AA", deliverySource = "PECS")
+
+    webTestClient.get().uri("/admin/delivery-addresses?classified=false")
+      .headers(setAuthorisation(roles = listOf(SUPPORT_ROLE)))
+      .exchange()
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.length()").isEqualTo(1)
+      .jsonPath("$[0].emailAddress").isEqualTo("pecs.north@geoamey.co.uk")
+  }
+
+  @Test
+  fun `classified addresses count the documents attached to their mapping`() {
+    insertMapping(MAPPED)
+    insertDocument(MAPPED, prisonerNumber = "A3333AA", mappingId = mappingIdOf(MAPPED))
+    insertDocument(MAPPED, prisonerNumber = "A5555AA")
+
+    webTestClient.get().uri("/admin/delivery-addresses?classified=true")
+      .headers(setAuthorisation(roles = listOf(SUPPORT_ROLE)))
+      .exchange()
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$[0].documentCount").isEqualTo(1)
+  }
 
   @Test
   fun `classified addresses are listed with their category and prison`() {
     insertMapping(MAPPED)
-    insertDocument(MAPPED, prisonerNumber = "A3333AA")
+    insertDocument(MAPPED, prisonerNumber = "A3333AA", mappingId = mappingIdOf(MAPPED))
 
     webTestClient.get().uri("/admin/delivery-addresses?classified=true")
       .headers(setAuthorisation(roles = listOf(SUPPORT_ROLE)))

@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionEnr
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.applyEnrichment
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsSubscriptionNotificationRequestBody
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.DeliveryMappingRepository
 import java.time.LocalDateTime
 
 @Service
@@ -22,6 +23,7 @@ class CourtDataIngestionService(
   private val courtHearingService: CourtHearingService,
   private val fileService: FileService,
   private val defendantMatchingService: DefendantMatchingService,
+  private val deliveryMappingRepository: DeliveryMappingRepository,
   @Value("\${extraction.mirror.metadata-version:0}")
   private val metadataVersion: Int,
 ) {
@@ -50,6 +52,7 @@ class CourtDataIngestionService(
           eventType = message.eventType,
           courtDocumentType = message.eventType.documentType,
           hmctsCourtHearingId = message.hearingId,
+          deliveryMapping = enriched.deliveryMappingId?.let { deliveryMappingRepository.findById(it).orElse(null) },
         ).applyEnrichment(enriched),
       )
 
