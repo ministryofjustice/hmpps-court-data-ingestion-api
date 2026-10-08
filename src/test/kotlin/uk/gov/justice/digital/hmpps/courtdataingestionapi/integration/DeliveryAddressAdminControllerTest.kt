@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.jdbc.core.JdbcTemplate
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import java.time.LocalDateTime
 import java.util.UUID
 
