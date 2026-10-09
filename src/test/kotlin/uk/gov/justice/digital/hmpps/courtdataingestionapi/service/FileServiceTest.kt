@@ -66,7 +66,7 @@ class FileServiceTest {
     expectedCaseReferences: Array<String>,
     expectedAddressedPrison: String?,
   ) {
-    val document = sampleWarrant(deliverySource, courtDocumentType, courtCode, caseReference, PRISONER_NUMBER)
+    val document = sampleWarrant(categoryCode, courtDocumentType, courtCode, caseReference, PRISONER_NUMBER)
 
     val result = fileService.buildMirrorEnrichmentMetadata(document)
 
