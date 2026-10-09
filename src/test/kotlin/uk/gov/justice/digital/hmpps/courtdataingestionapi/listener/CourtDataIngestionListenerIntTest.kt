@@ -9,14 +9,21 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.io.ClassPathResource
 import org.springframework.transaction.annotation.Transactional
+import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequest
+import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequestEntry
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.TestUtil
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.MatchOutcome
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsCourtDefendantApiExtension
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmctsSubcriptionApiMockServer
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.HmppsDocumentManagementApiExtension
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.DefendantDetails
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
 import uk.gov.justice.hmpps.sqs.countMessagesOnQueue
 import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 import java.util.UUID
 
 @Transactional(readOnly = true)
@@ -102,13 +109,51 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `Test uploaded document is deleted if unhandled exception rolls back transaction`() {
+  fun `Test uploaded document is deleted if exception from API`() {
     val masterDefendantId = UUID.randomUUID()
     HmctsCourtDefendantApiExtension.hmctsCourtDefendantApi.stubDefendantsError(
       CASE_REFERENCE,
     )
     sendSubscriptionNotification(masterDefendantId)
     awaitAtMost30Secs untilAsserted {
+      HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.verifyDeleteDocument()
+    }
+  }
+
+  /*
+   * Send two messages in order to create race condition where same defendant is attempted to insert twice with a unique constraint in db.
+   * The delay in response from defendant API will ensure both threads attempt to insert the defendant record.
+   * This causes an exception when the transaction is commited.
+   */
+  @Test
+  fun `Test uploaded document is deleted if unhandled exception rolls back transaction`() {
+    val masterDefendantId = UUID.randomUUID()
+    val defendantId = UUID.randomUUID()
+    HmctsCourtDefendantApiExtension.hmctsCourtDefendantApi.stubDefendants(
+      CASE_REFERENCE,
+      listOf(DefendantDetails(defendantId, masterDefendantId)),
+      delay = 1000 * 2,
+    )
+    val event =
+      HmctsSubscriptionNotificationRequestBody(
+        masterDefendantId = masterDefendantId,
+        documentId = COURT_DOCUMENT_ID,
+        cases = listOf(HmctsCase(CASE_REFERENCE)),
+        prisonEmailAddress = PRISON_EMAIL,
+        documentGeneratedTimestamp = ZonedDateTime.of(2026, 6, 12, 16, 0, 0, 0, ZoneOffset.UTC),
+        eventType = HmctsEventType.PRISON_COURT_REGISTER_GENERATED,
+        hearingId = UUID.fromString(HmctsSubcriptionApiMockServer.TEST_HMCTS_HEARING_ID),
+      )
+    courtDataIngestionQueue.sqsClient.sendMessageBatch(
+      SendMessageBatchRequest.builder()
+        .queueUrl(courtDataIngestionQueue.queueUrl)
+        .entries(
+          SendMessageBatchRequestEntry.builder().id(UUID.randomUUID().toString()).messageBody(TestUtil.objectMapper().writeValueAsString(event)).build(),
+          SendMessageBatchRequestEntry.builder().id(UUID.randomUUID().toString()).messageBody(TestUtil.objectMapper().writeValueAsString(event)).build(),
+        )
+        .build(),
+    )
+    awaitAtMost60Secs untilAsserted {
       HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.verifyDeleteDocument()
     }
   }

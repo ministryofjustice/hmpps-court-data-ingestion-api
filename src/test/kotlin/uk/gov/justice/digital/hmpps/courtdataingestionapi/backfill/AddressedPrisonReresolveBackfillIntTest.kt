@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.jdbc.core.JdbcTemplate
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -18,9 +17,6 @@ class AddressedPrisonReresolveBackfillIntTest : IntegrationTestBase() {
 
   @Autowired
   private lateinit var jdbcTemplate: JdbcTemplate
-
-  @Autowired
-  override lateinit var courtDocumentRepository: CourtDocumentRepository
 
   @BeforeEach
   fun setUp() {
@@ -72,6 +68,16 @@ class AddressedPrisonReresolveBackfillIntTest : IntegrationTestBase() {
     val after = jdbcTemplate.queryForMap("SELECT * FROM court_document WHERE id = ?", id)
     val changed = after.filterNot { (key, value) -> before[key] == value }.keys
     assertThat(changed).containsExactlyInAnyOrder("addressed_prison", "delivery_mapping_id", "delivery_source")
+  }
+
+  @Test
+  fun `a document with no mapping is given one, whatever the deprecated columns hold`() {
+    val id = insertDocument(MAPPED_EMAIL)
+    jdbcTemplate.update("UPDATE court_document SET addressed_prison = 'BRI', delivery_source = 'PECS' WHERE id = ?", id)
+
+    runBackfill("addressed-prison-reresolve")
+
+    assertThat(deliveryMappingOf(id)).isEqualTo(mappingIdOf(MAPPED_EMAIL))
   }
 
   @Test

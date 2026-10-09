@@ -86,7 +86,9 @@ class FileService(
   }
 
   fun buildMirrorEnrichmentMetadata(document: CourtDocumentEntity): Map<String, Serializable> = buildMap {
-    document.deliverySource?.let { put("deliverySource", it.name) }
+    document.deliveryMapping?.category?.code
+      ?.takeIf { it in LEGACY_DELIVERY_SOURCES }
+      ?.let { put("deliverySource", it) }
     put("documentSubType", document.courtDocumentType.name)
     document.courtHearing?.hmppsCourtId?.let { put("courtCode", it) }
     put("caseReferences", document.courtDocumentCases.map { it.caseReference }.toSet().toTypedArray())
@@ -109,8 +111,10 @@ class FileService(
 
   companion object {
     private val log = LoggerFactory.getLogger(FileService::class.java)
+    private val LEGACY_DELIVERY_SOURCES = setOf("PRISON", "PECS")
 
     private fun convertAddressedPrison(document: CourtDocumentEntity): String? {
+
       document.addressedPrison?.let { return it }
       return document.deliverySource?.name
     }

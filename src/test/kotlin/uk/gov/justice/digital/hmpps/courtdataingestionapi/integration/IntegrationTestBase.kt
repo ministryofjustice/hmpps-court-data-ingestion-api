@@ -83,6 +83,7 @@ import javax.sql.DataSource
 @AutoConfigureWebTestClient
 abstract class IntegrationTestBase {
   protected val awaitAtMost30Secs: ConditionFactory get() = await.atMost(Duration.ofSeconds(30))
+  protected val awaitAtMost60Secs: ConditionFactory get() = await.atMost(Duration.ofSeconds(60))
 
   @Autowired
   protected lateinit var courtDocumentRepository: CourtDocumentRepository

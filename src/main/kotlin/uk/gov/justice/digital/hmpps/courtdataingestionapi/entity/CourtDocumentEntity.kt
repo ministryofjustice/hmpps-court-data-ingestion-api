@@ -6,6 +6,7 @@ import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
@@ -42,6 +43,10 @@ data class CourtDocumentEntity(
 
   @Column(name = "delivery_mapping_id")
   var deliveryMappingId: UUID? = null,
+
+  @ManyToOne(optional = true)
+  @JoinColumn(name = "delivery_mapping_id", insertable = false, updatable = false)
+  val deliveryMapping: DeliveryMappingEntity? = null,
 
   @Column(name = "addressed_prison")
   var addressedPrison: String? = null,

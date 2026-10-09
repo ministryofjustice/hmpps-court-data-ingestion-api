@@ -41,7 +41,7 @@ class PrisonCourtDocumentService(
         PrisonCourtDocumentDayCount(day, onDay.size, onDay.mapNotNull { it.prisonerNumber }.distinct().size)
       },
       totalDocuments = documents.size,
-      documents = documents.takeIf { it.size <= WEEK_LIST_LIMIT }?.map { it.toApi() },
+      documents = documents.takeIf { it.size <= WEEK_LIST_LIMIT }?.map { it.toPrisonCourtDocument() },
       previousWeek = from.minusWeeks(1),
       nextWeek = from.plusWeeks(1).takeUnless { it.isAfter(thisWeek) },
     )
@@ -70,10 +70,10 @@ class PrisonCourtDocumentService(
             courtName = hearing.courtName,
             caseReferences = onHearing.flatMap { it.caseReferences() }.distinct(),
             receivedAt = onHearing.first().ingestionAt,
-            documents = onHearing.map { it.toApi() },
+            documents = onHearing.map { it.toPrisonCourtDocument() },
           )
         },
-      documentsWithoutAHearing = withoutHearing.map { it.toApi() },
+      documentsWithoutAHearing = withoutHearing.map { it.toPrisonCourtDocument() },
       people = documents.mapNotNull { it.prisonerNumber }.distinct().map { prisonerNumber ->
         val prisoner = roll.first { it.prisonerNumber == prisonerNumber }
         PrisonCourtPerson(prisonerNumber, prisoner.firstName, prisoner.lastName)
@@ -108,12 +108,12 @@ class PrisonCourtDocumentService(
 
   private fun CourtDocumentEntity.caseReferences() = courtDocumentCases.map { it.caseReference }
 
-  private fun CourtDocumentEntity.toApi() = PrisonCourtDocument(
+  private fun CourtDocumentEntity.toPrisonCourtDocument() = PrisonCourtDocument(
     prisonDocumentId = prisonDocumentId,
     prisonerNumber = prisonerNumber!!,
     documentType = courtDocumentType,
     caseReferences = caseReferences(),
-    addressedPrison = addressedPrison,
+    addressedPrison = deliveryMapping?.destinationPrison,
     receivedAt = ingestionAt,
   )
 

@@ -84,7 +84,6 @@ interface CourtDocumentRepository : JpaRepository<CourtDocumentEntity, UUID> {
       SELECT *
       FROM court_document
       WHERE id > :afterId
-        AND addressed_prison IS NULL
         AND delivery_mapping_id IS NULL
         AND prison_email_address IS NOT NULL
       ORDER BY id

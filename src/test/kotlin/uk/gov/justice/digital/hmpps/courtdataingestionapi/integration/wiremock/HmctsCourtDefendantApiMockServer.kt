@@ -49,10 +49,10 @@ class HmctsCourtDefendantApiMockServer : WireMockServer(WIREMOCK_PORT) {
     )
   }
 
-  fun stubDefendants(caseReference: String, defendants: List<DefendantDetails>) {
+  fun stubDefendants(caseReference: String, defendants: List<DefendantDetails>, delay: Int? = null) {
     stubFor(
       get(urlPathEqualTo("/defendants/cases/$caseReference"))
-        .willReturn(jsonResponse(TestUtil.objectMapper().writeValueAsString(defendants))),
+        .willReturn(jsonResponse(TestUtil.objectMapper().writeValueAsString(defendants)).let { if (delay != null) it.withFixedDelay(delay) else it }),
     )
   }
 

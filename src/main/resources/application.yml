@@ -38,6 +38,8 @@ spring:
     password: ${spring.datasource.password}
     placeholders:
       environment: ${environment.name}
+    postgresql:
+      transactional-lock: false
 
   security:
     oauth2:
