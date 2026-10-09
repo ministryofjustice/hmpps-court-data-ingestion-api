@@ -64,6 +64,37 @@ class FileServiceTest {
     expectedSubType: String,
     expectedCourtCode: String,
     expectedCaseReferences: Array<String>,
+    expectedAddressedPrison: String?,
+  ) {
+    val document = sampleWarrant(categoryCode, courtDocumentType, courtCode, caseReference, PRISONER_NUMBER)
+
+    val result = fileService.buildMirrorEnrichmentMetadata(document)
+
+    assertThat(result).isNotEmpty()
+    assertThat(result.getOrDefault("deliverySource", "NOT FOUND")).isEqualTo(expectedSource)
+    assertThat(result["documentSubType"]).isEqualTo(expectedSubType)
+    assertThat(result.getOrDefault("courtCode", "NOT FOUND")).isEqualTo(expectedCourtCode)
+
+    assertThat(result["caseReferences"]).hasSameClassAs(expectedCaseReferences)
+    val resultCaseReferences = result["caseReferences"] as Array<String>
+    assertThat(resultCaseReferences).hasSize(expectedCaseReferences.size)
+    assertThat(resultCaseReferences).isEqualTo(expectedCaseReferences)
+
+    assertThat(result["addressedPrison"]).isEqualTo(expectedAddressedPrison)
+  }
+
+  @ParameterizedTest
+  @MethodSource("getBuildMirrorEnrichmentMetadataTestParameters")
+  fun testBuildMirrorEnrichmentMetadataForUnmatchedDocuments(
+    categoryCode: String?,
+    courtDocumentType: CourtDocumentType,
+    courtCode: String?,
+    caseReference: String?,
+    expectedSource: String,
+    expectedSubType: String,
+    expectedCourtCode: String,
+    expectedCaseReferences: Array<String>,
+    expectedAddressedPrison: String?,
   ) {
     val document = sampleWarrant(categoryCode, courtDocumentType, courtCode, caseReference)
 
@@ -78,6 +109,8 @@ class FileServiceTest {
     val resultCaseReferences = result["caseReferences"] as Array<String>
     assertThat(resultCaseReferences).hasSize(expectedCaseReferences.size)
     assertThat(resultCaseReferences).isEqualTo(expectedCaseReferences)
+
+    assertThat(result["addressedPrison"]).isEqualTo(expectedAddressedPrison)
   }
 
   @Test
@@ -94,22 +127,27 @@ class FileServiceTest {
     val COURT_ID: UUID = UUID.fromString("d569ce3c-4cc0-9925-22d1-509b295e0503")
     const val CASE_REFERENCE_2 = "CASE789012"
     const val COURT_CODE = "LND001"
+    const val PRISONER_NUMBER = "OFF900"
+    const val PRISON_CODE = "HHI"
+    const val PRISON_EMAIL = "omu.holmehouse@justice.gov.uk"
 
     @JvmStatic
-    private fun sampleWarrant(categoryCode: String?, courtDocumentType: CourtDocumentType, courtCode: String?, caseReference: String?): CourtDocumentEntity {
+    private fun sampleWarrant(categoryCode: String?, courtDocumentType: CourtDocumentType, courtCode: String?, caseReference: String?, prisonerNumber: String? = null): CourtDocumentEntity {
+      val deliveryMapping = categoryCode?.let {
+        DeliveryMappingEntity(UUID.randomUUID(), PRISON_EMAIL, PRISON_CODE, DeliveryCategory(code = it, name = it, requiresPrisonCode = it == "PRISON"))
+      }
       val document = CourtDocumentEntity(
-        deliveryMapping = categoryCode?.let {
-          DeliveryMappingEntity(UUID.randomUUID(), "omu.holmehouse@justice.gov.uk", "HHI", DeliveryCategory(code = it, name = it, requiresPrisonCode = it == "PRISON"))
-        },
+        deliveryMapping = deliveryMapping,
         courtDocumentType = courtDocumentType,
         masterDefendantId = UUID.randomUUID(),
         hmctsCourtDocumentId = UUID.randomUUID(),
         prisonDocumentId = UUID.randomUUID(),
         hmctsCourtHearingId = COURT_HEARING_ID,
-        prisonEmailAddress = "OMU.HolmeHouse@justice.gov.uk",
+        prisonEmailAddress = PRISON_EMAIL,
         eventType = HmctsEventType.WEE_SendingToCrownCourtForTrial,
+        prisonerNumber = prisonerNumber,
         documentGeneratedTimestamp = LocalDateTime.now(),
-        addressedPrison = "HHI",
+        addressedPrison = deliveryMapping?.destinationPrison,
         downloadedFileSha256 = "1e8c08ae751bcfb0fd81b3f3abb32659a98a2171c30bc5c8e153791bc7060040",
         extractedTextSha256 = "1e8c08ae751bcfb0fd81b3f3abb32659a98a2171c30bc5c8e153791bc7060040",
       )
@@ -136,17 +174,18 @@ class FileServiceTest {
 
     @JvmStatic
     fun getBuildMirrorEnrichmentMetadataTestParameters() = listOf(
-      Arguments.of("PRISON", CourtDocumentType.REMAND_WARRANT, COURT_CODE, CASE_REFERENCE, "PRISON", "REMAND_WARRANT", COURT_CODE, arrayOf(CASE_REFERENCE)),
-      Arguments.of("PRISON", CourtDocumentType.PRISON_COURT_REGISTER, null, CASE_REFERENCE, "PRISON", "PRISON_COURT_REGISTER", "NOT FOUND", arrayOf(CASE_REFERENCE)),
-      Arguments.of(null, CourtDocumentType.PRISON_COURT_REGISTER, COURT_CODE, CASE_REFERENCE, "NOT FOUND", "PRISON_COURT_REGISTER", COURT_CODE, arrayOf(CASE_REFERENCE)),
-      Arguments.of(null, CourtDocumentType.REMAND_WARRANT, null, CASE_REFERENCE, "NOT FOUND", "REMAND_WARRANT", "NOT FOUND", arrayOf(CASE_REFERENCE)),
-      Arguments.of("PRISON", CourtDocumentType.REMAND_WARRANT, COURT_CODE, null, "PRISON", "REMAND_WARRANT", COURT_CODE, emptyArray<String>()),
-      Arguments.of("PRISON", CourtDocumentType.PRISON_COURT_REGISTER, null, null, "PRISON", "PRISON_COURT_REGISTER", "NOT FOUND", emptyArray<String>()),
-      Arguments.of(null, CourtDocumentType.PRISON_COURT_REGISTER, COURT_CODE, null, "NOT FOUND", "PRISON_COURT_REGISTER", COURT_CODE, emptyArray<String>()),
-      Arguments.of(null, CourtDocumentType.REMAND_WARRANT, null, null, "NOT FOUND", "REMAND_WARRANT", "NOT FOUND", emptyArray<String>()),
-      Arguments.of("PRISON", CourtDocumentType.REMAND_WARRANT, COURT_CODE, "${CASE_REFERENCE},${CASE_REFERENCE_2}", "PRISON", "REMAND_WARRANT", COURT_CODE, arrayOf(CASE_REFERENCE, CASE_REFERENCE_2)),
-      Arguments.of("PECS", CourtDocumentType.REMAND_WARRANT, COURT_CODE, CASE_REFERENCE, "PECS", "REMAND_WARRANT", COURT_CODE, arrayOf(CASE_REFERENCE)),
-      Arguments.of("YOUTH_CUSTODY", CourtDocumentType.REMAND_WARRANT, COURT_CODE, CASE_REFERENCE, "NOT FOUND", "REMAND_WARRANT", COURT_CODE, arrayOf(CASE_REFERENCE)),
+      Arguments.of("PRISON", CourtDocumentType.REMAND_WARRANT, COURT_CODE, CASE_REFERENCE, "PRISON", "REMAND_WARRANT", COURT_CODE, arrayOf(CASE_REFERENCE), PRISON_CODE),
+      Arguments.of("PRISON", CourtDocumentType.PRISON_COURT_REGISTER, null, CASE_REFERENCE, "PRISON", "PRISON_COURT_REGISTER", "NOT FOUND", arrayOf(CASE_REFERENCE), PRISON_CODE),
+      Arguments.of(null, CourtDocumentType.PRISON_COURT_REGISTER, COURT_CODE, CASE_REFERENCE, "NOT FOUND", "PRISON_COURT_REGISTER", COURT_CODE, arrayOf(CASE_REFERENCE), null),
+      Arguments.of(null, CourtDocumentType.REMAND_WARRANT, null, CASE_REFERENCE, "NOT FOUND", "REMAND_WARRANT", "NOT FOUND", arrayOf(CASE_REFERENCE), null),
+      Arguments.of("PRISON", CourtDocumentType.REMAND_WARRANT, COURT_CODE, null, "PRISON", "REMAND_WARRANT", COURT_CODE, emptyArray<String>(), PRISON_CODE),
+      Arguments.of("PRISON", CourtDocumentType.PRISON_COURT_REGISTER, null, null, "PRISON", "PRISON_COURT_REGISTER", "NOT FOUND", emptyArray<String>(), PRISON_CODE),
+      Arguments.of(null, CourtDocumentType.PRISON_COURT_REGISTER, COURT_CODE, null, "NOT FOUND", "PRISON_COURT_REGISTER", COURT_CODE, emptyArray<String>(), null),
+      Arguments.of(null, CourtDocumentType.REMAND_WARRANT, null, null, "NOT FOUND", "REMAND_WARRANT", "NOT FOUND", emptyArray<String>(), null),
+      Arguments.of("PRISON", CourtDocumentType.REMAND_WARRANT, COURT_CODE, "${CASE_REFERENCE},${CASE_REFERENCE_2}", "PRISON", "REMAND_WARRANT", COURT_CODE, arrayOf(CASE_REFERENCE, CASE_REFERENCE_2), PRISON_CODE),
+      Arguments.of("PECS", CourtDocumentType.REMAND_WARRANT, COURT_CODE, CASE_REFERENCE, "PECS", "REMAND_WARRANT", COURT_CODE, arrayOf(CASE_REFERENCE), "PECS"),
+      Arguments.of("PECS", CourtDocumentType.PRISON_COURT_REGISTER, COURT_CODE, null, "PECS", "PRISON_COURT_REGISTER", COURT_CODE, emptyArray<String>(), "PECS"),
+      Arguments.of("YOUTH_CUSTODY", CourtDocumentType.REMAND_WARRANT, COURT_CODE, CASE_REFERENCE, "NOT FOUND", "REMAND_WARRANT", COURT_CODE, arrayOf(CASE_REFERENCE), "YOUTH_CUSTODY"),
     )
   }
 }

@@ -177,7 +177,7 @@ extraction:
   corpus-sampler:
     enabled: false
   mirror:
-    metadata-version: 3
+    metadata-version: 4
 
 document:
   content-normalisation:
