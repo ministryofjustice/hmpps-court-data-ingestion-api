@@ -111,18 +111,17 @@ class FileService(
     private val log = LoggerFactory.getLogger(FileService::class.java)
     private val LEGACY_DELIVERY_SOURCES = setOf("PRISON", "PECS")
 
+    private fun convertDeliverySource(document: CourtDocumentEntity): String? = document.deliveryMapping?.category?.code
+      ?.takeIf { it in LEGACY_DELIVERY_SOURCES }
+      ?.let { return it }
+
     private fun convertAddressedPrison(document: CourtDocumentEntity): String? {
       document.deliveryMapping?.let {
-        it.destinationPrison?.let { prison ->  return prison }
-
-        it.category?.let { category ->  return category.code }
+        it.destinationPrison?.let { prison -> return prison }
+        it.category?.let { category -> return category.code }
       }
 
       return null
     }
-
-    private fun convertDeliverySource(document: CourtDocumentEntity): String? = document.deliveryMapping?.category?.code
-        ?.takeIf { it in LEGACY_DELIVERY_SOURCES }
-        ?.let { return it }
   }
 }
