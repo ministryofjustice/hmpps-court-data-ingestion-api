@@ -177,18 +177,18 @@ class FileServiceTest {
 
     @JvmStatic
     fun getBuildMirrorEnrichmentMetadataTestParameters() = listOf(
-      Arguments.of("PRISON", CourtDocumentType.REMAND_WARRANT, COURT_CODE, CASE_REFERENCE, "PRISON", "REMAND_WARRANT", COURT_CODE, arrayOf(CASE_REFERENCE)),
-      Arguments.of("PRISON", CourtDocumentType.PRISON_COURT_REGISTER, null, CASE_REFERENCE, "PRISON", "PRISON_COURT_REGISTER", "NOT FOUND", arrayOf(CASE_REFERENCE)),
-      Arguments.of(null, CourtDocumentType.PRISON_COURT_REGISTER, COURT_CODE, CASE_REFERENCE, "NOT FOUND", "PRISON_COURT_REGISTER", COURT_CODE, arrayOf(CASE_REFERENCE)),
-      Arguments.of(null, CourtDocumentType.REMAND_WARRANT, null, CASE_REFERENCE, "NOT FOUND", "REMAND_WARRANT", "NOT FOUND", arrayOf(CASE_REFERENCE)),
-      Arguments.of("PRISON", CourtDocumentType.REMAND_WARRANT, COURT_CODE, null, "PRISON", "REMAND_WARRANT", COURT_CODE, emptyArray<String>()),
-      Arguments.of("PRISON", CourtDocumentType.PRISON_COURT_REGISTER, null, null, "PRISON", "PRISON_COURT_REGISTER", "NOT FOUND", emptyArray<String>()),
-      Arguments.of(null, CourtDocumentType.PRISON_COURT_REGISTER, COURT_CODE, null, "NOT FOUND", "PRISON_COURT_REGISTER", COURT_CODE, emptyArray<String>()),
-      Arguments.of(null, CourtDocumentType.REMAND_WARRANT, null, null, "NOT FOUND", "REMAND_WARRANT", "NOT FOUND", emptyArray<String>()),
-      Arguments.of("PRISON", CourtDocumentType.REMAND_WARRANT, COURT_CODE, "${CASE_REFERENCE},${CASE_REFERENCE_2}", "PRISON", "REMAND_WARRANT", COURT_CODE, arrayOf(CASE_REFERENCE, CASE_REFERENCE_2)),
-      Arguments.of("PECS", CourtDocumentType.REMAND_WARRANT, COURT_CODE, CASE_REFERENCE, "PECS", "REMAND_WARRANT", COURT_CODE, arrayOf(CASE_REFERENCE)),
+      Arguments.of("PRISON", CourtDocumentType.REMAND_WARRANT, COURT_CODE, CASE_REFERENCE, "PRISON", "REMAND_WARRANT", COURT_CODE, arrayOf(CASE_REFERENCE), PRISON_CODE),
+      Arguments.of("PRISON", CourtDocumentType.PRISON_COURT_REGISTER, null, CASE_REFERENCE, "PRISON", "PRISON_COURT_REGISTER", "NOT FOUND", arrayOf(CASE_REFERENCE), PRISON_CODE),
+      Arguments.of(null, CourtDocumentType.PRISON_COURT_REGISTER, COURT_CODE, CASE_REFERENCE, "NOT FOUND", "PRISON_COURT_REGISTER", COURT_CODE, arrayOf(CASE_REFERENCE), null),
+      Arguments.of(null, CourtDocumentType.REMAND_WARRANT, null, CASE_REFERENCE, "NOT FOUND", "REMAND_WARRANT", "NOT FOUND", arrayOf(CASE_REFERENCE), null),
+      Arguments.of("PRISON", CourtDocumentType.REMAND_WARRANT, COURT_CODE, null, "PRISON", "REMAND_WARRANT", COURT_CODE, emptyArray<String>(), PRISON_CODE),
+      Arguments.of("PRISON", CourtDocumentType.PRISON_COURT_REGISTER, null, null, "PRISON", "PRISON_COURT_REGISTER", "NOT FOUND", emptyArray<String>(), PRISON_CODE),
+      Arguments.of(null, CourtDocumentType.PRISON_COURT_REGISTER, COURT_CODE, null, "NOT FOUND", "PRISON_COURT_REGISTER", COURT_CODE, emptyArray<String>(), null),
+      Arguments.of(null, CourtDocumentType.REMAND_WARRANT, null, null, "NOT FOUND", "REMAND_WARRANT", "NOT FOUND", emptyArray<String>(), null),
+      Arguments.of("PRISON", CourtDocumentType.REMAND_WARRANT, COURT_CODE, "${CASE_REFERENCE},${CASE_REFERENCE_2}", "PRISON", "REMAND_WARRANT", COURT_CODE, arrayOf(CASE_REFERENCE, CASE_REFERENCE_2), PRISON_CODE),
+      Arguments.of("PECS", CourtDocumentType.REMAND_WARRANT, COURT_CODE, CASE_REFERENCE, "PECS", "REMAND_WARRANT", COURT_CODE, arrayOf(CASE_REFERENCE), "PECS"),
       Arguments.of("PECS", CourtDocumentType.PRISON_COURT_REGISTER, COURT_CODE, null, "PECS", "PRISON_COURT_REGISTER", COURT_CODE, emptyArray<String>(), "PECS"),
-      Arguments.of("YOUTH_CUSTODY", CourtDocumentType.REMAND_WARRANT, COURT_CODE, CASE_REFERENCE, "NOT FOUND", "REMAND_WARRANT", COURT_CODE, arrayOf(CASE_REFERENCE)),
+      Arguments.of("YOUTH_CUSTODY", CourtDocumentType.REMAND_WARRANT, COURT_CODE, CASE_REFERENCE, "NOT FOUND", "REMAND_WARRANT", COURT_CODE, arrayOf(CASE_REFERENCE), "YOUTH_CUSTODY"),
     )
   }
 }
