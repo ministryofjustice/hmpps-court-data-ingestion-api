@@ -129,28 +129,25 @@ class FileServiceTest {
     const val COURT_CODE = "LND001"
     const val PRISONER_NUMBER = "OFF900"
     const val PRISON_CODE = "HHI"
+    const val PRISON_EMAIL = "omu.holmehouse@justice.gov.uk"
 
     @JvmStatic
     private fun sampleWarrant(categoryCode: String?, courtDocumentType: CourtDocumentType, courtCode: String?, caseReference: String?, prisonerNumber: String? = null): CourtDocumentEntity {
+      val deliveryMapping = categoryCode?.let {
+        DeliveryMappingEntity(UUID.randomUUID(), PRISON_EMAIL, PRISON_CODE, DeliveryCategory(code = it, name = it, requiresPrisonCode = it == "PRISON"))
+      }
       val document = CourtDocumentEntity(
-        deliveryMapping = categoryCode?.let {
-          DeliveryMappingEntity(UUID.randomUUID(), "omu.holmehouse@justice.gov.uk", "HHI", DeliveryCategory(code = it, name = it, requiresPrisonCode = it == "PRISON"))
-        },
+        deliveryMapping = deliveryMapping,
         courtDocumentType = courtDocumentType,
         masterDefendantId = UUID.randomUUID(),
         hmctsCourtDocumentId = UUID.randomUUID(),
         prisonDocumentId = UUID.randomUUID(),
         hmctsCourtHearingId = COURT_HEARING_ID,
-        prisonEmailAddress = "OMU.HolmeHouse@justice.gov.uk",
+        prisonEmailAddress = PRISON_EMAIL,
         eventType = HmctsEventType.WEE_SendingToCrownCourtForTrial,
         prisonerNumber = prisonerNumber,
         documentGeneratedTimestamp = LocalDateTime.now(),
-        addressedPrison = categoryCode?.let {
-          when (it) {
-            DestinationType.PRISON.name -> PRISON_CODE
-            else -> null
-          }
-        },
+        addressedPrison = deliveryMapping?.destinationPrison,
         downloadedFileSha256 = "1e8c08ae751bcfb0fd81b3f3abb32659a98a2171c30bc5c8e153791bc7060040",
         extractedTextSha256 = "1e8c08ae751bcfb0fd81b3f3abb32659a98a2171c30bc5c8e153791bc7060040",
       )
