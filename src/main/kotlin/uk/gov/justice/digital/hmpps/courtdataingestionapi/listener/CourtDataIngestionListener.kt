@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.CourtDataIngestionService
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.service.FileService
 import java.time.ZonedDateTime
 import java.util.UUID
 
@@ -15,6 +16,7 @@ import java.util.UUID
 class CourtDataIngestionListener(
   private val objectMapper: ObjectMapper,
   private val courtDataIngestionService: CourtDataIngestionService,
+  private val fileService: FileService,
 ) {
   companion object {
     val log: Logger = LoggerFactory.getLogger(this::class.java)
@@ -31,7 +33,13 @@ class CourtDataIngestionListener(
   ) {
     log.debug("Received message {}", rawMessage)
     val message = objectMapper.readValue<HmctsSubscriptionNotificationRequestBody>(rawMessage)
-    courtDataIngestionService.receiveMessage(message)
+    val prisonDocument = fileService.ingestFile(message.documentId, message.eventType.documentType.documentApiType)
+    try {
+      courtDataIngestionService.ingestDocument(message, prisonDocument)
+    } catch (e: Exception) {
+      fileService.deleteFileOnTransactionRollback(prisonDocument.documentUuid)
+      throw e
+    }
   }
 }
 
