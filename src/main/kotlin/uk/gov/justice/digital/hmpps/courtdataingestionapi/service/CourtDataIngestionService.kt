@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionCon
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.IngestionEnrichmentFlow
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.ingestion.applyEnrichment
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.listener.HmctsSubscriptionNotificationRequestBody
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.documents.Document
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtDocumentRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.DeliveryMappingRepository
 import java.time.LocalDateTime
@@ -28,43 +29,36 @@ class CourtDataIngestionService(
   private val metadataVersion: Int,
 ) {
 
-  fun receiveMessage(message: HmctsSubscriptionNotificationRequestBody) {
-    val prisonDocument = fileService.ingestFile(message.documentId, message.eventType.documentType.documentApiType)
+  fun ingestDocument(message: HmctsSubscriptionNotificationRequestBody, prisonDocument: Document) {
+    val enriched = ingestionEnrichmentFlow.run(
+      IngestionContext(
+        prisonEmailAddress = message.prisonEmailAddress,
+        prisonDocumentId = prisonDocument.documentUuid,
+      ),
+    )
 
-    try {
-      val enriched = ingestionEnrichmentFlow.run(
-        IngestionContext(
-          prisonEmailAddress = message.prisonEmailAddress,
-          prisonDocumentId = prisonDocument.documentUuid,
-        ),
-      )
+    val courtDocumentEntity = courtDocumentRepository.save(
+      CourtDocumentEntity(
+        masterDefendantId = message.masterDefendantId,
+        hmctsCourtDocumentId = message.documentId,
+        prisonEmailAddress = message.prisonEmailAddress,
+        documentGeneratedTimestamp = message.documentGeneratedTimestamp.withZoneSameInstant(TimezoneConfig.TIMEZONE)
+          .toLocalDateTime(),
+        courtDocumentCases = message.cases.flatMap { it.caseReferences() }.distinct()
+          .map { CourtDocumentCaseEntity(caseReference = it) }.toMutableList(),
+        prisonDocumentId = prisonDocument.documentUuid,
+        eventType = message.eventType,
+        courtDocumentType = message.eventType.documentType,
+        hmctsCourtHearingId = message.hearingId,
+        deliveryMapping = enriched.deliveryMappingId?.let { deliveryMappingRepository.findById(it).orElse(null) },
+      ).applyEnrichment(enriched),
+    )
 
-      val courtDocumentEntity = courtDocumentRepository.save(
-        CourtDocumentEntity(
-          masterDefendantId = message.masterDefendantId,
-          hmctsCourtDocumentId = message.documentId,
-          prisonEmailAddress = message.prisonEmailAddress,
-          documentGeneratedTimestamp = message.documentGeneratedTimestamp.withZoneSameInstant(TimezoneConfig.TIMEZONE)
-            .toLocalDateTime(),
-          courtDocumentCases = message.cases.flatMap { it.caseReferences() }.distinct()
-            .map { CourtDocumentCaseEntity(caseReference = it) }.toMutableList(),
-          prisonDocumentId = prisonDocument.documentUuid,
-          eventType = message.eventType,
-          courtDocumentType = message.eventType.documentType,
-          hmctsCourtHearingId = message.hearingId,
-          deliveryMapping = enriched.deliveryMappingId?.let { deliveryMappingRepository.findById(it).orElse(null) },
-        ).applyEnrichment(enriched),
-      )
+    defendantMatchingService.matchPrisonerForDocument(courtDocumentEntity)
 
-      defendantMatchingService.matchPrisonerForDocument(courtDocumentEntity)
+    courtHearingService.fetchAndCreateHearingData(courtDocumentEntity)
 
-      courtHearingService.fetchAndCreateHearingData(courtDocumentEntity)
-
-      mirrorEnrichmentToDocumentStore(courtDocumentEntity)
-    } catch (e: Exception) {
-      fileService.deleteFileOnTransactionRollback(prisonDocument.documentUuid)
-      throw e
-    }
+    mirrorEnrichmentToDocumentStore(courtDocumentEntity)
   }
 
   private fun mirrorEnrichmentToDocumentStore(courtDocumentEntity: CourtDocumentEntity) {
