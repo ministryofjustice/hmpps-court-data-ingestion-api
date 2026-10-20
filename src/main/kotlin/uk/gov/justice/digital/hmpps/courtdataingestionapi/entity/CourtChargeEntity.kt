@@ -30,6 +30,7 @@ data class CourtChargeEntity(
   val title: String,
   val wording: String,
   val sortOrder: Int,
+  val courtApplication: Boolean = false,
   @OneToMany(mappedBy = "courtCharge", cascade = [CascadeType.ALL])
   val results: List<CourtChargeResultEntity>,
 ) {

@@ -8,8 +8,10 @@ import java.util.UUID
 data class HmctsPcr(
   val hearing: HmctsHearing,
   val offences: List<HmctsOffence>,
+  val courtApplications: List<CourtApplication> = emptyList(),
   val sharedTime: LocalDateTime,
 )
+data class CourtApplication(val offences: List<HmctsOffence> = emptyList())
 
 data class HmctsHearing(
   val id: String,
