@@ -283,7 +283,7 @@ class HmctsPcrApiMockServer : WireMockServer(WIREMOCK_PORT) {
                     "offenceLegislation": "Contrary to section 1(1) and 7 of the Theft Act 1968."
                 }
             ],
-            "reference": "16XP2041526",
+            "reference": "ABC123",
             "defendantType": "Defendant"
         }
     ],
