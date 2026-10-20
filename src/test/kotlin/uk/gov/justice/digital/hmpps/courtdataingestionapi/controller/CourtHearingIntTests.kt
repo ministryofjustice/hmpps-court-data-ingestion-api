@@ -30,6 +30,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsOf
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsPcr
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsResult
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsResultText
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtHearingRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.typeReference
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -45,6 +46,9 @@ class CourtHearingIntTests : IntegrationTestBase() {
 
   @Autowired
   private lateinit var objectMapper: ObjectMapper
+
+  @Autowired
+  private lateinit var courtHearingRepository: CourtHearingRepository
 
   @Nested
   @DisplayName("Get court hearing test")
@@ -158,6 +162,10 @@ class CourtHearingIntTests : IntegrationTestBase() {
           hearingId = hearing.nextHearing!!.hearingId,
         ),
       )
+
+      val dbHearing = courtHearingRepository.findFirstByHmctsCourtHearingId(hearingId)!!
+      assertThat(dbHearing.courtCharges.size).isEqualTo(2)
+      assertThat(dbHearing.courtCharges.any { it.courtApplication }).isTrue
     }
 
     @Test

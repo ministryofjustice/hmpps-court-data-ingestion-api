@@ -100,7 +100,7 @@ data class CourtHearingEntity(
       },
       charges = courtCharges
         .filter {
-          it.masterDefendantId == masterDefendantId
+          it.masterDefendantId == masterDefendantId && !it.courtApplication // Filter court applications for now while we look at data.
         }
         .sortedBy { it.sortOrder }
         .map {

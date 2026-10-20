@@ -16,7 +16,7 @@ import java.io.Serializable
 import java.util.UUID
 
 @Service
-@Transactional
+@Transactional(readOnly = true)
 class FileService(
   private val hmctsSubscriptionApiClient: HmctsSubscriptionApiClient,
   private val subscriptionRepository: SubscriptionRepository,

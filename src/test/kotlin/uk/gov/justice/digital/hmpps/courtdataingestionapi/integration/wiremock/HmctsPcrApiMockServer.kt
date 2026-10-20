@@ -194,6 +194,99 @@ class HmctsPcrApiMockServer : WireMockServer(WIREMOCK_PORT) {
       "caseURN": "ZZ231257861",
       "results": []
     },
+     "courtApplications": [
+        {
+            "type": "Commission of a further offence during the operational period of a suspended sentence order",
+            "results": [
+                {
+                    "resultTexts": [],
+                    "resultDescription": "BRO - No adjudication - dealt with for original offence"
+                }
+            ],
+            "offences": [
+                {
+                    "id": "94ddfe47-6280-4bc3-aa2a-9d8ebb8fc18b",
+                    "code": "SE20512",
+                    "title": "Theft from a shop",
+                    "results": [
+                        {
+                            "resultTexts": [
+                                {
+                                    "label": "Concurrent",
+                                    "value": "false"
+                                },
+                                {
+                                    "label": "Total custodial period",
+                                    "value": "52 Weeks"
+                                },
+                                {
+                                    "label": "Prison organisation name",
+                                    "value": "HMP/YOI Hull"
+                                },
+                                {
+                                    "label": "Prison email address 1",
+                                    "value": "Courts.Hull@justice.gov.uk"
+                                },
+                                {
+                                    "label": "Prison email address 2",
+                                    "value": "Reception.Hull@justice.gov.uk"
+                                },
+                                {
+                                    "label": "Conveyor / custodian name organisation name",
+                                    "value": "Hull Magistrates' Court: PECS"
+                                },
+                                {
+                                    "label": "Conveyor / custodian name email address 1",
+                                    "value": "hullmc@geoamey.co.uk"
+                                },
+                                {
+                                    "label": "Probation team to be notified organisation name",
+                                    "value": "North East Division NPS"
+                                },
+                                {
+                                    "label": "Probation team to be notified email address 1",
+                                    "value": "nenps.court@justice.gov.uk"
+                                },
+                                {
+                                    "label": "Original custody term",
+                                    "value": "26 Weeks"
+                                },
+                                {
+                                    "label": "Original suspension period",
+                                    "value": "12 Months"
+                                },
+                                {
+                                    "label": "Name of court that imposed suspended sentence",
+                                    "value": "Hull Magistrates' Court"
+                                },
+                                {
+                                    "label": "Date suspended sentence imposed",
+                                    "value": "10/09/2026"
+                                },
+                                {
+                                    "label": "Bail remand days to count (tagged days)",
+                                    "value": "0"
+                                },
+                                {
+                                    "label": "This offence is aggravated by the foreign power condition being met in relation to it as defined by section 31 of the National Security Act 2023",
+                                    "value": "false"
+                                }
+                            ],
+                            "resultDescription": "SSI - Suspended sentence of imprisonment activated unaltered\nSuspended sentence of imprisonment of 26 Weeks suspended for 12 Months imposed by Hull Magistrates' Court on 10/09/2026 implemented. Bail remand days to count 0. Total custodial period: 52 Weeks."
+                        }
+                    ],
+                    "wording": "Test wording",
+                    "startDate": "2026-09-08",
+                    "listingNumber": 1,
+                    "convictionDate": "2026-09-10",
+                    "indicatedPleaValue": "INDICATED_GUILTY",
+                    "offenceLegislation": "Contrary to section 1(1) and 7 of the Theft Act 1968."
+                }
+            ],
+            "reference": "16XP2041526",
+            "defendantType": "Defendant"
+        }
+    ],
     "sharedTime": "2026-08-15T09:00:00Z"
   }
 ]

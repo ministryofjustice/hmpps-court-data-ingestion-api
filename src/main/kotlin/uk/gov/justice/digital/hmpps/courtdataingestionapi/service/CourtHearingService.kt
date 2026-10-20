@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmctsCourthouse
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.client.HmctsPcrApiClient
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.config.FeatureToggles
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.config.TimezoneConfig
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtCaseDefendantEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtChargeEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtChargeResultEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtChargeResultTextEntity
@@ -21,6 +22,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtHearingEnt
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtNextHearingEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtHearing
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.courtregister.CourtRegister
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsOffence
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtCaseDefendantRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtChargeRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtHearingRepository
@@ -131,38 +133,17 @@ class CourtHearingService(
       apiResponse = objectMapper.writeValueAsString(json),
       courtDocuments = mutableListOf(courtDocumentEntity),
       courtCharges = pcrs.flatMap { (pcr, defendant) ->
-        pcr.offences.map { offence ->
-          chargeOrder += 1
-          CourtChargeEntity(
-            hmctsId = offence.id,
-            defendantId = defendant.defendantId,
-            masterDefendantId = defendant.masterDefendantId,
-            listingNumber = offence.listingNumber,
-            offenceLegislation = offence.offenceLegislation,
-            pleaDate = offence.pleaDate,
-            pleaValue = offence.pleaValue,
-            startDate = offence.startDate,
-            endDate = offence.endDate,
-            convictionDate = offence.convictionDate,
-            title = offence.title,
-            wording = offence.title,
-            code = offence.code,
-            sortOrder = chargeOrder,
-            results = offence.results.map { result ->
-              val (code, description) = result.resultDescription.split(" - ", limit = 2)
-              CourtChargeResultEntity(
-                resultCode = code,
-                resultDescription = description,
-                resultTexts = result.resultTexts.map { resultText ->
-                  CourtChargeResultTextEntity(
-                    key = resultText.label,
-                    value = resultText.value,
-                  )
-                },
-              )
-            },
+        (
+          pcr.offences.map { offence ->
+            chargeOrder += 1
+            toCharge(offence, defendant, chargeOrder, false)
+          } + pcr.courtApplications.flatMap { application ->
+            application.offences.map { offence ->
+              chargeOrder += 1
+              toCharge(offence, defendant, chargeOrder, true)
+            }
+          }
           )
-        }
       }.toMutableList(),
       nextCourtHearings = pcrs.mapNotNull { (pcr, defendant) ->
         val nextHearing = pcr.hearing.nextHearing ?: return@mapNotNull null
@@ -180,6 +161,37 @@ class CourtHearingService(
       }.toMutableList(),
     )
   }
+
+  private fun toCharge(offence: HmctsOffence, defendant: CourtCaseDefendantEntity, chargeOrder: Int, courtApplication: Boolean) = CourtChargeEntity(
+    hmctsId = offence.id,
+    defendantId = defendant.defendantId,
+    masterDefendantId = defendant.masterDefendantId,
+    listingNumber = offence.listingNumber,
+    offenceLegislation = offence.offenceLegislation,
+    pleaDate = offence.pleaDate,
+    pleaValue = offence.pleaValue,
+    startDate = offence.startDate,
+    endDate = offence.endDate,
+    convictionDate = offence.convictionDate,
+    title = offence.title,
+    wording = offence.title,
+    code = offence.code,
+    sortOrder = chargeOrder,
+    courtApplication = courtApplication,
+    results = offence.results.map { result ->
+      val (code, description) = result.resultDescription.split(" - ", limit = 2)
+      CourtChargeResultEntity(
+        resultCode = code,
+        resultDescription = description,
+        resultTexts = result.resultTexts.map { resultText ->
+          CourtChargeResultTextEntity(
+            key = resultText.label,
+            value = resultText.value,
+          )
+        },
+      )
+    },
+  )
 
   private fun fetchHearingData(courtDocumentEntity: CourtDocumentEntity): CourtHearingEntity? {
     val caseReferences = courtDocumentEntity.courtDocumentCases.map { it.caseReference }
