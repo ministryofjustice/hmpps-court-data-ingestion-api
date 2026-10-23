@@ -95,7 +95,7 @@ class CourtHearingIntTests : IntegrationTestBase() {
             startDate = LocalDate.of(2026, 6, 15),
             endDate = LocalDate.of(2026, 7, 15),
             title = "Theft from the person of another",
-            wording = "Theft from the person of another",
+            wording = "Wording of theft on the offence dates at some time.",
             code = "TH68001",
             convictionDate = LocalDate.of(2026, 8, 20),
             results = listOf(
