@@ -174,7 +174,7 @@ class CourtHearingService(
     endDate = offence.endDate,
     convictionDate = offence.convictionDate,
     title = offence.title,
-    wording = offence.title,
+    wording = offence.wording,
     code = offence.code,
     sortOrder = chargeOrder,
     courtApplication = courtApplication,

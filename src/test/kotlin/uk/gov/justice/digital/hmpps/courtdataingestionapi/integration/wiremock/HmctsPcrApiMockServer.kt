@@ -186,7 +186,7 @@ class HmctsPcrApiMockServer : WireMockServer(WIREMOCK_PORT) {
         "startDate": "2026-06-15",
         "endDate": "2026-07-15",
         "title": "Theft from the person of another",
-        "wording": "Theft from the person of another"
+        "wording": "Wording of theft on the offence dates at some time."
       }
     ],
     "prosecutionCase": {
