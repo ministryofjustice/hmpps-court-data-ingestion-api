@@ -9,7 +9,6 @@ COPY hmpps-court-data-ingestion-api-${BUILD_NUMBER}.jar app.jar
 RUN java -Djarmode=tools -jar app.jar extract --layers --destination extracted
 
 FROM ${BASE_IMAGE}
-LABEL maintainer="HMPPS Digital Studio <info@digital.justice.gov.uk>"
 
 ARG BUILD_NUMBER
 ENV BUILD_NUMBER=${BUILD_NUMBER:-1_0_0}
@@ -23,10 +22,6 @@ RUN ln -snf "/usr/share/zoneinfo/$TZ" /etc/localtime && echo "$TZ" > /etc/timezo
 
 RUN addgroup --gid 2000 --system appgroup && \
     adduser --uid 2000 --system appuser --gid 2000
-
-# Install AWS RDS Root cert into Java truststore
-RUN mkdir /home/appuser/.postgresql
-ADD --chown=appuser:appgroup https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /home/appuser/.postgresql/root.crt
 
 WORKDIR /app
 COPY --chown=appuser:appgroup applicationinsights.json ./
