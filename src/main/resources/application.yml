@@ -184,6 +184,11 @@ document:
     patterns:
       - "Register generated on: \\d{2}/\\d{2}/\\d{4}"
 
+court-schedule-snapshot:
+  prisons: ${COURT_SCHEDULE_SNAPSHOT_PRISONS:}
+  lookback-days: ${COURT_SCHEDULE_SNAPSHOT_LOOKBACK_DAYS:28}
+  grace-days: ${COURT_SCHEDULE_SNAPSHOT_GRACE_DAYS:7}
+
 feature-toggles:
   defendant-resolution: ${DEFENDANT_RESOLUTION_ENABLED:true}
   structured-extraction: ${STRUCTURED_EXTRACTION_ENABLED:false}
