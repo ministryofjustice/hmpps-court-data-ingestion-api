@@ -30,13 +30,14 @@ class CourtScheduleSnapshotBackfillIntTest : IntegrationTestBase() {
   private lateinit var snapshotRepository: CourtScheduleSnapshotRepository
 
   @BeforeEach
-  fun setUp() {
-    snapshotRepository.deleteAll()
-    jdbcTemplate.update("DELETE FROM prison_email_mapping WHERE email = ?", PRISON_EMAIL)
-  }
+  fun setUp() = clearData()
 
   @AfterEach
-  fun tearDown() {
+  fun tearDown() = clearData()
+
+  private fun clearData() {
+    snapshotRepository.deleteAll()
+    courtDocumentRepository.deleteAll()
     jdbcTemplate.update("DELETE FROM prison_email_mapping WHERE email = ?", PRISON_EMAIL)
   }
 
