@@ -116,4 +116,16 @@ class HmctsCourtScheduleApiMockServer : WireMockServer(WIREMOCK_PORT) {
         ),
     )
   }
+
+  fun stubCourtScheduleResponse(caseReference: String, status: Int, body: String) {
+    stubFor(
+      get(urlEqualTo("/case/$caseReference/courtschedule"))
+        .willReturn(
+          aResponse()
+            .withHeader("Content-Type", "application/json")
+            .withStatus(status)
+            .withBody(body),
+        ),
+    )
+  }
 }

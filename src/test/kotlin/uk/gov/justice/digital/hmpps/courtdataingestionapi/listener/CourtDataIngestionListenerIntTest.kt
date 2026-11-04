@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.H
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtDocumentType
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.DefendantDetails
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsEventType
+import uk.gov.justice.hmpps.sqs.countAllMessagesOnQueue
 import uk.gov.justice.hmpps.sqs.countMessagesOnQueue
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -118,13 +119,9 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
     awaitAtMost30Secs untilAsserted {
       HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.verifyDeleteDocument()
     }
+    awaitIngestionQueueDrained()
   }
 
-  /*
-   * Send two messages in order to create race condition where same defendant is attempted to insert twice with a unique constraint in db.
-   * The delay in response from defendant API will ensure both threads attempt to insert the defendant record.
-   * This causes an exception when the transaction is commited.
-   */
   @Test
   fun `Test uploaded document is deleted if unhandled exception rolls back transaction`() {
     val masterDefendantId = UUID.randomUUID()
@@ -156,5 +153,12 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
     awaitAtMost60Secs untilAsserted {
       HmppsDocumentManagementApiExtension.hmppsDocumentManagementApi.verifyDeleteDocument()
     }
+    awaitIngestionQueueDrained()
+  }
+
+  private fun awaitIngestionQueueDrained() {
+    awaitAtMost60Secs untilCallTo {
+      courtDataIngestionQueue.sqsClient.countAllMessagesOnQueue(courtDataIngestionQueue.queueUrl).get()
+    } matches { it == 0 }
   }
 }
