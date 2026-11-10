@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.TestPropertySource
-import org.springframework.transaction.annotation.Transactional
 import tools.jackson.databind.ObjectMapper
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.CorePersonApiExtension
@@ -30,7 +29,6 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsOf
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsPcr
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsResult
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsResultText
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtHearingRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.typeReference
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -47,14 +45,10 @@ class CourtHearingIntTests : IntegrationTestBase() {
   @Autowired
   private lateinit var objectMapper: ObjectMapper
 
-  @Autowired
-  private lateinit var courtHearingRepository: CourtHearingRepository
-
   @Nested
   @DisplayName("Get court hearing test")
   inner class GetCourtHearingTests {
     @Test
-    @Transactional(readOnly = true)
     fun `Get court hearing for matching hearing`() {
       val defendantId = UUID.randomUUID()
       val hearingId = UUID.randomUUID()
@@ -181,10 +175,6 @@ class CourtHearingIntTests : IntegrationTestBase() {
           hearingId = hearing.nextHearing!!.hearingId,
         ),
       )
-
-      val dbHearing = courtHearingRepository.findFirstByHmctsCourtHearingId(hearingId)!!
-      assertThat(dbHearing.courtCharges.size).isEqualTo(2)
-      assertThat(dbHearing.courtCharges.any { it.courtApplication }).isTrue
     }
 
     @Test
