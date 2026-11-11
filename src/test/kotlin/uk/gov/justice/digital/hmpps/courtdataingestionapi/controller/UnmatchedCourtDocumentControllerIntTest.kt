@@ -26,7 +26,7 @@ class UnmatchedCourtDocumentControllerIntTest : IntegrationTestBase() {
       val documents = webTestClient
         .get()
         .uri("/unmatched-document?prisonDocumentIds=${dbCourtDocument.prisonDocumentId}")
-        .headers(setAuthorisation(roles = listOf("COURTCASE_RELEASEDATE_SUPPORT")))
+        .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RO")))
         .exchange()
         .expectBody(typeReference<List<CourtDocument>>())
         .returnResult().responseBody!!
@@ -52,7 +52,7 @@ class UnmatchedCourtDocumentControllerIntTest : IntegrationTestBase() {
       val documents = webTestClient
         .get()
         .uri("/unmatched-document?prisonDocumentIds=${dbCourtDocument.prisonDocumentId}")
-        .headers(setAuthorisation(roles = listOf("COURTCASE_RELEASEDATE_SUPPORT")))
+        .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RW")))
         .exchange()
         .expectBody(typeReference<List<CourtDocument>>())
         .returnResult().responseBody!!
@@ -65,7 +65,7 @@ class UnmatchedCourtDocumentControllerIntTest : IntegrationTestBase() {
       val documents = webTestClient
         .get()
         .uri("/unmatched-document?prisonDocumentIds=")
-        .headers(setAuthorisation(roles = listOf("COURTCASE_RELEASEDATE_SUPPORT")))
+        .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RO")))
         .exchange()
         .expectBody(typeReference<List<CourtDocument>>())
         .returnResult().responseBody!!
@@ -96,7 +96,7 @@ class UnmatchedCourtDocumentControllerIntTest : IntegrationTestBase() {
       webTestClient
         .get()
         .uri("/unmatched-document?prisonDocumentIds=${dbCourtDocument.prisonDocumentId}")
-        .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RO")))
+        .headers(setAuthorisation(roles = listOf("COURTCASE_RELEASEDATE_SUPPORT")))
         .exchange()
         .expectStatus()
         .isForbidden
@@ -107,7 +107,7 @@ class UnmatchedCourtDocumentControllerIntTest : IntegrationTestBase() {
       webTestClient
         .get()
         .uri("/unmatched-document")
-        .headers(setAuthorisation(roles = listOf("COURTCASE_RELEASEDATE_SUPPORT")))
+        .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RO")))
         .exchange()
         .expectStatus()
         .is5xxServerError

@@ -20,7 +20,7 @@ class UnmatchedCourtDocumentController(
 ) {
 
   @GetMapping
-  @PreAuthorize("hasRole('COURTCASE_RELEASEDATE_SUPPORT')")
+  @PreAuthorize("hasAnyRole('COURT_DATA_INGESTION__COURT_DATA_RO', 'COURT_DATA_INGESTION__COURT_DATA_RW')")
   @Operation(
     summary = "Collect data of unmatched court documents",
     description = "Retrieve information of the given unmatched court documents.",
@@ -29,7 +29,7 @@ class UnmatchedCourtDocumentController(
     value = [
       ApiResponse(responseCode = "200", description = "Successfully collected the requested unmatched court documents."),
       ApiResponse(responseCode = "401", description = "Unauthorized - valid Oauth2 token required"),
-      ApiResponse(responseCode = "403", description = "Forbidden - requires ROLE_COURTCASE_RELEASEDATE_SUPPORT"),
+      ApiResponse(responseCode = "403", description = "Forbidden - requires appropriate role"),
     ],
   )
   fun getDocuments(@RequestParam(name = "prisonDocumentIds", required = true) prisonDocumentIds: List<UUID>): List<CourtDocument> = unmatchedDocumentService.getDocuments(prisonDocumentIds)
