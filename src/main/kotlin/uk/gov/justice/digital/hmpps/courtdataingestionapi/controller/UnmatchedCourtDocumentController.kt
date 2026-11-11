@@ -29,7 +29,7 @@ class UnmatchedCourtDocumentController(
     value = [
       ApiResponse(responseCode = "200", description = "Successfully collected the requested unmatched court documents."),
       ApiResponse(responseCode = "401", description = "Unauthorized - valid Oauth2 token required"),
-      ApiResponse(responseCode = "403", description = "Forbidden - requires appropriate role"),
+      ApiResponse(responseCode = "403", description = "Forbidden - requires ROLE_COURTCASE_RELEASEDATE_SUPPORT"),
     ],
   )
   fun getDocuments(@RequestParam(name = "prisonDocumentIds", required = true) prisonDocumentIds: List<UUID>): List<CourtDocument> = unmatchedDocumentService.getDocuments(prisonDocumentIds)
