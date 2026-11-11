@@ -11,7 +11,7 @@ import java.util.UUID
 @Transactional(readOnly = true)
 class UnmatchedCourtDocumentService(private val courtDocumentRepository: CourtDocumentRepository) {
 
-  fun getUnmatchedCourtDocumentsByPrisonDocumentIds(prisonDocumentIds: List<UUID>): List<CourtDocument> = courtDocumentRepository.findByPrisonerNumberIsNullAndPrisonDocumentIdIn(prisonDocumentIds).map { document ->
+  fun getDocuments(prisonDocumentIds: List<UUID>): List<CourtDocument> = courtDocumentRepository.findByPrisonerNumberIsNullAndPrisonDocumentIdIn(prisonDocumentIds).map { document ->
     CourtDocument(
       prisonDocumentId = document.prisonDocumentId,
       caseReferences = document.courtDocumentCases.map { it.caseReference },

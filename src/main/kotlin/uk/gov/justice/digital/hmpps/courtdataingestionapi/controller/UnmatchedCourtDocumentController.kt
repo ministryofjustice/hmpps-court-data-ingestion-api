@@ -32,5 +32,5 @@ class UnmatchedCourtDocumentController(
       ApiResponse(responseCode = "403", description = "Forbidden - requires appropriate role"),
     ],
   )
-  fun getCourtDocuments(@RequestParam(name = "prisonDocumentIds", required = true) prisonDocumentIds: List<UUID>): List<CourtDocument> = unmatchedDocumentService.getUnmatchedCourtDocumentsByPrisonDocumentIds(prisonDocumentIds)
+  fun getDocuments(@RequestParam(name = "prisonDocumentIds", required = true) prisonDocumentIds: List<UUID>): List<CourtDocument> = unmatchedDocumentService.getDocuments(prisonDocumentIds)
 }
