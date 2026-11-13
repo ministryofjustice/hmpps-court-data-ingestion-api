@@ -20,7 +20,7 @@ class UnmatchedCourtDocumentController(
 ) {
 
   @GetMapping
-  @PreAuthorize("hasRole('COURT_DATA_INGESTION__COURT_DATA_RO')")
+  @PreAuthorize("hasAnyRole('COURT_DATA_INGESTION__COURT_DATA_RO', 'COURT_DATA_INGESTION__COURT_DATA_RW')")
   @Operation(
     summary = "Collect data of unmatched court documents",
     description = "Retrieve information of the given unmatched court documents.",

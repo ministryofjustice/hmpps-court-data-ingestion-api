@@ -52,7 +52,7 @@ class UnmatchedCourtDocumentControllerIntTest : IntegrationTestBase() {
       val documents = webTestClient
         .get()
         .uri("/unmatched-document?prisonDocumentIds=${dbCourtDocument.prisonDocumentId}")
-        .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RO")))
+        .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RW")))
         .exchange()
         .expectBody(typeReference<List<CourtDocument>>())
         .returnResult().responseBody!!
@@ -65,7 +65,7 @@ class UnmatchedCourtDocumentControllerIntTest : IntegrationTestBase() {
       val documents = webTestClient
         .get()
         .uri("/unmatched-document?prisonDocumentIds=")
-        .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RO")))
+        .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RO", "COURT_DATA_INGESTION__COURT_DATA_RW")))
         .exchange()
         .expectBody(typeReference<List<CourtDocument>>())
         .returnResult().responseBody!!
@@ -96,7 +96,7 @@ class UnmatchedCourtDocumentControllerIntTest : IntegrationTestBase() {
       webTestClient
         .get()
         .uri("/unmatched-document?prisonDocumentIds=${dbCourtDocument.prisonDocumentId}")
-        .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_RW")))
+        .headers(setAuthorisation(roles = listOf("COURT_DATA_INGESTION__COURT_DATA_NONE")))
         .exchange()
         .expectStatus()
         .isForbidden
