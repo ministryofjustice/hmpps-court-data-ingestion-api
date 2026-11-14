@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.TestPropertySource
-import org.springframework.transaction.annotation.Transactional
 import tools.jackson.databind.ObjectMapper
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.CorePersonApiExtension
@@ -30,7 +29,6 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsOf
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsPcr
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsResult
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsResultText
-import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtHearingRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.typeReference
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -47,14 +45,10 @@ class CourtHearingIntTests : IntegrationTestBase() {
   @Autowired
   private lateinit var objectMapper: ObjectMapper
 
-  @Autowired
-  private lateinit var courtHearingRepository: CourtHearingRepository
-
   @Nested
   @DisplayName("Get court hearing test")
   inner class GetCourtHearingTests {
     @Test
-    @Transactional(readOnly = true)
     fun `Get court hearing for matching hearing`() {
       val defendantId = UUID.randomUUID()
       val hearingId = UUID.randomUUID()
@@ -151,6 +145,25 @@ class CourtHearingIntTests : IntegrationTestBase() {
               ),
             ),
           ),
+          CourtCharge(
+            chargeId = UUID.fromString("94ddfe47-6280-4bc3-aa2a-9d8ebb8fc18b"), listingNumber = 1, offenceLegislation = "Contrary to section 1(1) and 7 of the Theft Act 1968.",
+            convictionDate = LocalDate.of(2026, 9, 10), code = "SE20512", pleaDate = null, pleaValue = null, startDate = LocalDate.of(2026, 9, 8), endDate = null, title = "Theft from a shop", wording = "Test wording",
+            results = listOf(
+              CourtResult(
+                code = "SSI",
+                description = "Suspended sentence of imprisonment activated unaltered\nSuspended sentence of imprisonment of 26 Weeks suspended for 12 Months imposed by Hull Magistrates' Court on 10/09/2026 implemented. Bail remand days to count 0. Total custodial period: 52 Weeks.",
+                keyValuePairs = listOf(
+                  ResultKeyValue(key = "Concurrent", value = "false"),
+                  ResultKeyValue(key = "Total custodial period", value = "52 Weeks"),
+                  ResultKeyValue(key = "Prison organisation name", value = "HMP/YOI Hull"),
+                  ResultKeyValue(key = "Original custody term", value = "26 Weeks"),
+                  ResultKeyValue(key = "Original suspension period", value = "12 Months"),
+                  ResultKeyValue(key = "Name of court that imposed suspended sentence", value = "Hull Magistrates' Court"),
+                  ResultKeyValue(key = "Date suspended sentence imposed", value = "10/09/2026"),
+                ),
+              ),
+            ),
+          ),
         ),
       )
       assertThat(hearing.nextHearing).isEqualTo(
@@ -162,10 +175,6 @@ class CourtHearingIntTests : IntegrationTestBase() {
           hearingId = hearing.nextHearing!!.hearingId,
         ),
       )
-
-      val dbHearing = courtHearingRepository.findFirstByHmctsCourtHearingId(hearingId)!!
-      assertThat(dbHearing.courtCharges.size).isEqualTo(2)
-      assertThat(dbHearing.courtCharges.any { it.courtApplication }).isTrue
     }
 
     @Test
@@ -338,9 +347,9 @@ class CourtHearingIntTests : IntegrationTestBase() {
       sendSubscriptionNotificationWaitForRecordToBeCreated(masterDefendantTwo, hearingId = hearingId)
 
       val hearingForPrisonerOne = getCourtHearing(prisonerNumberOne, hearingId.toString())
-      assertThat(hearingForPrisonerOne.charges.size).isEqualTo(1)
+      assertThat(hearingForPrisonerOne.charges.size).isEqualTo(2)
       val hearingForPrisonerTwo = getCourtHearing(prisonerNumberTwo, hearingId.toString())
-      assertThat(hearingForPrisonerTwo.charges.size).isEqualTo(1)
+      assertThat(hearingForPrisonerTwo.charges.size).isEqualTo(2)
     }
 
     @Test
@@ -378,7 +387,7 @@ class CourtHearingIntTests : IntegrationTestBase() {
       sendSubscriptionNotificationWaitForRecordToBeCreated(masterDefendant, hearingId = hearingId, hmctsCases = listOf(HmctsCase(caseReferenceOne), HmctsCase(caseReferenceTwo)))
 
       val hearing = getCourtHearing(prisonerNumber, hearingId.toString())
-      assertThat(hearing.charges.size).isEqualTo(2)
+      assertThat(hearing.charges.size).isEqualTo(4)
     }
 
     @Test
