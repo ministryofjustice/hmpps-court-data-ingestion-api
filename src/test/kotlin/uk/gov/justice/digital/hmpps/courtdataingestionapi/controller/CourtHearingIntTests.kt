@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.TestPropertySource
+import org.springframework.transaction.annotation.Transactional
 import tools.jackson.databind.ObjectMapper
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.integration.wiremock.CorePersonApiExtension
@@ -29,6 +30,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsOf
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsPcr
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsResult
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsResultText
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtHearingRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.typeReference
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -44,6 +46,9 @@ class CourtHearingIntTests : IntegrationTestBase() {
 
   @Autowired
   private lateinit var objectMapper: ObjectMapper
+
+  @Autowired
+  private lateinit var courtHearingRepository: CourtHearingRepository
 
   @Nested
   @DisplayName("Get court hearing test")
@@ -178,6 +183,7 @@ class CourtHearingIntTests : IntegrationTestBase() {
     }
 
     @Test
+    @Transactional(readOnly = true)
     fun `Ingestion of updated court hearing`() {
       val masterDefendantId = UUID.randomUUID()
       val defendantId = UUID.randomUUID()
@@ -212,6 +218,9 @@ class CourtHearingIntTests : IntegrationTestBase() {
 
       assertThat(hearing.charges.size).isEqualTo(1)
       assertThat(hearing.nextHearing).isNotNull
+
+      val dbCourtHearing = courtHearingRepository.findFirstByHmctsCourtHearingId(hearingId)
+      assertThat(dbCourtHearing?.pcrApiResponses?.size).isEqualTo(1)
     }
 
     @Test
@@ -316,6 +325,7 @@ class CourtHearingIntTests : IntegrationTestBase() {
     }
 
     @Test
+    @Transactional(readOnly = true)
     fun `Ingestion of hearing including multiple defendants`() {
       val masterDefendantOne = UUID.randomUUID()
       val defendantOne = UUID.randomUUID()
@@ -350,6 +360,9 @@ class CourtHearingIntTests : IntegrationTestBase() {
       assertThat(hearingForPrisonerOne.charges.size).isEqualTo(2)
       val hearingForPrisonerTwo = getCourtHearing(prisonerNumberTwo, hearingId.toString())
       assertThat(hearingForPrisonerTwo.charges.size).isEqualTo(2)
+
+      val dbCourtHearing = courtHearingRepository.findFirstByHmctsCourtHearingId(hearingId)
+      assertThat(dbCourtHearing?.pcrApiResponses?.size).isEqualTo(2)
     }
 
     @Test

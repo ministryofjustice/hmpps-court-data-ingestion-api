@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtChargeResu
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtDocumentEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtHearingEntity
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtNextHearingEntity
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.entity.CourtPcrApiResponse
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtHearing
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.courtregister.CourtRegister
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.hmctsapi.HmctsOffence
@@ -27,6 +28,7 @@ import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtCaseDe
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtChargeRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtHearingRepository
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtNextHearingRepository
+import uk.gov.justice.digital.hmpps.courtdataingestionapi.repository.CourtPcrApiResponseRepository
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -43,6 +45,7 @@ class CourtHearingService(
   private val objectMapper: ObjectMapper,
   private val courtNextHearingRepository: CourtNextHearingRepository,
   private val courtChargeRepository: CourtChargeRepository,
+  private val courtPcrApiResponseRepository: CourtPcrApiResponseRepository,
 ) {
 
   companion object {
@@ -91,8 +94,10 @@ class CourtHearingService(
   ) {
     val existingCharges = existing?.courtCharges?.filter { it.masterDefendantId == courtDocumentEntity.masterDefendantId } ?: emptyList()
     val existingNextAppearances = existing?.nextCourtHearings?.filter { it.masterDefendantId == courtDocumentEntity.masterDefendantId } ?: emptyList()
-    existingCharges.forEach { courtChargeRepository.deleteById(it.id) }
-    existingNextAppearances.forEach { courtNextHearingRepository.deleteById(it.id) }
+    val existingApiResponses = existing?.pcrApiResponses?.filter { it.masterDefendantId == courtDocumentEntity.masterDefendantId } ?: emptyList()
+    existingCharges.forEach { courtChargeRepository.delete(it) }
+    existingNextAppearances.forEach { courtNextHearingRepository.delete(it) }
+    existingApiResponses.forEach { courtPcrApiResponseRepository.delete(it) }
   }
 
   private fun fetchHearingAndOffenceData(courtDocumentEntity: CourtDocumentEntity): CourtHearingEntity? {
@@ -106,11 +111,6 @@ class CourtHearingService(
 
     val results = defendants.map {
       pcrApiClient.get(it.caseReference, courtDocumentEntity.hmctsCourtHearingId!!, it.defendantId) to it
-    }
-
-    val json = objectMapper.createArrayNode()
-    results.forEach { (result, _) ->
-      json.addAll(result.raw)
     }
 
     if (results.isEmpty() || results.all { (result, _) -> result.data.isEmpty() }) {
@@ -130,7 +130,13 @@ class CourtHearingService(
       hearingType = hearing.hearingType,
       hearingDate = hearing.hearingDate,
       hmctsCourtHearingId = courtDocumentEntity.hmctsCourtHearingId!!,
-      apiResponse = objectMapper.writeValueAsString(json),
+      pcrApiResponses = results.map { (result, defendant) ->
+        CourtPcrApiResponse(
+          defendantId = defendant.defendantId,
+          masterDefendantId = defendant.masterDefendantId,
+          apiResponse = objectMapper.writeValueAsString(result.raw),
+        )
+      }.toMutableList(),
       courtDocuments = mutableListOf(courtDocumentEntity),
       courtCharges = pcrs.flatMap { (pcr, defendant) ->
         (
@@ -216,6 +222,7 @@ class CourtHearingService(
       courtDocuments = mutableListOf(courtDocumentEntity),
       courtCharges = mutableListOf(),
       nextCourtHearings = mutableListOf(),
+      pcrApiResponses = mutableListOf(),
     )
   }
 
