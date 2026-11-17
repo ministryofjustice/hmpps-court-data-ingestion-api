@@ -12,12 +12,14 @@ CREATE TABLE court_pcr_api_response (
 
 
 INSERT INTO court_pcr_api_response (
+    id,
     court_hearing_id,
     defendant_id,
     master_defendant_id,
     api_response
 )
 SELECT DISTINCT ON (ch.id)
+    gen_random_uuid(),
     ch.id,
     cc.defendant_id,
     cc.master_defendant_id,
