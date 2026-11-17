@@ -46,7 +46,7 @@ dependencies {
 
   // AWS
   implementation("software.amazon.awssdk:secretsmanager")
-  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:7.4.1")
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:7.6.0")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
 
   // Open API
