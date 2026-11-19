@@ -29,6 +29,8 @@ generic-service:
   # Environment variables to load into the deployment
   env:
     JAVA_OPTS: "-Xmx512m"
+    # Remove below after Java4Shell is resolved
+    JAVA_TOOL_OPTIONS: "-XX:+ExitOnOutOfMemoryError -XX:MaxRAMPercentage=50.0 -XX:-UseBASE64Intrinsics"
     SERVER_PORT: "8080"
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.json
 
