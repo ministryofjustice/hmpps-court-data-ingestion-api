@@ -25,7 +25,6 @@ import java.util.UUID
   name = "CourtHearing.full",
   attributeNodes = [
     NamedAttributeNode("courtDocuments"),
-    NamedAttributeNode("nextCourtHearings"),
     NamedAttributeNode(
       value = "courtCharges",
       subgraph = "courtCharges",
@@ -45,6 +44,7 @@ import java.util.UUID
       name = "results",
       attributeNodes = [
         NamedAttributeNode("resultTexts"),
+        NamedAttributeNode("courtNextHearing"),
       ],
     ),
   ],
@@ -63,15 +63,12 @@ data class CourtHearingEntity(
   @OneToMany(mappedBy = "courtHearing", cascade = [CascadeType.ALL])
   var courtCharges: MutableList<CourtChargeEntity>,
   @OneToMany(mappedBy = "courtHearing", cascade = [CascadeType.ALL])
-  var nextCourtHearings: MutableList<CourtNextHearingEntity>,
-  @OneToMany(mappedBy = "courtHearing", cascade = [CascadeType.ALL])
   var pcrApiResponses: MutableList<CourtPcrApiResponse> = mutableListOf(),
   var createdAt: LocalDateTime = LocalDateTime.now(),
   var updatedAt: LocalDateTime = LocalDateTime.now(),
 ) {
   init {
     courtCharges.forEach { charge -> charge.courtHearing = this }
-    nextCourtHearings.forEach { courtHearing -> courtHearing.courtHearing = this }
     pcrApiResponses.forEach { apiResponse -> apiResponse.courtHearing = this }
   }
 
@@ -122,21 +119,19 @@ data class CourtHearingEntity(
                 keyValuePairs = result.resultTexts.map { resultText ->
                   ResultKeyValue(resultText.key, resultText.value)
                 },
+                nextHearing = result.courtNextHearing?.let { nextHearing ->
+                  NextCourtHearing(
+                    courtName = nextHearing.courtName,
+                    hmctsCourtId = nextHearing.hmctsCourtId,
+                    hmppsCourtId = nextHearing.hmppsCourtId,
+                    hearingDate = nextHearing.dateTime,
+                    hearingId = nextHearing.hearingId,
+                  )
+                },
               )
             },
           )
         },
-      nextHearing = nextCourtHearings.find {
-        it.masterDefendantId == masterDefendantId
-      }?.let {
-        NextCourtHearing(
-          courtName = it.courtName,
-          hmctsCourtId = it.hmctsCourtId,
-          hmppsCourtId = it.hmppsCourtId,
-          hearingDate = it.dateTime,
-          hearingId = it.hearingId,
-        )
-      },
     )
   }
 }

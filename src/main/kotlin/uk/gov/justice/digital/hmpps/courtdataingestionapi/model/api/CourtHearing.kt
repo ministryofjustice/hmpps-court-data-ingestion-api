@@ -14,7 +14,6 @@ data class CourtHearing(
   val hearingType: String,
   val documents: List<CourtHearingDocument>,
   val charges: List<CourtCharge>,
-  val nextHearing: NextCourtHearing?,
 )
 
 data class CourtHearingDocument(
@@ -42,6 +41,7 @@ data class CourtResult(
   val code: String,
   val description: String,
   val keyValuePairs: List<ResultKeyValue>,
+  val nextHearing: NextCourtHearing?,
 )
 
 data class ResultKeyValue(

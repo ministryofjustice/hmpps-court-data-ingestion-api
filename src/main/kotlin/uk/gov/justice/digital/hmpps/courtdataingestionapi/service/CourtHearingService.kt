@@ -93,10 +93,8 @@ class CourtHearingService(
     courtDocumentEntity: CourtDocumentEntity,
   ) {
     val existingCharges = existing?.courtCharges?.filter { it.masterDefendantId == courtDocumentEntity.masterDefendantId } ?: emptyList()
-    val existingNextAppearances = existing?.nextCourtHearings?.filter { it.masterDefendantId == courtDocumentEntity.masterDefendantId } ?: emptyList()
     val existingApiResponses = existing?.pcrApiResponses?.filter { it.masterDefendantId == courtDocumentEntity.masterDefendantId } ?: emptyList()
     existingCharges.forEach { courtChargeRepository.delete(it) }
-    existingNextAppearances.forEach { courtNextHearingRepository.delete(it) }
     existingApiResponses.forEach { courtPcrApiResponseRepository.delete(it) }
   }
 
@@ -151,20 +149,6 @@ class CourtHearingService(
           }
           )
       }.toMutableList(),
-      nextCourtHearings = pcrs.mapNotNull { (pcr, defendant) ->
-        val nextHearing = pcr.hearing.nextHearing ?: return@mapNotNull null
-        val courtId = nextHearing.court.courtHouseId
-        val courtRegister = getCourtRegister(courtId)
-        CourtNextHearingEntity(
-          defendantId = defendant.defendantId,
-          masterDefendantId = defendant.masterDefendantId,
-          hmctsCourtId = courtId,
-          courtName = getCourtName(courtId, courtRegister),
-          hmppsCourtId = courtRegister?.courtId,
-          dateTime = nextHearing.dateTime?.withZoneSameInstant(TimezoneConfig.TIMEZONE)?.toLocalDateTime(),
-          hearingId = nextHearing.hearingId,
-        )
-      }.toMutableList(),
     )
   }
 
@@ -195,6 +179,19 @@ class CourtHearingService(
             value = resultText.value,
           )
         },
+        courtNextHearing = result.nextHearing?.let {
+          val courtId = it.court.courtHouseId
+          val courtRegister = getCourtRegister(courtId)
+          CourtNextHearingEntity(
+            defendantId = defendant.defendantId,
+            masterDefendantId = defendant.masterDefendantId,
+            hmctsCourtId = courtId,
+            courtName = getCourtName(courtId, courtRegister),
+            hmppsCourtId = courtRegister?.courtId,
+            dateTime = it.dateTime?.withZoneSameInstant(TimezoneConfig.TIMEZONE)?.toLocalDateTime(),
+            hearingId = it.hearingId,
+          )
+        },
       )
     },
   )
@@ -221,7 +218,6 @@ class CourtHearingService(
       hmctsCourtHearingId = courtDocumentEntity.hmctsCourtHearingId!!,
       courtDocuments = mutableListOf(courtDocumentEntity),
       courtCharges = mutableListOf(),
-      nextCourtHearings = mutableListOf(),
       pcrApiResponses = mutableListOf(),
     )
   }

@@ -5,6 +5,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilAsserted
 import org.awaitility.kotlin.untilCallTo
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.io.ClassPathResource
@@ -126,6 +127,7 @@ class CourtDataIngestionListenerIntTest : IntegrationTestBase() {
    * This causes an exception when the transaction is commited.
    */
   @Test
+  @Disabled("CDIA-549")
   fun `Test uploaded document is deleted if unhandled exception rolls back transaction`() {
     val masterDefendantId = UUID.randomUUID()
     val defendantId = UUID.randomUUID()

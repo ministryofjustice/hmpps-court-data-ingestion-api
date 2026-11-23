@@ -165,7 +165,6 @@ class FileServiceTest {
           hearingDate = LocalDate.of(2026, 6, 4),
           hmctsCourtHearingId = COURT_HEARING_ID,
           courtDocuments = mutableListOf(document),
-          nextCourtHearings = mutableListOf(),
           courtCharges = mutableListOf(),
         )
       }

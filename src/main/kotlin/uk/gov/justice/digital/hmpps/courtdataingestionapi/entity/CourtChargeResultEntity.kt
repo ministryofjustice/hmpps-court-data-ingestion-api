@@ -5,6 +5,7 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
+import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import java.util.UUID
 
@@ -17,10 +18,13 @@ data class CourtChargeResultEntity(
   var courtCharge: CourtChargeEntity? = null,
   val resultCode: String,
   val resultDescription: String,
+  @OneToOne(mappedBy = "courtChargeResult", cascade = [CascadeType.ALL])
+  val courtNextHearing: CourtNextHearingEntity?,
   @OneToMany(mappedBy = "courtChargeResult", cascade = [CascadeType.ALL])
   val resultTexts: List<CourtChargeResultTextEntity>,
 ) {
   init {
     resultTexts.forEach { resultText -> resultText.courtChargeResult = this }
+    courtNextHearing?.courtChargeResult = this
   }
 }
