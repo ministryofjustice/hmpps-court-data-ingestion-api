@@ -30,6 +30,7 @@ generic-service:
     ENVIRONMENT_NAME: preprod
     HMCTS_RATE_LIMIT: 0.4
     OFFENCE_DATA_ENABLED: true
+    COURT_SCHEDULE_SNAPSHOT_PRISONS: "HLI,PVI,PBI,BZI,CFI"
 
   scheduledDowntime:
     enabled: true
