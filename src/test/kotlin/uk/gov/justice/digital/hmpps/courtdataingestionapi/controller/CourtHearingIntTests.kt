@@ -147,6 +147,13 @@ class CourtHearingIntTests : IntegrationTestBase() {
                     value = "",
                   ),
                 ),
+                nextHearing = NextCourtHearing(
+                  courtName = "Central London County Court",
+                  hmctsCourtId = UUID.fromString(TEST_HMCTS_COURTHOUSE_ID_NO_REGISTER),
+                  hmppsCourtId = null,
+                  hearingDate = LocalDateTime.of(2026, 8, 15, 10, 0),
+                  hearingId = UUID.fromString("e2a6187c-26a0-4862-8041-beeb37e4b83a"),
+                ),
               ),
             ),
           ),
@@ -166,18 +173,10 @@ class CourtHearingIntTests : IntegrationTestBase() {
                   ResultKeyValue(key = "Name of court that imposed suspended sentence", value = "Hull Magistrates' Court"),
                   ResultKeyValue(key = "Date suspended sentence imposed", value = "10/09/2026"),
                 ),
+                nextHearing = null,
               ),
             ),
           ),
-        ),
-      )
-      assertThat(hearing.nextHearing).isEqualTo(
-        NextCourtHearing(
-          courtName = "Central London County Court",
-          hmctsCourtId = UUID.fromString(TEST_HMCTS_COURTHOUSE_ID_NO_REGISTER),
-          hmppsCourtId = null,
-          hearingDate = LocalDateTime.of(2026, 8, 15, 10, 0),
-          hearingId = hearing.nextHearing!!.hearingId,
         ),
       )
     }
@@ -217,7 +216,6 @@ class CourtHearingIntTests : IntegrationTestBase() {
       assertThat(hearing.hearingType).isEqualTo("Second hearing")
 
       assertThat(hearing.charges.size).isEqualTo(1)
-      assertThat(hearing.nextHearing).isNotNull
 
       val dbCourtHearing = courtHearingRepository.findFirstByHmctsCourtHearingId(hearingId)
       assertThat(dbCourtHearing?.pcrApiResponses?.size).isEqualTo(1)
@@ -277,9 +275,7 @@ class CourtHearingIntTests : IntegrationTestBase() {
             pleaValue = null,
           ),
         ),
-        hearing = UPDATED_HEARING.hearing.copy(
-          nextHearing = null,
-        ),
+        hearing = UPDATED_HEARING.hearing,
       )
       HmctsPcrApiExtension.hmctsPcrApiMockServer.stubGetPcr(
         CASE_REFERENCE,
@@ -294,7 +290,6 @@ class CourtHearingIntTests : IntegrationTestBase() {
       assertThat(hearing.charges.first().pleaDate).isNull()
       assertThat(hearing.charges.first().pleaValue).isNull()
       assertThat(hearing.charges.first().offenceLegislation).isNull()
-      assertThat(hearing.nextHearing).isNull()
     }
 
     @Test
@@ -526,15 +521,6 @@ class CourtHearingIntTests : IntegrationTestBase() {
         hearingDate = LocalDate.now().plusDays(7),
         hearingType = "Second hearing",
         jurisdiction = "Crown",
-        nextHearing = HmctsNextHearing(
-          court = HmctsCourt(
-            courtHouseCode = "B01",
-            courtHouseName = "Sheffield Crown Court",
-            courtHouseId = UUID.fromString(TEST_HMCTS_COURTHOUSE_ID),
-          ),
-          dateTime = ZonedDateTime.now().plusDays(30),
-          hearingId = UUID.fromString(TEST_HMCTS_HEARING_ID),
-        ),
       ),
       offences = listOf(
         HmctsOffence(
@@ -558,6 +544,15 @@ class CourtHearingIntTests : IntegrationTestBase() {
                 ),
               ),
               resultDescription = "CSS - Custodial sentence",
+              nextHearing = HmctsNextHearing(
+                court = HmctsCourt(
+                  courtHouseCode = "B01",
+                  courtHouseName = "Sheffield Crown Court",
+                  courtHouseId = UUID.fromString(TEST_HMCTS_COURTHOUSE_ID),
+                ),
+                dateTime = ZonedDateTime.now().plusDays(30),
+                hearingId = UUID.fromString(TEST_HMCTS_HEARING_ID),
+              ),
             ),
           ),
           startDate = LocalDate.now().minusMonths(2),

@@ -112,16 +112,7 @@ class HmctsPcrApiMockServer : WireMockServer(WIREMOCK_PORT) {
       "hearingDate": "2026-08-15",
       "hearingType": "First hearing",
       "id": "27cc647d-0818-4a4b-87f3-c8ba15781d80",
-      "jurisdiction": "MAGISTRATES",
-      "nextHearing": {
-        "court": {
-          "courtHouseCode": "B01LY00",
-          "courtHouseId": "$TEST_HMCTS_COURTHOUSE_ID_NO_REGISTER",
-          "courtHouseName": "Lavender Hill Magistrates' Court"
-        },
-        "dateTime": "2026-08-15T09:00:00Z",
-        "hearingId": "e2a6187c-26a0-4862-8041-beeb37e4b83a"
-      }
+      "jurisdiction": "MAGISTRATES"
     },
     "offences": [
       {
@@ -180,7 +171,16 @@ class HmctsPcrApiMockServer : WireMockServer(WIREMOCK_PORT) {
                 "label": "Adjournment reasons",
                 "value": ""
               }
-            ]
+            ],
+            "nextHearing": {
+              "court": {
+                "courtHouseCode": "B01LY00",
+                "courtHouseId": "$TEST_HMCTS_COURTHOUSE_ID_NO_REGISTER",
+                "courtHouseName": "Lavender Hill Magistrates' Court"
+              },
+              "dateTime": "2026-08-15T09:00:00Z",
+              "hearingId": "e2a6187c-26a0-4862-8041-beeb37e4b83a"
+            }
           }
         ],
         "startDate": "2026-06-15",
