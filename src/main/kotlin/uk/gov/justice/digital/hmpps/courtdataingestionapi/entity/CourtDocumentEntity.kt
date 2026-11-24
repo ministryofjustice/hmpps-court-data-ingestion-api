@@ -79,6 +79,8 @@ data class CourtDocumentEntity(
     courtDocumentCases.forEach { case -> case.courtDocument = this }
   }
 
+  override fun hashCode(): Int = id.hashCode()
+
   override fun toString(): String = "CourtDocumentEntity(id=$id, prisonDocumentId=$prisonDocumentId, " +
     "hmctsCourtHearingId=$hmctsCourtHearingId, courtDocumentType=$courtDocumentType, " +
     "eventType=$eventType, extractedTextSha256=$extractedTextSha256)"
