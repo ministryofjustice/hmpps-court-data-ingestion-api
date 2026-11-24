@@ -1,21 +1,19 @@
 package uk.gov.justice.digital.hmpps.courtdataingestionapi.integration
 
-import io.swagger.v3.parser.OpenAPIV3Parser
+import io.swagger.v3.core.util.Json31
+import io.swagger.v3.oas.models.OpenAPI
 import net.minidev.json.JSONArray
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
-import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.http.MediaType
+import org.springframework.test.web.reactive.server.expectBody
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 class OpenApiDocsTest : IntegrationTestBase() {
-  @LocalServerPort
-  private val port: Int = 0
-
   @Test
   fun `open api docs are available`() {
     webTestClient.get()
@@ -36,44 +34,34 @@ class OpenApiDocsTest : IntegrationTestBase() {
   }
 
   @Test
-  @Disabled("TODO Enable this test once you have an endpoint. It checks that endpoints appear on the OpenAPI spec.")
   fun `the open api json contains documentation`() {
-    webTestClient.get()
-      .uri("/v3/api-docs")
-      .accept(MediaType.APPLICATION_JSON)
-      .exchange()
-      .expectStatus().isOk
-      .expectBody()
-      .jsonPath("paths").isNotEmpty
+    val openApi = readOpenApi()
+    assertThat(openApi.paths).isNotEmpty
   }
 
   @Test
   fun `the open api json contains the version number`() {
-    webTestClient.get()
-      .uri("/v3/api-docs")
-      .accept(MediaType.APPLICATION_JSON)
-      .exchange()
-      .expectStatus().isOk
-      .expectBody().jsonPath("info.version").value<String> {
-        assertThat(it).startsWith(DateTimeFormatter.ISO_DATE.format(LocalDate.now()))
-      }
+    val openApi = readOpenApi()
+    assertThat(openApi.info.version).isNotBlank()
+    assertThat(openApi.info.version).startsWith(DateTimeFormatter.ISO_DATE.format(LocalDate.now()))
   }
 
   @Test
   fun `the open api json is valid`() {
-    val result = OpenAPIV3Parser().readLocation("http://localhost:$port/v3/api-docs", null, null)
-    assertThat(result.messages).isEmpty()
+    val openApi = readOpenApi()
+    assertThat(openApi.info.title).isNotBlank()
+    assertThat(openApi.info.version).isNotBlank()
   }
 
   @Test
   @Disabled("TODO Enable this test once you have added security schema to OpenApiConfiguration.OpenAPi().components()")
   fun `the open api json path security requirements are valid`() {
-    val result = OpenAPIV3Parser().readLocation("http://localhost:$port/v3/api-docs", null, null)
+    val openApi = readOpenApi()
 
     // The security requirements of each path don't appear to be validated like they are at https://editor.swagger.io/
     // We therefore need to grab all the valid security requirements and check that each path only contains those items
-    val securityRequirements = result.openAPI.security.flatMap { it.keys }
-    result.openAPI.paths.forEach { pathItem ->
+    val securityRequirements = openApi.security.flatMap { it.keys }
+    openApi.paths.forEach { pathItem ->
       assertThat(pathItem.value.get.security.flatMap { it.keys }).isSubsetOf(securityRequirements)
     }
   }
@@ -107,5 +95,16 @@ class OpenApiDocsTest : IntegrationTestBase() {
       .expectStatus().isOk
       .expectBody()
       .jsonPath("$.paths[*][*][?(!@.security)]").doesNotExist()
+  }
+
+  private fun readOpenApi(): OpenAPI {
+    val body = webTestClient.get()
+      .uri("/v3/api-docs")
+      .accept(MediaType.APPLICATION_JSON)
+      .exchange()
+      .expectStatus().isOk
+      .expectBody<String>()
+      .returnResult().responseBody!!
+    return Json31.mapper().readValue(body, OpenAPI::class.java)
   }
 }
