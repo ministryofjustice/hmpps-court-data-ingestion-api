@@ -9,8 +9,6 @@ import jakarta.persistence.NamedEntityGraph
 import jakarta.persistence.NamedSubgraph
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
-import org.hibernate.annotations.JdbcTypeCode
-import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtCharge
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtHearing
 import uk.gov.justice.digital.hmpps.courtdataingestionapi.model.api.CourtHearingDocument
@@ -66,14 +64,15 @@ data class CourtHearingEntity(
   var courtCharges: MutableList<CourtChargeEntity>,
   @OneToMany(mappedBy = "courtHearing", cascade = [CascadeType.ALL])
   var nextCourtHearings: MutableList<CourtNextHearingEntity>,
+  @OneToMany(mappedBy = "courtHearing", cascade = [CascadeType.ALL])
+  var pcrApiResponses: MutableList<CourtPcrApiResponse> = mutableListOf(),
   var createdAt: LocalDateTime = LocalDateTime.now(),
   var updatedAt: LocalDateTime = LocalDateTime.now(),
-  @JdbcTypeCode(SqlTypes.JSON)
-  var apiResponse: String? = null,
 ) {
   init {
     courtCharges.forEach { charge -> charge.courtHearing = this }
     nextCourtHearings.forEach { courtHearing -> courtHearing.courtHearing = this }
+    pcrApiResponses.forEach { apiResponse -> apiResponse.courtHearing = this }
   }
 
   fun toCourtHearing(prisonerNumber: String): CourtHearing {
@@ -100,7 +99,7 @@ data class CourtHearingEntity(
       },
       charges = courtCharges
         .filter {
-          it.masterDefendantId == masterDefendantId && !it.courtApplication // Filter court applications for now while we look at data.
+          it.masterDefendantId == masterDefendantId
         }
         .sortedBy { it.sortOrder }
         .map {

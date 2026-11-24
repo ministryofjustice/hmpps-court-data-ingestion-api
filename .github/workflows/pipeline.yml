@@ -57,21 +57,27 @@ jobs:
       java-version: "25"
     needs:
       - app_version
-  pact_broker_verify:
-    name: Verify and publish Pact contracts to broker
-    needs:
-      - app_version
-      - gradle_verify
-    uses: ./.github/workflows/pact_broker_verify.yml
-    secrets: inherit
-    with:
-      app_version: '${{ needs.app_version.outputs.version }}'
+  pact_test_publish:
+      name: Pact consumer test and publish
+      needs:
+        - app_version
+        - gradle_verify
+      permissions:
+        contents: read
+        id-token: write
+      uses: ministryofjustice/hmpps-github-actions/.github/workflows/pact_test_publish.yml@386d4ea009b450ddd4e6d37c2a1f484762bfa9de
+      secrets: inherit
+      with:
+        app_version: ${{ needs.app_version.outputs.version }}
+        webhook_name: hmpps-person-record
+        webhook_id: ctNyAoj2Rx6pJYuJSpYChw
+        webhook_provider_repository: hmpps-person-record
   build:
     name: Build docker image from hmpps-github-actions
     if: github.ref == 'refs/heads/main'
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/docker_build.yml@v2 # WORKFLOW_VERSION
     needs:
-      - pact_broker_verify
+      - pact_test_publish
     with:
       docker_registry: 'ghcr.io'
       registry_org: 'ministryofjustice'

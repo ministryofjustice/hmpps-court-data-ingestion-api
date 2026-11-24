@@ -20,6 +20,7 @@ interface CourtDocumentRepository : JpaRepository<CourtDocumentEntity, UUID> {
   fun countByPrisonerNumber(prisonerNumber: String): Long
   fun findByPrisonerNumber(prisonerNumber: String): List<CourtDocumentEntity>
   fun findByPrisonerNumberAndPrisonDocumentIdIn(personId: String, prisonDocumentIds: List<UUID>): List<CourtDocumentEntity>
+  fun findByPrisonerNumberIsNullAndPrisonDocumentIdIn(prisonDocumentIds: List<UUID>): List<CourtDocumentEntity>
   fun findFirstByPrisonDocumentId(prisonDocumentId: UUID): Optional<CourtDocumentEntity>
 
   @EntityGraph(attributePaths = ["courtHearing", "courtDocumentCases"])

@@ -224,30 +224,6 @@ class HmctsPcrApiMockServer : WireMockServer(WIREMOCK_PORT) {
                                     "value": "HMP/YOI Hull"
                                 },
                                 {
-                                    "label": "Prison email address 1",
-                                    "value": "Courts.Hull@justice.gov.uk"
-                                },
-                                {
-                                    "label": "Prison email address 2",
-                                    "value": "Reception.Hull@justice.gov.uk"
-                                },
-                                {
-                                    "label": "Conveyor / custodian name organisation name",
-                                    "value": "Hull Magistrates' Court: PECS"
-                                },
-                                {
-                                    "label": "Conveyor / custodian name email address 1",
-                                    "value": "hullmc@geoamey.co.uk"
-                                },
-                                {
-                                    "label": "Probation team to be notified organisation name",
-                                    "value": "North East Division NPS"
-                                },
-                                {
-                                    "label": "Probation team to be notified email address 1",
-                                    "value": "nenps.court@justice.gov.uk"
-                                },
-                                {
                                     "label": "Original custody term",
                                     "value": "26 Weeks"
                                 },
@@ -262,14 +238,6 @@ class HmctsPcrApiMockServer : WireMockServer(WIREMOCK_PORT) {
                                 {
                                     "label": "Date suspended sentence imposed",
                                     "value": "10/09/2026"
-                                },
-                                {
-                                    "label": "Bail remand days to count (tagged days)",
-                                    "value": "0"
-                                },
-                                {
-                                    "label": "This offence is aggravated by the foreign power condition being met in relation to it as defined by section 31 of the National Security Act 2023",
-                                    "value": "false"
                                 }
                             ],
                             "resultDescription": "SSI - Suspended sentence of imprisonment activated unaltered\nSuspended sentence of imprisonment of 26 Weeks suspended for 12 Months imposed by Hull Magistrates' Court on 10/09/2026 implemented. Bail remand days to count 0. Total custodial period: 52 Weeks."
