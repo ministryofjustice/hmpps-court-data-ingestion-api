@@ -19,7 +19,6 @@ data class HmctsHearing(
   val hearingDate: LocalDate,
   val hearingType: String,
   val jurisdiction: String,
-  val nextHearing: HmctsNextHearing?,
 )
 
 data class HmctsCourtDetails(
@@ -57,6 +56,7 @@ data class HmctsOffence(
 data class HmctsResult(
   val resultTexts: List<HmctsResultText>,
   val resultDescription: String,
+  val nextHearing: HmctsNextHearing?,
 )
 
 data class HmctsResultText(

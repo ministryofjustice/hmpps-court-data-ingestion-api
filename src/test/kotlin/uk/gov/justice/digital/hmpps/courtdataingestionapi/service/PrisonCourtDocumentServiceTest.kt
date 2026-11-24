@@ -48,7 +48,6 @@ class PrisonCourtDocumentServiceTest {
     hmctsCourtHearingId = UUID.randomUUID(),
     courtDocuments = mutableListOf(),
     courtCharges = mutableListOf(),
-    nextCourtHearings = mutableListOf(),
   )
 
   @Test
