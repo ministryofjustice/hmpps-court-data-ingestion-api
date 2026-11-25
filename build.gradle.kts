@@ -1,5 +1,5 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.15"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.1.2"
   kotlin("plugin.spring") version "2.4.21"
   kotlin("plugin.jpa") version "2.4.21"
   id("au.com.dius.pact") version "4.7.7"
@@ -36,7 +36,7 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
   // Telem
-  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.33.1")
+  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.34.0")
 
   // DB
   // Spring Boot 4 no longer auto-configures Flyway from flyway-core alone; the starter is required or migrations silently won't run at startup.
@@ -50,7 +50,7 @@ dependencies {
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
 
   // Open API
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.2.0")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.2.1")
   // Spatial PDF text extraction for the court-register engine.
   implementation("org.apache.pdfbox:pdfbox:3.0.8")
   implementation("com.google.guava:guava:33.7.2-jre")
@@ -66,9 +66,6 @@ dependencies {
   testImplementation("org.testcontainers:localstack:1.21.4")
   testImplementation("org.testcontainers:postgresql:1.21.4")
   testImplementation("org.testcontainers:junit-jupiter:1.21.4")
-  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.48") {
-    exclude(group = "io.swagger.core.v3")
-  }
 }
 
 java {
