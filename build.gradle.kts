@@ -61,7 +61,7 @@ dependencies {
   testImplementation("io.jsonwebtoken:jjwt-jackson:0.13.0")
   testImplementation("org.wiremock:wiremock-standalone:3.13.2")
   testImplementation("au.com.dius.pact.consumer:junit5:4.7.7")
-  testImplementation("org.awaitility:awaitility-kotlin:4.3.0")
+  testImplementation("org.awaitility:awaitility-kotlin:4.4.0")
   testImplementation("org.testcontainers:testcontainers:2.0.5")
   testImplementation("org.testcontainers:localstack:1.21.4")
   testImplementation("org.testcontainers:postgresql:1.21.4")
